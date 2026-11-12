@@ -4183,6 +4183,7 @@ export function fakeAgentBrain(agentId: string, patch: Partial<AgentBrain> = {})
     effectiveModel: null,
     fallback: true,
     extraUsage: true,
+    personalMcp: false,
     computer: { machineId: "machine_1", name: "MacBook", online: true },
     options: [
       { kind: "model", available: true, models: [], defaultModel: null },

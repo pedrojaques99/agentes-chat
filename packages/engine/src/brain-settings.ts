@@ -439,6 +439,8 @@ export interface AgentBrainView {
   fallback: boolean;
   /** Long work may go on into the plan's paid extra usage where the provider reports it on (ADR 0118). */
   extraUsage: boolean;
+  /** Its Claude Code loads the computer owner's own MCP servers (`brainPersonalMcp`). */
+  personalMcp: boolean;
   computer: BrainComputer | null;
   options: BrainOption[];
   /** Every computer the caller may give the agent (admins: all; its owner: the ones they connected), with its options. */
@@ -609,6 +611,7 @@ function view(
     effectiveModel: brain === "model" ? null : (agent.brainModel ?? defaultBrainModel(brain)),
     fallback: agent.brainFallback,
     extraUsage: agent.brainExtraUsage,
+    personalMcp: agent.brainPersonalMcp,
     computer: machine ? { machineId: machine.id, name: machine.name, online: machineOnline(machine) } : null,
     options: brainOptions(machine),
     machines,
@@ -654,6 +657,7 @@ async function personalAgent(db: Database, agent: Agent, userId: string, account
     brainAccountLentBy: own?.brainAccountLentBy ?? null,
     brainFallback: false,
     brainExtraUsage: false,
+    brainPersonalMcp: false,
     planForOthers: false,
   };
   // ponytail: the computer of their first plan, so plans on a second computer don't list here; loop over their
@@ -934,6 +938,8 @@ export interface AgentBrainInput {
   model?: unknown;
   fallback?: unknown;
   extraUsage?: unknown;
+  /** Its Claude Code loads the computer owner's own MCP servers; only that owner changes it. Omitted = keep. */
+  personalMcp?: unknown;
   /**
    * "Atende outras pessoas" turned off (ADR 0059 §5): true, only its owner talks
    * to it; false, whoever its "who can talk" list lets in (everyone with no
@@ -1007,6 +1013,9 @@ export async function setAgentBrain(
   if (input.extraUsage !== undefined && typeof input.extraUsage !== "boolean") {
     throw new ValidationError("extraUsage is on or off", "brain.invalid");
   }
+  if (input.personalMcp !== undefined && typeof input.personalMcp !== "boolean") {
+    throw new ValidationError("personalMcp is on or off", "brain.invalid");
+  }
   if (input.onlyOwner !== undefined && typeof input.onlyOwner !== "boolean") {
     throw new ValidationError("onlyOwner is on or off", "brain.invalid");
   }
@@ -1072,6 +1081,16 @@ export async function setAgentBrain(
   const ownerSwitch = accountChanged && (lentBy !== null || agent.brainAccountLentBy != null);
   const extraBefore = newPlan || ownerSwitch ? false : agent.brainExtraUsage;
   const extraUsage = (input.extraUsage as boolean | undefined) ?? extraBefore;
+  // The computer owner's own servers and settings: only they lend them, and only to Claude Code. Another computer or
+  // brain starts with it off.
+  const personalBefore = changed ? false : agent.brainPersonalMcp;
+  const personalMcp = brain === "claude_code" && ((input.personalMcp as boolean | undefined) ?? personalBefore);
+  if (input.personalMcp !== undefined && personalMcp !== personalBefore && machine?.pairedByUserId !== userId) {
+    throw new ForbiddenError(
+      "Only who connected this computer lends its own MCP servers to an agent",
+      "brain.personal_mcp_owner_only",
+    );
+  }
   // Paid extra usage bills the plan's owner (the agent's, unless it was lent): an admin picks the account, not this.
   // A plan that changes hands starts with it off, so only its owner may send it on with that change.
   if (input.extraUsage !== undefined && extraUsage !== extraBefore && planOwner !== userId) {
@@ -1113,6 +1132,7 @@ export async function setAgentBrain(
     model !== agent.brainModel ||
     fallback !== agent.brainFallback ||
     extraUsage !== agent.brainExtraUsage ||
+    personalMcp !== agent.brainPersonalMcp ||
     account !== agent.brainAccountId ||
     effort !== agent.brainEffort ||
     speed !== agent.brainSpeed ||
@@ -1159,6 +1179,7 @@ export async function setAgentBrain(
         brainModel: model,
         brainFallback: fallback,
         brainExtraUsage: extraUsage,
+        brainPersonalMcp: personalMcp,
         brainAccountId: account,
         brainAccountLentBy: lentBy,
         brainEffort: effort,
@@ -1230,12 +1251,13 @@ export async function setAgentBrain(
           model: agent.brainModel,
           fallback: agent.brainFallback,
           extraUsage: agent.brainExtraUsage,
+          personalMcp: agent.brainPersonalMcp,
           account: agent.brainAccountId,
           effort: agent.brainEffort,
           speed: agent.brainSpeed,
           contextTokens: agent.contextTokens,
         },
-        to: { brain, model, fallback, extraUsage, account, effort, speed, contextTokens },
+        to: { brain, model, fallback, extraUsage, personalMcp, account, effort, speed, contextTokens },
         ...(rightHand ? { planForOthers: { from: agent.planForOthers, to: planForOthers } } : {}),
         ...options.audit,
       },
@@ -1265,6 +1287,7 @@ export async function setAgentBrain(
     brainModel: model,
     brainFallback: fallback,
     brainExtraUsage: extraUsage,
+    brainPersonalMcp: personalMcp,
     brainAccountId: account,
     brainAccountLentBy: lentBy,
     brainEffort: effort,

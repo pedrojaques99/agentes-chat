@@ -108,6 +108,7 @@ interface Switched {
 
 interface MoreDraft extends Advanced {
   extraUsage: boolean;
+  personalMcp: boolean;
 }
 
 /** The effort's ramp: Automático is the model's choice, not a level (an automatic model picks the effort too). */
@@ -479,6 +480,7 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
     onlyOwner: view.onlyOwner,
     fallback: view.fallback,
     extraUsage: view.extraUsage,
+    personalMcp: view.personalMcp,
   };
   const m = more ?? moreNow;
   const openMore = () => {
@@ -495,6 +497,7 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
       if (m.fallback !== view.fallback) input.fallback = m.fallback;
       if (m.onlyOwner !== view.onlyOwner) input.onlyOwner = m.onlyOwner;
       if (m.extraUsage !== view.extraUsage) input.extraUsage = m.extraUsage;
+      if (m.personalMcp !== view.personalMcp) input.personalMcp = m.personalMcp;
     }
     if (m.contextTokens !== s.savedContext) input.contextTokens = m.contextTokens;
     if (Object.keys(input).length === 0) return home();
@@ -959,6 +962,14 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
               // Paid extra usage bills the plan's owner: someone else's plan given to this agent is theirs to turn on.
               disabled={!(s.currentAccount ? s.currentAccount.mine : view.canUsePlans)}
               onChange={(on) => setMore({ ...m, extraUsage: on })}
+            />
+          )}
+          {s.kind === "claude_code" && view.ownSignIn && (
+            <SwitchLine
+              label={t("agentPage.work.brain.personalMcpTitle")}
+              hint={t("agentPage.work.brain.personalMcpHint")}
+              checked={m.personalMcp}
+              onChange={(on) => setMore({ ...m, personalMcp: on })}
             />
           )}
           {s.runsOn.length > 1 && can("machine") && (

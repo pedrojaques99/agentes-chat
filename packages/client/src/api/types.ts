@@ -5554,6 +5554,8 @@ export interface AgentBrain {
   fallback: boolean;
   /** Long work may go on into the plan's paid extra usage where the provider reports it on (ADR 0118). */
   extraUsage: boolean;
+  /** Its Claude Code loads the computer owner's own MCP servers and settings. */
+  personalMcp: boolean;
   computer: { machineId: string; name: string; online: boolean } | null;
   options: BrainOption[];
   /** Every computer the caller may give the agent, with what each offers ("Vai para o Mac mini"). */
@@ -5713,6 +5715,8 @@ export interface AgentBrainInput {
   fallback?: boolean;
   /** Off: long work pauses at 95% of the plan even with its paid extra usage on. */
   extraUsage?: boolean;
+  /** Its Claude Code loads the computer owner's own MCP servers; only who connected the computer changes it. */
+  personalMcp?: boolean;
   /**
    * "Atende outras pessoas" turned off: false lets in whoever its "who can talk" list allows (everyone with no list).
    */
