@@ -16,6 +16,7 @@ const ptBR = {
   started: "Sincronização iniciada",
   failed: "Não deu para iniciar a sincronização",
   seeOnGitHub: "Ver no GitHub",
+  see: "Ver",
   commitLink: (sha: string) => `Abrir ${sha} no GitHub`,
 };
 
@@ -33,6 +34,7 @@ const en: UpstreamStrings = {
   started: "Sync started",
   failed: "Couldn't start the sync",
   seeOnGitHub: "See on GitHub",
+  see: "See",
   commitLink: (sha) => `Open ${sha} on GitHub`,
 };
 

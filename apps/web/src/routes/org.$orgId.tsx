@@ -29,6 +29,7 @@ import { RemoveMemberProvider } from "@/components/RemoveMember";
 import { Sidebar } from "@/components/Sidebar";
 import { BootSplash } from "@/components/Sky";
 import { DeletingBanner, HoldBanner, SuspendedScreen } from "@/components/Standing";
+import { UpstreamNotice } from "@/components/visant/UpstreamNotice";
 import { useWebPushClear, useWebPushRefresh } from "@/components/WebPush";
 import { ComputerSetupNotice } from "@/components/WorkspaceComputer";
 import { HeaderSearchProvider } from "@/hooks/useWorkspaceSearch";
@@ -177,6 +178,7 @@ function OrgLayout() {
                                 {!focused && <NoticeIsland />}
                                 <Arrival />
                                 <FeedbackHost />
+                                <UpstreamNotice />
                                 <Outlet />
                               </DetailsHost>
                             </ComputerDialogProvider>
