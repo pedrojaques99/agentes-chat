@@ -640,13 +640,11 @@ export function buildEngine(o: EngineOptions) {
   };
   // A background run (a routine's) keeps no computer process alive after its turn.
   const brains: RunExecutorDeps["brains"] = {
-    claude_code: (agent, run, setup) =>
+    claude_code: (_agent, run, setup) =>
       createClaudeCodeBrain({
         hub: machineHub,
         pubsub: adapters.pubsub,
         agentScope,
-        // The computer owner's own MCP servers and settings, where they lent them to this agent (`brainPersonalMcp`).
-        personalMcp: () => agent.brainPersonalMcp,
         mcpToken: () => setup.mcpToken(),
         permissions: turnPermissions,
         keepAlive: !run.background,

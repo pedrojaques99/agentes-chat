@@ -99,7 +99,6 @@ const brain = (over: Partial<AgentBrain> = {}): AgentBrain => ({
   effectiveModel: null,
   fallback: true,
   extraUsage: true,
-  personalMcp: false,
   computer: { machineId: "m1", name: "MacBook", online: true },
   options: [option("claude_code"), option("codex")],
   machines: [],

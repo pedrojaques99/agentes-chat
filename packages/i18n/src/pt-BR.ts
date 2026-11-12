@@ -4962,9 +4962,6 @@ export const ptBR = {
       failed: "Não deu para salvar. Tente de novo.",
       use: "Usar",
       brain: {
-        personalMcpTitle: "Usar meus MCPs deste computador",
-        personalMcpHint:
-          "O Claude Code também carrega os servidores MCP e as configurações que você tem neste computador (Premiere, Figma desktop, ferramentas locais). Só quem conectou o computador liga isso.",
         model: "Chave de API",
         modelText: "Pago por uso. Conta no orçamento do {{name}}.",
         modelText_female: "Pago por uso. Conta no orçamento da {{name}}.",

@@ -5034,9 +5034,6 @@ export const en = {
       failed: "Couldn't save. Try again.",
       use: "Use",
       brain: {
-        personalMcpTitle: "Use my MCP servers on this computer",
-        personalMcpHint:
-          "Claude Code also loads the MCP servers and settings you set up on this computer (Premiere, Figma desktop, local tools). Only you, who connected it, can turn this on.",
         model: "API key",
         modelText: "Paid per use. It counts against {{name}}'s budget.",
         /** A plan's card: `plan` is its name ("Claude", "ChatGPT", "OpenCode Go"). */

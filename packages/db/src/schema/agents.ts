@@ -204,12 +204,6 @@ export const agents = pgTable(
      */
     brainExtraUsage: boolean().notNull().default(true),
     /**
-     * Its Claude Code on the computer loads the computer owner's own MCP servers and settings (`~/.claude.json`:
-     * stdio servers and localhost ones such as a desktop app's), the runner's `personalMcp`. Only that owner turns
-     * it on: it lends what is theirs on that computer.
-     */
-    brainPersonalMcp: boolean().notNull().default(false),
-    /**
      * The account its computer brain runs with (ADR 0041), on its machine and
      * of its brain's kind (checked in code); null = the computer's own sign-in.
      * Cleared when the agent changes computer or brain kind, or the account goes.
