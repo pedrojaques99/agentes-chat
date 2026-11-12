@@ -956,6 +956,14 @@ export const MCP_PRESETS: readonly McpPreset[] = [
     serverUrl: "https://api.millionsend.com/mcp",
   },
   {
+    id: "visantlabs",
+    category: "marketing",
+    label: "Visant Labs",
+    description: "Visant Labs brand guidelines, mockups and image generation.",
+    icon: "visantlabs",
+    serverUrl: "https://api.visantlabs.com/api/mcp",
+  },
+  {
     id: "semrush",
     category: "marketing",
     label: "Semrush",
