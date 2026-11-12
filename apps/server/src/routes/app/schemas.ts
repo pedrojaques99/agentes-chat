@@ -997,6 +997,9 @@ export const AgentBrain = z
       description:
         "Long work may go on into the plan's paid extra usage where the provider reports it on (ADR 0118); false: it pauses at 95%.",
     }),
+    personalMcp: z
+      .boolean()
+      .openapi({ description: "Its Claude Code loads the computer owner's own MCP servers and settings." }),
     computer: z.object({ machineId: z.uuid(), name: z.string(), online: z.boolean() }).nullable(),
     options: z.array(BrainOption),
     machines: z.array(BrainMachine).openapi({
