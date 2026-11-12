@@ -208,42 +208,44 @@ describe("finding the settings", () => {
     const link = within(nav).getByRole("link", { name: "Sua conta" });
     expect(link.querySelector(".ac-avatar")?.textContent).toBe("W");
     expect(link.querySelector(".ac-icon")).toBeNull();
-    await click(screen().getByRole("button", { name: /^Perfil/ }));
-    await settle(2);
-    const dialog = screen().getByRole("dialog", { name: "Seu perfil neste workspace" });
-    await type(within(dialog).getByLabelText("Seu @"), "walt");
-    // Our zone selector: search by city, Enter picks.
-    const zoneBox = within(dialog).getByRole("combobox", { name: "Fuso horário" });
-    expect(zoneBox.textContent).toContain("UTC");
+    // Perfil and Fuso horário change right on their lines: the @ saves when the field is left.
+    const handle = screen().getByLabelText("Seu @");
+    await type(handle, "walt");
+    await act(async () => fireEvent.blur(handle));
+    await settle(4);
+    expect(state.calls.find((c) => c.method === "orgs.updateMe")?.args).toEqual([ORG_ID, { handle: "walt" }]);
+    // Our zone selector: search by city, Enter picks and saves.
+    const zoneBox = screen().getByRole("combobox", { name: "Fuso horário" });
     await click(zoneBox);
     await settle(2);
     const search = screen().getByRole("combobox", { name: "Buscar fuso" });
     await type(search, "lisboa");
     await act(async () => fireEvent.keyDown(search, { key: "Enter" }));
-    await settle(2);
-    expect(within(dialog).getByRole("combobox", { name: "Fuso horário" }).textContent).toContain("Lisboa");
-    await click(within(dialog).getByRole("button", { name: "Salvar" }));
     await settle(4);
-    expect(state.calls.find((c) => c.method === "orgs.updateMe")?.args).toEqual([
+    expect(state.calls.filter((c) => c.method === "orgs.updateMe").at(-1)?.args).toEqual([
       ORG_ID,
-      { handle: "walt", timezone: "Europe/Lisbon" },
+      { timezone: "Europe/Lisbon" },
     ]);
     expect(screen().getByText("Perfil salvo.")).toBeTruthy();
   });
 
-  test("Fuso horário in Sua conta says my zone in words under its name, as the selector does, never its id", async () => {
+  test("Fuso horário in Sua conta is its selector on the line, saying my zone in words, never its id", async () => {
     for (const [zone, words] of [
       ["Europe/Lisbon", "Lisboa"],
-      ["Asia/Kathmandu", "Horário do Nepal"],
+      ["Asia/Kathmandu", "Kathmandu"],
     ] as const) {
       const state = seedState();
       const me = state.members.find((m) => m.userId === state.me?.user.id);
       if (me) me.timezone = zone;
       await go("settings/account", state);
-      const item = screen().getByRole("button", { name: /^Fuso horário/ });
-      // On a line of its own, as Perfil's: a long name ("Los Angeles (Pacífico dos EUA)") has the row's width.
-      const line = item.querySelector(".settings-row__status")?.textContent;
-      expect({ zone, line }).toEqual({ zone, line: words });
+      // Changed right there: no button opening a dialog, the selector itself on the line.
+      expect(screen().queryByRole("button", { name: /^Fuso horário/ })).toBeNull();
+      const line = screen().getByRole("combobox", { name: "Fuso horário" }).textContent ?? "";
+      expect({ zone, line, id: line.includes(zone) }).toEqual({
+        zone,
+        line: expect.stringContaining(words),
+        id: false,
+      });
       cleanup();
     }
   });

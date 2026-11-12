@@ -87,7 +87,11 @@ export function AccountSection() {
             label={t("shell.timezone")}
             control={
               <Locked when={setZone.isPending}>
-                <ZoneSelect value={zone} onChange={(z) => z !== zone && setZone.mutate(z)} />
+                <ZoneSelect
+                  aria-label={t("shell.timezone")}
+                  value={zone}
+                  onChange={(z) => z !== zone && setZone.mutate(z)}
+                />
               </Locked>
             }
           />
