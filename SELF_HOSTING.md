@@ -200,8 +200,8 @@ sign-in.
   this Mac** (**Use this PC** on Windows, **Use this computer** on Linux). The app asks first, in its
   own dialog naming the instance and the organization. Its agents start with commands, the browser and
   Claude Code or Codex when the computer has them, and no folders of yours. Commands are on by
-  default. Turn them off in the app's **Preferences › Tools**, where one switch counts for every
-  workspace on the computer. Folders are added in **Preferences › Folders**. The app pairs a computer
+  default. Turn them off in the app's **Preferences › Tools**, where each workspace on the computer
+  has its own switch. Folders are added in **Preferences › Folders**. The app pairs a computer
   with agentes.chat Cloud the same way. Until you pair it,
   nothing of the computer is used. The app never offers the computer that runs the instance: its agents
   work there through the instance itself (This server as the agents' computer, below).
@@ -779,6 +779,7 @@ ones a self-hosted instance usually touches:
 | `RUN_MIGRATIONS_ON_BOOT` | `true` | `false` only if you run `docker compose run --rm agentes migrate` yourself before each start. |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`. |
 | `TELEMETRY` | `on` | `off` stops the anonymous usage report (Optional services and what they receive). |
+| `FEEDBACK_RELAY` | `true` | The apps' feedback form sends what a person writes to the agentes.chat team. `false`: no form (Optional services and what they receive). |
 | `TYPESAFE_API_KEY` | | Your TypeSafe key for Jev (AI: plans and keys). Wins over the key added in Settings → AI and usage. |
 | `COMPOSIO_API_KEY`, `COMPOSIO_WEBHOOK_SECRET` | | Your Composio project: Gmail and Outlook mailboxes and the services connected through Composio (below). |
 | `COMPOSIO_AUTH_CONFIGS`, `COMPOSIO_CALLS_PER_MONTH` | `0` for the cap (none) | Auth configs of your own per toolkit (`googledrive=ac_…`), and the Composio calls a workspace may make per month. |
@@ -868,12 +869,11 @@ Composio's own LinkedIn and YouTube apps share their rate limits and daily quota
 customers: with heavy use, give them OAuth apps of your own in `COMPOSIO_AUTH_CONFIGS`.
 
 **Deleting workspaces and accounts.** An owner deletes a workspace in **Settings → General**, with a
-code emailed to them (with no email set up, their password instead): it closes for everyone at once,
-its agents stop, and it is deleted for good 7 days later. Until then any owner can restore it. An
+code emailed to them (with no email set up, their password instead): it turns read-only for everyone at
+once, its agents stop, and it is deleted for good 7 days later. Until then any owner can restore it. An
 account is deleted from **Settings → Your account**, or the account page on the phone, with the same
 proof: it is signed out everywhere at once and deleted for good 7 days later, and signing in before
-then restores it. The workspaces where it was the only member close at the same time and go on the
-same date. With Sign in with Apple, register `EMAIL_FROM`'s domain in Apple Developer › Sign in with Apple for Email
+then restores it. The workspaces where it was the only member are deleted with it, on the same date. With Sign in with Apple, register `EMAIL_FROM`'s domain in Apple Developer › Sign in with Apple for Email
 Communication (SPF and DKIM passing): someone who hid their address gets mail only from senders
 registered there, so without it they would get no code. What lives outside the server stays:
 the agents' folders on connected computers until the runner is removed, files in a workspace's own
@@ -959,6 +959,20 @@ either way:
   Docker, in `~/.agentes/.env`, then start it again. This wins over the switch below.
 - The switch in **Settings → General → Usage statistics**. Only the installation's first account (the
   person who set it up) sees it.
+
+**Feedback.** The apps have a feedback form (**Send feedback**, at the bottom of the sidebar), and an
+agent can send one when a person asks it to or agrees to its offer. Each one
+goes to the agentes.chat team, who make the app, and the form says so before the person sends it.
+Nothing goes by itself: only when someone presses **Send**, and only that message, as JSON in a POST to
+`FEEDBACK_URL` (`https://app.agentes.chat/api/feedback/inbox`), through Cloudflare like the usage
+report. It holds what the person wrote; their name and email address, to answer them; the workspace's
+name and their role in it; the thing they reported and its words, when they right-clicked one and left
+it in; the screen they were on (its path, with its ids), the agent open and what it thinks with, the
+language, the browser, the window, the app's build and its last errors; the server's version; and up
+to three pictures they added (a video isn't offered). Never a conversation, and nothing that says which
+server it came from beyond the request's own address. agentes.chat mails it to its team and keeps no
+copy on the server that received it. To turn it off, set `FEEDBACK_RELAY=false` in `.env` and start the
+server again: the apps show no form and agents can't send any.
 
 **Downloads and updates.** Installing and updating fetch files from agentes.chat, and those requests
 carry nothing about the instance beyond what any download does: the installer
@@ -1467,9 +1481,11 @@ kept in the account's folder (`token.json`, mode 600), which only root opens, an
 stays in `provider.json` there the same way. Each turn's Claude Code runs in a folder of that agent's
 own and reads the token on a file descriptor as it starts, never from its environment, so the
 commands it runs don't get it; a key goes in its environment. When the agent moves to another account
-or brain, or the account is disconnected, the processes that had it close. A ChatGPT sign-in there
-still thinks for one agent. Disconnecting a Claude account deletes its token from the computer: to
-end it on Claude too, revoke it in Claude's settings.
+or brain, or the account is disconnected, the processes that had it close. A ChatGPT sign-in made for
+all agents is Codex's own `auth.json` there, and a Gemini one the Antigravity CLI's own sign-in file:
+each turn gets a copy in the agent's own folder (Gemini's goes when that agent's turns on it end, or,
+if its worker was killed mid-turn, when its next worker starts). Disconnecting a Claude account
+deletes its token from the computer: to end it on Claude too, revoke it in Claude's settings.
 
 **Who can reach an account.** With every agent running as the runner's own user (the default
 install), any agent on that computer could reach every account folder there; the runner keeps them

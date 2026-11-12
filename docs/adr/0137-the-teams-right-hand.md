@@ -1,11 +1,11 @@
 # 0137. The team's right hand
 
-- Status: Accepted; §6 and §7 amended 2026-11-06 by ADR 0079 §7 (built: engine, server, the shared client, the web and the phone app); amended 2026-11-03 (§5, a person alone with the team; §4 and §6 written as decided); amended 2026-11-04 (§8, agents act on agentes.chat through their tools, never by signing in to it); amended 2026-11-04 (§4, it starts everything a person does in the app, as cards); amended 2026-11-04 (§1, §4 and §7: it thinks with a person's plan through Claude Code or OpenCode, locked down and checked before each turn; then through Codex and Cursor too, the owner accepting their residual risk); amended 2026-11-04 (§4: through Grok Build too, checked on its `init` like Claude Code, ADR 0142); amended 2026-11-04 (§4: through the Antigravity CLI too, as an agent with no tool of its own, checked on its `init` and every step, ADR 0143); amended 2026-11-04 (§9, "Semana da equipe": a weekly card in each admin's DM, from stored data); amended 2026-11-04 (§10: the team set up from three questions, one team card, team templates); amended 2026-11-04 (§4: the team map's drag posts its settings card, ADR 0148); amended 2026-11-05 (§11, each person's own AI); amended 2026-11-06 (§12, it reads the Drive and the wiki for the person); amended 2026-11-06 (§13, the one you talk to: it sees the team and hands work on)
+- Status: Accepted; §6 and §7 amended 2026-11-06 by ADR 0079 §7 (built: engine, server, the shared client, the web and the phone app); amended 2026-11-03 (§5, a person alone with the team; §4 and §6 written as decided); amended 2026-11-04 (§8, agents act on agentes.chat through their tools, never by signing in to it); amended 2026-11-04 (§4, it starts everything a person does in the app, as cards); amended 2026-11-04 (§1, §4 and §7: it thinks with a person's plan through Claude Code or OpenCode, locked down and checked before each turn; then through Codex and Cursor too, the owner accepting their residual risk); amended 2026-11-04 (§4: through Grok Build too, checked on its `init` like Claude Code, ADR 0142); amended 2026-11-04 (§4: through the Antigravity CLI too, as an agent with no tool of its own, checked on its `init` and every step, ADR 0143); amended 2026-11-04 (§9, "Semana da equipe": a weekly card in each admin's DM, from stored data); amended 2026-11-04 (§10: the team set up from three questions, one team card, team templates); amended 2026-11-04 (§4: the team map's drag posts its settings card, ADR 0148); amended 2026-11-05 (§11, each person's own AI); amended 2026-11-06 (§12, it reads the Drive and the wiki for the person); amended 2026-11-06 (§13, the one you talk to: it sees the team and hands work on); amended 2026-11-11 (§4: a teammate's skills on its settings card); amended 2026-11-12 (§4: every agent asks for its own settings on the same card, always a click); amended 2026-11-12 (§4, §12, §13: it has a normal agent's tools)
 - Date: 2026-11-03
 - Supersedes: ADR 0093 (the team's coordinator)
 - Amends: ADR 0081 (one-click Criar and Criar e testar on the right hand's cards), ADR 0092 §5 (a teammate's settings, on the right hand's card)
 - Extends: ADR 0053 (who is behind a run), ADR 0061 and 0129 (action cards applied as whoever clicks), ADR 0085 (an agent's audience by roles), ADR 0074 (the router)
-- Code: db `packages/db/src/schema/agents.ts` (`agents.builtin`, index `agents_one_right_hand`, migration `right_hand`), `schema/context.ts` (`proposal_target` `agent_settings`, `context_proposals.settings`, `requested_by_user_id`, `asked_at`, migration `right_hand_settings`); engine `right-hand.ts` (`ensureRightHand`, `ensureRightHands`, `followOwner`, `RIGHT_HAND_GRANTS`, `RIGHT_HAND_EDITABLE`, `refuseRightHand`, `rightHandReaches`), `right-hand-prompt.ts` (`rightHandPrompt`), `settings-proposals.ts` (`SETTING_GROUP`, `settingLines`, `applySettings`, `revertSettings`), `context/proposals.ts` (`askProposal`), `agent-proposals.ts` (`askAgentProposal`, `first_task`, superseded cards), `setup-tools.ts` (`propose_settings_change`, `offer_approvals`, `propose_member_changes`, `offer_open_page`, `APP_PAGES`, the card cap), `card-via.ts` (`cardVia`), `agents.ts` (`unarchiveAgent`), `router.ts`, `organizations.ts`, `exports.ts`; on a plan (2026-11-04): db `agents.plan_for_others` (migration `right_hand_plans`), engine `right-hand.ts` (`thinkingAgent`, `scrubRightHandReply`, `rightHandPlanRefusal`, `rightHandNoAiReason`, `RIGHT_HAND_TURN`), `brains/select.ts` (`resolveBrain`, `mayFallBack`), `brains/claude-code.ts`, `brain-settings.ts` (`settingsAgent`), `ai-status.ts`, `no-ai.ts`, `executor.ts` (`brainUnavailable`), `machines.ts` (`machineAgents`), adapters `LOCKED_BRAIN_PROTOCOL`, runner `brain.ts` (`brainProfileLaunch("chat")`, `ClaudeProcess.lock`), `mcp.ts` (`CHAT_DENIED_TOOLS`, `chatToolsBreach`), `brain-opencode.ts` (`OPENCODE_CHAT_PERMISSION`, `opencodeToolsBreach`), `brain-codex.ts` (`CODEX_CHAT_OFF`, `CODEX_CHAT_CONFIG`, `codexChatBreach`, `chatFolder`), `brain-cursor.ts` (`CURSOR_CHAT_PERMISSIONS`, `cursorChatBreach`), `handlers.ts`, engine `tool-detail.ts` (`scrubSignIns`), `right-hand-prompt.ts` ("# Your tools"), engine `brains/codex.ts` (the chat gate), `email.ts` (`queuePlanOpenedEmail`), client `lib/no-ai.ts` (`planLine`); each person's own AI (2026-11-05): db `right_hand_brains` (migration `right_hand_brains`), engine `right-hand.ts` (`personalBrain`, `withPersonalBrain`, `rightHandPerson`), `brain-settings.ts` (`BrainScope`, `personalView`, `setPersonalBrain`), `machines.ts` (`machineAgents`, `accounts`), runner `keepAccount`, client `lib/right-hand.ts` (`rightHandFallback`); server `routes/app/agents.ts`, `routes/app/memory.ts` (`POST …/proposals/{id}/ask`, `POST …/agent-proposals/{messageId}/ask`); client `api/context.ts` (`CardVia`), `lib/app-pages.ts`, `lib/action-cards.ts` (`memberRowDone`), `lib/right-hand.ts` (`isRightHand`, `rightHandOf`, `RIGHT_HAND_DEFAULT`, `finishOnboarding`, `createWorkspace`, `introCards`), `lib/proposals.ts` (`settingLineText`, `decidersOf`, `onlyKey`, `sentToText`); web `components/RightHandCards.tsx`, `RightHandIntro.tsx`, `RightHandSettings.tsx`, `Sidebar.tsx`, `pages/OnboardingPage.tsx`; phone `features/right-hand/*`, `features/chats/logic.ts` (`rightHandPin`), `features/onboarding/OnboardingFlow.tsx`
+- Code: db `packages/db/src/schema/agents.ts` (`agents.builtin`, index `agents_one_right_hand`, migration `right_hand`), `schema/context.ts` (`proposal_target` `agent_settings`, `context_proposals.settings`, `requested_by_user_id`, `asked_at`, migration `right_hand_settings`); engine `right-hand.ts` (`ensureRightHand`, `ensureRightHands`, `followOwner`, `RIGHT_HAND_GRANTS`, `RIGHT_HAND_EDITABLE`, `refuseRightHand`, `rightHandReaches`), `right-hand-prompt.ts` (`rightHandPrompt`), `settings-proposals.ts` (`SETTING_GROUP`, `settingLines`, `applySettings`, `revertSettings`), `context/proposals.ts` (`askProposal`), `agent-proposals.ts` (`askAgentProposal`, `first_task`, superseded cards), `setup-tools.ts` (`propose_settings_change`, `request_settings_change`, `offer_approvals`, `propose_member_changes`, `offer_open_page`, `APP_PAGES`, the card cap), `card-via.ts` (`cardVia`), `skills.ts` (`importSkillFromUrl`, `importPickedSkills` with `forAgentId`), `agents.ts` (`unarchiveAgent`), `router.ts`, `organizations.ts`, `exports.ts`; on a plan (2026-11-04): db `agents.plan_for_others` (migration `right_hand_plans`), engine `right-hand.ts` (`thinkingAgent`, `scrubRightHandReply`, `rightHandPlanRefusal`, `rightHandNoAiReason`, `RIGHT_HAND_TURN`), `brains/select.ts` (`resolveBrain`, `mayFallBack`), `brains/claude-code.ts`, `brain-settings.ts` (`settingsAgent`), `ai-status.ts`, `no-ai.ts`, `executor.ts` (`brainUnavailable`), `machines.ts` (`machineAgents`), adapters `LOCKED_BRAIN_PROTOCOL`, runner `brain.ts` (`brainProfileLaunch("chat")`, `ClaudeProcess.lock`), `mcp.ts` (`CHAT_DENIED_TOOLS`, `chatToolsBreach`), `brain-opencode.ts` (`OPENCODE_CHAT_PERMISSION`, `opencodeToolsBreach`), `brain-codex.ts` (`CODEX_CHAT_OFF`, `CODEX_CHAT_CONFIG`, `codexChatBreach`, `chatFolder`), `brain-cursor.ts` (`CURSOR_CHAT_PERMISSIONS`, `cursorChatBreach`), `handlers.ts`, engine `tool-detail.ts` (`scrubSignIns`), `right-hand-prompt.ts` ("# Your tools"), engine `brains/codex.ts` (the chat gate), `email.ts` (`queuePlanOpenedEmail`), client `lib/no-ai.ts` (`planLine`); each person's own AI (2026-11-05): db `right_hand_brains` (migration `right_hand_brains`), engine `right-hand.ts` (`personalBrain`, `withPersonalBrain`, `rightHandPerson`), `brain-settings.ts` (`BrainScope`, `personalView`, `setPersonalBrain`), `machines.ts` (`machineAgents`, `accounts`), runner `keepAccount`, client `lib/right-hand.ts` (`rightHandFallback`); server `routes/app/agents.ts`, `routes/app/memory.ts` (`POST …/proposals/{id}/ask`, `POST …/agent-proposals/{messageId}/ask`); client `api/context.ts` (`CardVia`), `lib/app-pages.ts`, `lib/action-cards.ts` (`memberRowDone`), `lib/right-hand.ts` (`isRightHand`, `rightHandOf`, `RIGHT_HAND_DEFAULT`, `finishOnboarding`, `createWorkspace`, `introCards`), `lib/proposals.ts` (`settingLineText`, `decidersOf`, `onlyKey`, `sentToText`); web `components/RightHandCards.tsx`, `RightHandIntro.tsx`, `RightHandSettings.tsx`, `Sidebar.tsx`, `pages/OnboardingPage.tsx`; phone `features/right-hand/*`, `features/chats/logic.ts` (`rightHandPin`), `features/onboarding/OnboardingFlow.tsx`
 
 ## Context
 
@@ -346,3 +346,166 @@ adjusts for them without asking (ADR 0139 §2). "Para todo o workspace", only wi
 quem não tem um" (before "Atende outras pessoas"), its monthly budget where something bills per use, and who may use
 it. A value that changes is one row that opens its choice in a dialog (a sheet on the phone). Alone in a personal
 workspace, lending and the audience are not shown.
+
+## Amendment (2026-11-11): a teammate's skills on its settings card (§4)
+
+Asked to give an agent a skill or take one away, the right hand had no card for it: skills were left for later in the
+amendment of 2026-11-07. They are now lines of `propose_settings_change` (`add_skills`, `remove_skills`, by the name
+Settings › Skills lists, the exact name before one that differs only in punctuation), one `skill` line per skill with
+its id in `skillId`, its name in `label.to` and whether the agent has it on as `from` and `to`. They are decided as on
+the agent's page, where only who manages agents changes skills (`admin`; `setAgentSkills` also takes the agent's
+owner, the page doesn't). They apply at once with Undo when the person who asked may, else wait on the card, sent on
+with "Pedir a um admin". A name no installed skill has is refused with the names there are, and a skill removed
+before the click leaves the row out of date. The notice to the proposer and a refusal's lesson say each skill on or
+off by its name. An applied card refreshes every open agent page's skills (`agents.changed`), since that page saves
+its whole list. The right hand's own skills can't be changed (it has no skill tools), and its delegated decisions (ADR
+0139) never take a skill line. Nothing reaches its grants, the Vault or any secret: a skill is instructions an agent
+opens, under the agent's own tools.
+
+## Amendment (2026-11-12): every agent asks for its own settings, always with a click (§4)
+
+### Context
+
+An agent that needed a skill installed in the workspace but not on for it told the person to open its page and turn
+it on by hand, and said it couldn't ask on a card. `propose_settings_change` is any setup agent's tool (ADR 0139), but
+it reads as teammates' settings and loads only with the setup tools, and installing a skill from an agent's card left
+it off for that agent. The owner decided that agents edit their own settings when a person approves.
+
+### Decision
+
+- **`request_settings_change`.** Every agent but the right hand has it in every run a person is behind: no scope, like
+  `request_permission`, so a run in a channel's thread holds it without the setup tools. Like `request_permission` it
+  speaks for the agent (`ELSEWHERE` in the run policy), so a routine's run, or one fed by what a routine read, never
+  asks for it. Its definition waits with the
+  conversation's rarer tools (ADR 0043: up front, the whole card's schema would add about 3,800 characters to every
+  run) and what the agent can do names it, so the agent calls it by that name (`use_tool`). It takes any line of the
+  settings card (skills, channels and how it answers there, model, AI account, budget, owner, who talks to it, name,
+  look, who it reports to, archiving) and has no `agent` field: its only target is the agent that calls it. It posts
+  the same card, read as the agent's own (`chat.body.settings_request`, "Pede uma mudança nas próprias configurações"),
+  whose rows are decided as before (`SETTING_GROUP`, "Pedir a um admin" for whoever can't). A skill on and off at once
+  is refused, and a refusal lists at most 20 names. The right hand keeps `propose_settings_change`, its wider reach and
+  its fixed list of its own settings.
+- **Always a click.** An agent's own row never applies at once, even when the person who asked could make the change
+  and wrote it themselves: the agent may be acting on text from an email, an issue or a web page, so it never widens
+  its own settings without a person's click. Its card gets no look from the right hand either (ADR 0139 §2 already keeps
+  an agent's own settings the person's). A receipt that changed skills, from this card or the right hand's, is undone
+  or redone only by who manages agents (`requireMayUndo`): never the agent's owner, as on its page. "Desfazer tudo"
+  checks every receipt of the card before undoing any, so it never undoes part of one and then refuses.
+- **What it says.** The capabilities and the tool tell an agent that lacks a skill, a channel, a model or another
+  setting of its own to offer the card, never to list manual steps or say it can't ask. `load_skill` on a skill
+  installed here but off for the agent, and `offer_install_skill` on a link already installed, point to the card.
+- **An install from an agent's card can turn the skill on for it, in the open.** The install dialog opened from
+  `offer_install_skill`'s card shows a box, on by default, "Fica ligada para {{agent}}" (web and phone), and sends that
+  agent (`forAgentId`) only when it is checked and only on an install from the card's own link: a link typed over it, a
+  repository picked under "Escolher do GitHub conectado", or a link to the screen that merely names an agent turns
+  nothing on (`cardInstallAgent`: the card that opened it is kept in this tab's session on the web, through connecting
+  GitHub, and in memory on the phone). The box shows only for a live agent other than the right hand, the ones the
+  server would turn it on for. The server marks each pick that takes a name already used (`replaces`), and the dialog
+  says so: "Substitui a skill X já instalada" (it becomes a new version for every agent that has it) or "Substitui a
+  skill X removida". A removed skill installed again from a link comes back on for none of its old agents (their
+  assignments turn off, `source: "url"`): the link may hold anything under that name. A restore, or a save by hand or
+  from a .zip, still brings its agents back. The server turns it on for the card's agent when the installer may change
+  its skills, never for an agent archived or gone nor the right hand, and announces `agents.changed`. Otherwise the
+  install still stands and the agent asks for it on its own card.
+
+### Consequences
+
+- What the card still can't carry: connector apps (`propose_instruction_change` for teammates, `request_permission`
+  for itself), mailboxes, databases, computer access, Vault items, routines and instructions, each on its own screen
+  or tool.
+- One more line in what every agent can do (about 150 characters); the tool's definition loads when a run needs it.
+
+## Amended 2026-11-12: it has a normal agent's tools (§4, §12, §13)
+
+### Context
+
+Its tools were a short list fixed in code (§4), so the one agent everybody talks to could not read the Vault, use a
+connected app, a mailbox, a database or a skill, search the web, remember anything or post outside its DM. Asked for
+any of these it refused or handed the work on, and a grant made for it on the server did nothing: `loadScopeKeys`
+threw its rows away. The owner decided it has every tool an agent can have, by default, the Vault included.
+
+### Decision
+
+- **Every built-in scope an agent can be given, in code** (`RIGHT_HAND_GRANTS`): context, memory, the Drive (reading
+  and writing), tasks, the calendar, skills, the wiki, routines, the Vault (seeing and editing) and the setup cards,
+  with what was denied by name gone (`request_permission`, `share_artifact`, the memory tools, `web_search`,
+  `web_fetch`, `post_message`, `send_dm`, `add_agent_to_channel`, long work's tools, `comment_issue`). A test fails
+  when a new built-in scope is left out of the list.
+- **Its grant rows count on top** (`loadScopeKeys` adds them to the list instead of replacing them): the apps every
+  new connection gives every agent (`grantToEveryAgent`), a server connected by address, a mailbox, a database, a tool
+  turned off (`deny:`). `request_permission` works for it as for any agent, and the refusal that said its tools were
+  fixed is gone.
+- **Its page shows and changes them.** `/agents/{id}` has two tabs for it: its settings (as before) and the agent
+  page's own "Ferramentas e acesso" (apps, mailboxes, databases, built-in areas, approvals, skills), saved with the
+  same bar. Its built-in scopes are held in code, so an area an admin turns off there is kept as denials of its tools
+  (`setAgentAccess`), lifted when the area is turned on again; that covers the tools with no row of their own on
+  the page (`UNLISTED_TOOLS`). Its setup cards are its job and have no area to turn off. The older save of scopes
+  as a list (`setAgentScopes`) is refused for it, since it can't carry those denials. A save made from its grants as a list
+  (`replaceableGrants`, an access proposal) carries the scopes it holds in code, so it turns none of them off. On the
+  phone its profile lists what it may use, and a mailbox's owner gives or takes it there. Changing an app's level for
+  it from the phone is not there yet.
+- **Skills.** It loads the skills turned on for it. Its own skill is a line of its settings card like any agent's own
+  (always a click), and an install from its card may turn the skill on for it. A skill's script needs a computer, so
+  it reads a skill's instructions and runs none.
+
+### What stays
+
+- **No archive, no delete**, its instructions the product's, its owner the workspace's (§1). It is still in no channel
+  and answers an @mention anywhere (§2): the router still never picks it. It posts with `post_message` where the
+  person behind the run may post, a private channel included, as it already answers there by name.
+- **Its workspace powers behind cards** (§4): the team, people, approvals and `workspace_action` are its alone, applied
+  as whoever clicks.
+- **No computer yet.** `sandbox:run`, `browser:use` and `desktop:use` are not on its list, a row for one gives it
+  nothing, its access tree leaves them out, `request_permission` never offers them and refuses a card that asks, and a
+  call of one answers that it has no computer and to hand the work to an agent that has one. `agents.machine_id` stays
+  null (`machines.ts`). A separate change gives it a computer of its own.
+- **The locked turn on a plan** (`RIGHT_HAND_TURN`, §4) is unchanged: the CLI gets our bridge and nothing else. Every
+  tool above is ours, served by the Tool Gateway on the server (the web tools fetch from the server, with no browser
+  to fall back on), so the lock stops none of them. Long work is the same run going on in the background. Its turn on
+  a plan is no longer told of a computer's own tools, which it never had there: not by the turn-end judge's means
+  either, and its "What you can do" names no browser, no `git_clone` (left off its list) and no way to type a Vault
+  login or pass a key (`describeCapabilities` with `noComputer`).
+- **One person's things stay that person's.** One row answers everyone, each acting as the person behind the run, so
+  what is one person's is used only in that person's own DM with it (`rightHandReader`, null anywhere else). That DM
+  has one person and no agent but the right hand. A routine's own run there counts as its creator: only a routine's
+  creator sets what it does, and only they read that DM. A run a routine's report or work woke counts as nobody.
+  - **The Vault** (`vaultPersonOfRun`): a personal item for its owner, a team item for its audience, only in that DM.
+    Called in a channel, or by a routine that reports anywhere else, it reaches only team items open to everyone and
+    shared with it.
+  - **A mailbox** (`mailboxUserCheck`): only for the person who connected it, in that DM. Being in its audience opens
+    no one else's mailbox, since its audience is everyone. Its routine watches a mailbox only when the routine's
+    creator connected it (`watchesFor`, checked when the routine is saved and again as mail arrives, so a routine
+    taken over by someone else gets none), and `create_routine` names only that person's mailboxes. The mailbox's
+    row for it tells its owner that it uses the mailbox only for them (`mail.agent.onlyYou`).
+  - **Tasks** (§13): `comment_issue` joins `list_issues`, `create_issue` and `update_issue`: in that DM, on a task
+    the person sees.
+  - **Memory**: `remember`, `update_memory`, `forget` and `save_how_to` work only in that DM, and what they save is
+    that person's alone with fields that already existed (`scope_type = 'person'`, `scope_id` the person, and that
+    DM as its only channel, a rule's too): read back in that DM for that person, never in another person's DM or in
+    a channel, and changed or forgotten only by them there. A rule it keeps holds in the runs of the person who gave
+    it and nobody else's, whoever decides its approvals (`rulesForPerson`, which filters by person before its cut of
+    30). The DM as a rule's channel keeps it out of the lists of who reviews memory. One person's items never merge
+    into another's, when saved (`findCandidates`) or in the nightly pass (`consolidateOrg`). `for: "team"` still
+    asks to share with every agent, as the person's own choice, and is the one save it makes in a channel.
+    Reflection and learning still skip its conversations (§2), so nothing is written for the team from what people
+    tell it. Its page has a Memory tab on the web and the same lists on the phone, which show each viewer only
+    their own.
+  - **The Drive, the wiki and context** already read as the person behind the run (§12, §13), and writing follows
+    the same rule.
+- **Shared by nature, as for any agent open to everyone:** a connected app or a database is the workspace's, with one
+  sign-in, so whoever may talk to it reaches what an admin gave it there. An admin narrows it on its access tab.
+
+### Consequences
+
+- This replaces §2's "its memory tools are denied", §4's "its tools are fixed in code" and "`add_agent_to_channel` is
+  denied to it" (it is any agent's tool, with the rights of the person who asked and Undo), §12's "reading only" and
+  "`request_permission` is denied", and §13's "no web or file writing, no `post_message` or `send_dm`, no long work".
+- It also replaces, in the amendments of 2026-11-11 and 2026-11-12, "the right hand's own skills can't be changed"
+  and the install box and `turnOnFor` leaving it out.
+- Its prompt's "# Your tools" says what it has, that it has no computer yet, and that what is one person's stays in
+  their own conversation with it. Its first paragraph no longer says it does no hands-on work: small things it does
+  itself, work that is a teammate's job or needs a computer it hands on.
+- It may now read a web page or an email and then act. Outside content marks the run as before (ADR 0117), so a
+  change after it waits on a card, a send still asks a person, and its replies keep the scrub of §4.
+- Its one budget on an API key (§13) now also carries the turns that read the web, write files and do long work for
+  everyone who talks to it.

@@ -75,7 +75,7 @@ import { UsageQueueSheet } from "../queue/UsageQueueSheet";
 import { openRightHandSettings, RightHandMine } from "../right-hand/SettingsScreen";
 import { useConnectedById } from "../settings/hooks";
 import { agentBadgeInset } from "../shared/Face";
-import { useColors, useDirectory, useMeId, useNow, useOrgId, useWhen } from "../shared/hooks";
+import { useColors, useDirectory, useErrorToast, useMeId, useNow, useOrgId, useWhen } from "../shared/hooks";
 import { agentLook, genderOf } from "../shared/logic";
 import { SheetTitle } from "../shared/PromptForm";
 import { PushedHeader } from "../shared/parts";
@@ -88,6 +88,7 @@ import { StatusCard } from "../status/StatusCard";
 import { openAgentUsage } from "../usage/UsageScreen";
 import { openAgentEdit } from "./AgentEditScreen";
 import { useAgentMailboxes } from "./AgentMailSection";
+import { ApprovalsLevelRow } from "./ApprovalsLevelRow";
 import {
   agoOf,
   byPlaybook,
@@ -165,6 +166,7 @@ function Profile({ id }: { id: string }) {
   const dir = useDirectory();
   const c = useColors();
   const toast = useToast();
+  const failed = useErrorToast();
   const sheet = useSheet();
   const when = useWhen();
   const meId = useMeId();
@@ -198,7 +200,7 @@ function Profile({ id }: { id: string }) {
   const usage = useUsage(orgId);
   const forYou = useAgentForYou(orgId, id);
   const knows = useMemoryAboutMe(orgId, id);
-  const mailboxes = useAgentMailboxes(id, details && !rightHand);
+  const mailboxes = useAgentMailboxes(id, details);
   const work = useWorkingNow().filter((w) => w.agentId === id);
   const asking = useWaitingApprovals().filter((a) => a.agentId === id);
   // On a billing hold an AI comes after the plan: no row to connect one.
@@ -279,7 +281,7 @@ function Profile({ id }: { id: string }) {
               { type: "archive", id: m.id, archived: true },
               {
                 onSuccess: () => toast({ title: t("mobile.intentAgents.fix.forgotten"), agentId: id }),
-                onError: () => toast({ title: t("mobile.app.failed"), icon: "x" }),
+                onError: failed,
               },
             ),
         },
@@ -293,7 +295,7 @@ function Profile({ id }: { id: string }) {
         void qc.invalidateQueries({ queryKey: keys.dms(orgId) });
         router.push(chatHref(channelId));
       })
-      .catch(() => toast({ title: t("mobile.app.failed"), icon: "x" }));
+      .catch(failed);
 
   const open = (href: DidLine["href"]) => {
     if (!href) return;
@@ -543,9 +545,10 @@ function Profile({ id }: { id: string }) {
       : uses.asks
         ? asksNote()
         : null;
+  // The right hand's AI is each person's, on its settings ("Sua IA"): its access shows only what it may use.
   const accessView = (
     <>
-      {thinks ? (
+      {thinks && !rightHand ? (
         <>
           <GroupedHeader>{t("mobile.intentAgents.thinks")}</GroupedHeader>
           <GroupedList>
@@ -633,6 +636,11 @@ function Profile({ id }: { id: string }) {
           {usesNote ? <GroupedFooter>{usesNote}</GroupedFooter> : null}
         </>
       ) : null}
+      {agent ? (
+        <View style={styles.apart}>
+          <ApprovalsLevelRow agent={agent} />
+        </View>
+      ) : null}
       {personal ? (
         // A personal workspace keeps its rules, repositories and the rest in Advanced (ADR 0159 §3).
         rightHand ? null : (
@@ -691,7 +699,7 @@ function Profile({ id }: { id: string }) {
     <>
       {knows.data ? memoryKnows : null}
       {/* What people told it to always do, under what it learned, as the web's Memória. */}
-      <GivenRules agentId={id} name={name} />
+      <GivenRules agentId={id} name={name} rightHand={rightHand} />
     </>
   );
 
@@ -797,6 +805,9 @@ function Profile({ id }: { id: string }) {
                 )}
               />
             </GroupedList>
+            {details ? accessView : null}
+            {/* What it keeps for the viewer and the rules they gave it: theirs to see and take back. */}
+            {memoryView}
           </View>
         ) : details ? (
           <>
@@ -849,6 +860,7 @@ export function AlwaysApproved({ agentId, name, mayRemove }: { agentId: string; 
   const { t } = useTranslation();
   const orgId = useOrgId();
   const toast = useToast();
+  const failed = useErrorToast();
   const when = useWhen();
   const dir = useDirectory();
   const connected = useConnectedById();
@@ -891,7 +903,7 @@ export function AlwaysApproved({ agentId, name, mayRemove }: { agentId: string; 
                     onPress={() =>
                       remove.mutate(rule.id, {
                         onSuccess: () => toast({ title: t("agentPage.access.always.removed", { name }), agentId }),
-                        onError: () => toast({ title: t("mobile.app.failed"), icon: "x" }),
+                        onError: failed,
                       })
                     }
                   />
@@ -969,11 +981,12 @@ function ButtonRow({
  * giver, the agent's owner and admins take one back with a swipe, confirmed by a system alert (never a bare × that
  * deletes on the tap). Shown only when there is something.
  */
-function GivenRules({ agentId, name }: { agentId: string; name: string }) {
+function GivenRules({ agentId, name, rightHand }: { agentId: string; name: string; rightHand: boolean }) {
   const { t } = useTranslation();
   const c = useColors();
   const orgId = useOrgId();
   const toast = useToast();
+  const failed = useErrorToast();
   const when = useWhen();
   const memory = useMemory(orgId, agentId);
   const remove = useMemoryAction(orgId, agentId);
@@ -990,7 +1003,7 @@ function GivenRules({ agentId, name }: { agentId: string; name: string }) {
             { type: "archive", id: m.id, archived: true },
             {
               onSuccess: () => toast({ title: t("agentPage.memory.ruleRemoved"), agentId }),
-              onError: () => toast({ title: t("mobile.app.failed"), icon: "x" }),
+              onError: failed,
             },
           ),
       },
@@ -1028,7 +1041,9 @@ function GivenRules({ agentId, name }: { agentId: string; name: string }) {
           );
         })}
       </GroupedList>
-      <GroupedFooter>{t("agentPage.memory.rulesNote")}</GroupedFooter>
+      <GroupedFooter>
+        {t(rightHand ? "agentPage.memory.rulesNoteRightHand" : "agentPage.memory.rulesNote")}
+      </GroupedFooter>
     </>
   );
 }
@@ -1061,7 +1076,7 @@ export function MemoryFix({
   const action = useMemoryAction(orgId, agentId);
   const [text, setText] = useState(m.text);
   const changed = text.trim() !== "" && text.trim() !== m.text.trim();
-  const failed = () => toast({ title: t("mobile.app.failed"), icon: "x" });
+  const failed = useErrorToast();
   const save = () =>
     action.mutate(
       { type: "edit", id: m.id, text: text.trim() },

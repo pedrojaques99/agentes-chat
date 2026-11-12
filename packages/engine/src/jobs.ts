@@ -59,7 +59,15 @@ import {
 import { forgetCodeEmail } from "./email-codes";
 import { type DecidedBy, publishListChanged, publishRouted } from "./events";
 import { executeRun, type RunExecutorDeps } from "./executor";
-import { FEEDBACK_FILE_PURGE_JOB, FEEDBACK_JOB, purgeFeedbackFile, sendQueuedFeedback } from "./feedback";
+import {
+  FEEDBACK_FILE_PURGE_JOB,
+  FEEDBACK_JOB,
+  type Feedback,
+  isFeedbackRelay,
+  purgeFeedbackFile,
+  relayQueuedFeedback,
+  sendQueuedFeedback,
+} from "./feedback";
 import { FOLLOW_UP_JOB, wakeFollowUp } from "./follow-through";
 import { cutText } from "./format";
 import type { GitHubAppAccess } from "./git/github-call";
@@ -122,7 +130,7 @@ import { assessThread } from "./thread-assess";
 import { runVaultSync, VAULT_SYNC_JOB, type VaultDeps } from "./vault";
 import { transcribeVoiceClip, VOICE_JOB, type VoiceDeps } from "./voice";
 import { saveWaitlistContact } from "./waitlist";
-import { checkInWork, WORK_CHECK_IN_JOB } from "./works";
+import { checkInWork, followUpWork, WORK_CHECK_IN_JOB, WORK_FOLLOW_UP_JOB } from "./works";
 import {
   ACCOUNT_DELETE_JOB,
   type DeletionDeps,
@@ -158,6 +166,8 @@ export interface JobDeps extends RunExecutorDeps {
   email?: EmailSender;
   /** Where feedback's pictures and videos are kept (jobs `feedback.send`, `feedback.file.purge`). */
   feedbackBlobs?: BlobStore;
+  /** How a feedback reaches the agentes.chat team's inbox (ADR 0160 §13); the network's own by default. */
+  feedbackFetch?: typeof fetch;
   /** Where emails get their pictures (`emailArtFor`); absent: from each link's own server. */
   emailArt?: EmailArt;
   /** Push to the phone app (job `push.send`); absent = push off. */
@@ -832,6 +842,16 @@ export function createJobHandlers(deps: JobDeps): JobHandlers {
         ...(typeof job.payload.due === "number" ? { due: job.payload.due } : {}),
       });
     },
+    // A long work ended after people passed messages on to it: its agent follows each one's up, once (ADR 0121).
+    [WORK_FOLLOW_UP_JOB]: async (job) => {
+      const ids = Array.isArray(job.payload.messageIds) ? job.payload.messageIds : [];
+      await followUpWork(deps, orgOf(job), {
+        workId: String(job.payload.workId),
+        runId: String(job.payload.runId),
+        messageIds: ids.filter((id): id is string => typeof id === "string"),
+        stopped: job.payload.stopped === true,
+      });
+    },
     "secret.activate": async (job) => {
       if (!deps.sandbox) throw new Error("Computer secret delivery is unavailable");
       await activateDeliveredSecret(
@@ -890,7 +910,12 @@ export function createJobHandlers(deps: JobDeps): JobHandlers {
     },
     "routine.run": async (job) => {
       await executeRoutineRun(
-        { db: deps.db, pubsub: deps.pubsub, context: deps.context },
+        {
+          db: deps.db,
+          pubsub: deps.pubsub,
+          context: deps.context,
+          ai: { gateway: deps.gateway, machines: deps.machines ?? null },
+        },
         String(job.payload.routineRunId),
       );
     },
@@ -970,6 +995,10 @@ export function createJobHandlers(deps: JobDeps): JobHandlers {
       await sayTeamHello(deps, orgOf(job), job.payload);
     },
     [FEEDBACK_JOB]: async (job) => {
+      if (isFeedbackRelay((job.payload.feedback as Feedback | undefined)?.to)) {
+        await relayQueuedFeedback(deps.feedbackFetch ?? fetch, job.payload, deps.feedbackBlobs);
+        return;
+      }
       if (!deps.email) throw new PermanentJobError("no email sender configured");
       await sendQueuedFeedback(deps.email, job.payload, deps.feedbackBlobs);
     },

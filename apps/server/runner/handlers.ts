@@ -15,6 +15,7 @@ import {
   type MachineRequest,
   type RunnerAccess,
   type RunnerFrame,
+  type RunnerPause,
   type RunnerTools,
   STEER_LIMITS,
 } from "@agenteschat/adapters/machine-protocol";
@@ -32,7 +33,7 @@ import { handleOpencodeBrainTurn, type OpencodeBrainTurnRequest } from "./brain-
 import { routeWithPlan } from "./brain-route";
 import { type BrowserManager, browserSetupText } from "./browser";
 import type { BrowserViews } from "./browser-views";
-import { allowedMerge, commandApproval, ownBranches } from "./command-gate";
+import { allowedMerge, commandApproval, mergeOf, ownBranches } from "./command-gate";
 import type { DesktopManager } from "./desktop";
 import { type DesktopSessions, hostMemAvailable, MIN_FREE_BYTES } from "./desktop-session";
 import { RunnerError, toMachineError } from "./errors";
@@ -204,7 +205,11 @@ export const OP_ROUTES: Readonly<Record<MachineOp, "machine" | "agent">> = {
   "phone.pair.code": "machine",
   "phone.pair.status": "machine",
   "phone.pair.cancel": "machine",
+  // The computer's own pause lives in its config, root's.
+  "pause.set": "machine",
   "phone.look": "machine",
+  // The Mac's own pick of iPhones on its Wi-Fi, kept beside its phones' locks.
+  "phone.wifi": "machine",
 };
 
 type AccessRequestOp = Extract<MachineRequest, { op: "access.request" }>;
@@ -271,6 +276,8 @@ export interface HandlerContext {
   };
   /** Protocol 9: whether the owner paused this computer (new work is refused with `paused`). */
   paused?: () => boolean;
+  /** `REMOTE_PAUSE_PROTOCOL`: pause (`until` null: until resumed) or resume as asked from the apps; absent: refused. */
+  setPause?: (paused: boolean, until: string | null, by: string) => RunnerPause;
   /** System mode: this process is root and answers only the `machine` ops of `OP_ROUTES` itself. */
   systemMode?: () => boolean;
   /** System mode: runs an `agent` op in its agent's worker; without it those ops are refused. */
@@ -405,8 +412,12 @@ async function doExec(
   // our git proxy would refuse it anyway (`never`).
   const held = await commandApproval(command, { cwd, own: ownBranches(req.agent), how: ASK_AGAIN, script: true });
   if (held?.never) throw new RunnerError("not_allowed", held.message);
-  const merge =
-    held && req.approved !== true ? await allowedMerge(command, { cwd, repos: req.mergeRepos ?? [] }) : null;
+  // An approved merge is named too: one a saved rule or an agent that never asks let through leaves the same receipt.
+  const merge = !held
+    ? null
+    : req.approved === true
+      ? await mergeOf(command, cwd)
+      : await allowedMerge(command, { cwd, repos: req.mergeRepos ?? [] });
   if (held && req.approved !== true && !merge) throw new RunnerError("approval_needed", held.message);
   let env = secrets?.env;
   let redact = secrets;
@@ -588,6 +599,12 @@ async function scrubbed(ctx: HandlerContext, req: MachineRequest, err: unknown):
 async function routeRequest(ctx: HandlerContext, req: MachineRequest, scope: RequestScope): Promise<unknown> {
   // Protocol 9: paused by the owner. What already runs finishes; status, output and cancel still answer.
   if ((NEW_WORK_OPS.has(req.op) || workStream(req)) && ctx.paused?.()) throw new RunnerError("paused", PAUSED);
+  if (req.op === "pause.set") {
+    if (!ctx.setPause) throw new RunnerError("unsupported", "This runner can't be paused from the apps.");
+    const by = requireString(req.by, "by");
+    const until = req.paused && typeof req.until === "string" ? req.until : null;
+    return { paused: ctx.setPause(req.paused === true, until, by) } satisfies MachineReplies["pause.set"];
+  }
   // Protocol 49: an agent's (or a profile's) live view socket, this process's in every mode (ADR 0040 §7.1).
   if (req.op === "browser.view.open") return openBrowserView(ctx, req);
   // Protocol 34: a browser profile's session, never an agent's worker or folder (ADR 0110).
@@ -661,6 +678,8 @@ async function routeRequest(ctx: HandlerContext, req: MachineRequest, scope: Req
     return ctx.phones.pair(req);
   }
   if (req.op === "phone.look") return { looking: ctx.phones?.look() ?? false } satisfies MachineReplies["phone.look"];
+  if (req.op === "phone.wifi")
+    return ctx.phones ? ctx.phones.wifi(req) : ({ available: [] } satisfies MachineReplies["phone.wifi"]);
   if (isPhoneOp(req)) return handlePhone(ctx, req, scope);
   // Each agent works in its own folder: that folder is its workspace.
   if (req.agent) ctx = { ...ctx, workspaceReal: await agentWorkspace(ctx.workspaceReal, req.agent) };
@@ -1326,6 +1345,7 @@ async function doCodexTurn(
           ...(ctx.grants && !chat ? { grants: ctx.grants } : {}),
           ...(ctx.accounts || codex.accounts ? { accounts: ctx.accounts ?? codex.accounts } : {}),
           ...(codex.spawn ? { spawn: codex.spawn } : {}),
+          ...(ctx.grant ? { grant: ctx.grant } : {}),
         },
         req as unknown as AntigravityBrainTurnRequest,
         { signal: scope.signal, emit },

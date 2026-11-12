@@ -1061,7 +1061,7 @@ function RunRow({
           </ApproveAll>
         </Locked>
       </div>
-      <Button size="sm" variant="ghost" className="ap-run__more" aria-expanded={open} onClick={onToggle}>
+      <Button variant="link" className="ap-run__more" aria-expanded={open} onClick={onToggle}>
         {t("approval.run.show")}
       </Button>
       {open && <div className="ap-run__items">{children}</div>}
@@ -1330,6 +1330,7 @@ function ReviewBody({ approval: a, channel }: { approval: Approval; channel: str
           steps={track}
           className="ap-review__track"
           more={(count) => t("chat.work.steps", { count })}
+          onMore={() => setSteps(true)}
           aria-label={t("approvals.review.trail")}
         />
         {steps && run.data && around && (

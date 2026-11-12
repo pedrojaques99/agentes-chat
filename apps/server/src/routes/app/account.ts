@@ -336,7 +336,12 @@ export function accountRoutes(deps: AppDeps) {
               description: "Where people write to whoever runs this server (SUPPORT_EMAIL): hold, suspension.",
             }),
             feedback: z.boolean().openapi({
-              description: "The apps offer the feedback form (FEEDBACK_EMAIL is set): `POST /api/app/feedback`.",
+              description:
+                "The apps offer the feedback form (FEEDBACK_EMAIL is set, or FEEDBACK_RELAY is on): `POST /api/app/feedback`.",
+            }),
+            feedbackRelay: z.boolean().openapi({
+              description:
+                "Feedback goes to the agentes.chat team rather than to whoever runs this server (no FEEDBACK_EMAIL): the form says so and takes pictures only.",
             }),
             workspaceComputer: z.boolean().openapi({
               description:
@@ -1253,7 +1258,7 @@ export function accountRoutes(deps: AppDeps) {
       tags,
       security,
       summary: "Delete a workspace (owners)",
-      description: `It closes to everyone now, like a suspended workspace: requests answer 403 \`org.deleting\`, and its people's apps hear an \`org.deleting\` org event. Its work stops, and it is deleted for good 7 days later. Until then any owner can restore it (\`DELETE …/deletion\`). ${PROOF_TEXT} A workspace takes 3 deletions a day (429). Already being deleted, it answers 202 with its date before any proof, and nobody is told again. 403 \`forbidden\` for anyone but an owner, \`org.suspended\` while suspended.`,
+      description: `It turns read-only for everyone now: its members still read it, every other change answers 403 \`org.deleting\` (restoring it, leaving it, read marks, the inbox and their own settings there stay open), and its people's apps hear an \`org.deleting\` org event. Its work stops, and it is deleted for good 7 days later. Until then any owner can restore it (\`DELETE …/deletion\`). ${PROOF_TEXT} A workspace takes 3 deletions a day (429). Already being deleted, it answers 202 with its date before any proof, and nobody is told again. 403 \`forbidden\` for anyone but an owner, \`org.suspended\` while suspended.`,
       request: { params: OrgParams, body: body(Proof) },
       responses: {
         202: json(

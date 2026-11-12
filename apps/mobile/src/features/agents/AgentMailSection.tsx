@@ -2,7 +2,7 @@ import { type AgentMailbox, useAgentMail, useMailAccounts, useSetAgentMail } fro
 import { LEVELS, type Level, nextLevel } from "@agenteschat/client/lib/access-levels";
 import { canTalk } from "@agenteschat/client/lib/audience";
 import { errorText } from "@agenteschat/client/lib/errors";
-import { defaultPolicy, mailAccessOf, toMailLevel } from "@agenteschat/client/lib/mail";
+import { defaultPolicy, mailAccessOf, onlyForOwner, toMailLevel } from "@agenteschat/client/lib/mail";
 import { can } from "@agenteschat/client/lib/permissions";
 import { useTranslation } from "react-i18next";
 import { useOrg } from "@/providers/org";
@@ -17,7 +17,7 @@ export interface MailboxLine {
   address: string;
   /** Its level in words, the row's value. */
   level: string;
-  /** On a mailbox someone else connected: who gives access to it. */
+  /** On a mailbox someone else connected: who gives access to it. On one's own with the right hand: that it serves only them. */
   sub: string | null;
   /** On one's own mailbox: a tap moves the agent to the next level. */
   onPress: (() => void) | null;
@@ -69,7 +69,13 @@ export function useAgentMailboxes(agentId: string, enabled = true): MailboxLine[
       id: account.id,
       address: account.address,
       level: t(`access.level.${level}`),
-      sub: theirs ? (owner ? t("mail.agent.ownerOnly", { name: owner }) : t("mail.agent.ownerOnlyUnknown")) : null,
+      sub: theirs
+        ? owner
+          ? t("mail.agent.ownerOnly", { name: owner })
+          : t("mail.agent.ownerOnlyUnknown")
+        : onlyForOwner(account, agent, meId)
+          ? t("mail.agent.onlyYou", { name: agent?.name ?? "" })
+          : null,
       onPress: may.gives && !set.isPending ? () => save(account.id, saved, nextLevel({ levels: LEVELS }, level)) : null,
       remove:
         !may.gives && may.removes && level !== "none"

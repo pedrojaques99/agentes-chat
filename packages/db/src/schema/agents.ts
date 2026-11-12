@@ -190,6 +190,12 @@ export const agents = pgTable(
      */
     missionCommandApproval: text(),
     /**
+     * How much it asks before acting (ADR 0173): `always` (before every change), `risky` (what is marked sensitive,
+     * the default) or `never` (nothing, merge, deploy and routines included). Validated in code
+     * (`APPROVALS_LEVELS`). It never widens what the agent may use.
+     */
+    approvalsLevel: text().$type<"always" | "risky" | "never">().notNull().default("risky"),
+    /**
      * Who thinks for it (ADR 0032): `model` (the API, default), `claude_code`
      * or `codex` on its computer; validated in code (`brain-settings.ts`).
      */

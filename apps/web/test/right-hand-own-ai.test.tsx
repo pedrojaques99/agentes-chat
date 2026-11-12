@@ -76,7 +76,7 @@ test("Lodi's old settings address opens Lodi's page: two groups, the face opens 
   // The value is under the row's name, the chevron at its end: no button of its own, nothing floating right.
   const ai = row(/^IA de quem não tem plano próprio/);
   expect(ai.matches(".settings-row--open")).toBe(true);
-  expect(ai.querySelector(".settings-row__status")?.textContent).toBe("Plano Trabalho");
+  expect(ai.querySelector(".settings-row__status")?.textContent).toBe("Plano Trabalho · Sonnet");
   expect(ai.querySelector(".settings-row__status .ac-provider-logo, .settings-row__status svg")).toBeTruthy();
   expect(ai.querySelector(".settings-row__chevron")).toBeTruthy();
   expect(ai.querySelector(".settings-row__value")).toBeNull();
@@ -102,7 +102,7 @@ test("Lodi's old settings address opens Lodi's page: two groups, the face opens 
   await act(async () => fireEvent.click(within(dialog).getByRole("button", { name: "Fechar" })));
   await settle(4);
   expect(row(/^IA de quem não tem plano próprio/).querySelector(".settings-row__status")?.textContent).toBe(
-    "OpenAI da Acme",
+    "OpenAI da Acme · Automático",
   );
   expect(screen().queryByRole("switch", { name: "Emprestar este plano a quem não tem um" })).toBeNull();
 });
@@ -161,7 +161,7 @@ test("Sua IA on a plan of mine: the dialog goes back to the workspace's AI, and 
   };
   await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}`, { api });
   await settle(8);
-  expect(row(/^Sua IA/).querySelector(".settings-row__status")?.textContent).toBe("Trabalho · seu plano");
+  expect(row(/^Sua IA/).querySelector(".settings-row__status")?.textContent).toBe("Trabalho · seu plano · Sonnet");
   await act(async () => fireEvent.click(row(/^Sua IA/)));
   await settle(4);
   const dialog = screen().getByRole("dialog", { name: "Sua IA" });
@@ -185,6 +185,102 @@ test("Sua IA on a plan of mine: the dialog goes back to the workspace's AI, and 
   );
 });
 
+test("a plan and its model are one choice: the model is picked under the plan in Sua IA and in the workspace's AI", async () => {
+  const state = withRightHand(seedState(), { brain: { kind: "claude_code", model: "Sonnet" } });
+  const api = createFakeApi(state);
+  const model: Record<string, string | null> = { mine: null, workspace: null };
+  api.agents.brain = async (_org, id, scope) =>
+    fakeAgentBrain(id, {
+      scope: scope ?? "mine",
+      brain: "claude_code",
+      account: "acc-ana",
+      effectiveModel: model[scope ?? "mine"] ?? null,
+      accounts: [planOf(state.me?.user.id)],
+      canUsePlans: true,
+      canEdit: true,
+    });
+  const sent: { scope?: string; model?: string | null }[] = [];
+  api.agents.setBrain = async (_org, id, input) => {
+    sent.push(input);
+    model[input.scope ?? "mine"] = input.model ?? null;
+    return fakeAgentBrain(id);
+  };
+  await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}`, { api });
+  await settle(8);
+  for (const [name, scope, before] of [
+    [/^Sua IA/, "mine", "Trabalho · seu plano · Sonnet"],
+    [/^IA de quem não tem plano próprio/, "workspace", "Plano Trabalho · Sonnet"],
+  ] as const) {
+    expect(row(name).querySelector(".settings-row__status")?.textContent).toBe(before);
+    await act(async () => fireEvent.click(row(name)));
+    await settle(4);
+    const dialog = screen().getByRole("dialog");
+    const select = within(dialog).getByRole("combobox", { name: "Modelo" });
+    // Under the plan in use, inside the list of choices: never a loose control beside it.
+    expect(select.closest(".ac-optrow__more")).toBeTruthy();
+    expect(select.textContent).toContain("Sonnet");
+    await act(async () => fireEvent.click(select));
+    await settle(3);
+    await act(async () => fireEvent.click(screen().getByRole("option", { name: /^Opus/ })));
+    await settle(8);
+    expect(sent.at(-1)).toEqual({ scope, model: "opus" });
+    // The dialog stays open on the new model, and the row behind it says it.
+    expect(within(screen().getByRole("dialog")).getByRole("combobox", { name: "Modelo" }).textContent).toContain(
+      "Opus",
+    );
+    await act(async () =>
+      fireEvent.click(within(screen().getByRole("dialog")).getByRole("button", { name: "Fechar" })),
+    );
+    await settle(4);
+    expect(row(name).querySelector(".settings-row__status")?.textContent).toBe(before.replace("Sonnet", "Opus"));
+  }
+});
+
+test("Poderes do workspace is one row for everyone that opens what only Lodi does, and no Computador row without a computer", async () => {
+  const state = withRightHand(seedState());
+  const me = state.me?.organizations[0];
+  if (me) me.role = "member";
+  await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}`, { api: createFakeApi(state) });
+  await settle(8);
+  expect(screen().queryByRole("button", { name: /^Computador/ })).toBeNull();
+  const powers = row(/^Poderes do workspace/);
+  expect(powers.matches(".settings-row--open")).toBe(true);
+  await act(async () => fireEvent.click(powers));
+  await settle(4);
+  const dialog = screen().getByRole("dialog", { name: "Poderes do workspace" });
+  expect([...dialog.querySelectorAll(".rh-powers li")].map((li) => li.textContent)).toEqual([
+    "Monta e muda o time inteiro por cards que uma pessoa aplica: agentes, pessoas e ajustes do workspace",
+    "Roda e apaga rotinas de qualquer agente que você pode gerenciar",
+    "Na sua conversa, lê o Drive, a wiki e as tarefas que você pode ver",
+    "Responde a um @ em qualquer canal sem ser membro",
+  ]);
+});
+
+test("Lodi's page has three tabs: its settings, what it may use on the agent page's own access tab, and what it keeps for the viewer", async () => {
+  const state = withRightHand(seedState());
+  await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}`, { api: createFakeApi(state) });
+  await settle(8);
+  const tabs = () => within(screen().getByRole("tablist", { name: "Seções do Lodi" })).getAllByRole("tab");
+  expect(tabs().map((tab) => tab.textContent)).toEqual(["Configurações", "Ferramentas e acesso", "Memória"]);
+  expect(tabs()[0]?.getAttribute("aria-selected")).toBe("true");
+  expect(row(/^Poderes do workspace/)).toBeTruthy();
+  cleanup();
+  await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}?tab=access`, { api: createFakeApi(state) });
+  await settle(8);
+  expect(tabs()[1]?.getAttribute("aria-selected")).toBe("true");
+  // The same cards as any agent's: its apps, mailboxes and skills. Its settings are the other tab.
+  for (const id of ["ac-connectors", "ac-builtin", "ac-skills"]) expect(document.getElementById(id)).toBeTruthy();
+  expect(screen().queryByRole("button", { name: /^Poderes do workspace/ })).toBeNull();
+  // No sky, tabs of an agent's own work or archive: it is part of the workspace.
+  expect(document.querySelector(".agp-hero")).toBeNull();
+  cleanup();
+  // What it keeps for the viewer, and the rules they gave it, on the agent page's own memory tab.
+  await renderApp(`/org/${ORG_ID}/agents/${LODI_ID}?tab=memory`, { api: createFakeApi(state) });
+  await settle(8);
+  expect(tabs()[2]?.getAttribute("aria-selected")).toBe("true");
+  expect(document.getElementById("mem-known")).toBeTruthy();
+});
+
 test("the worst case keeps its shape: a very long account and owner name stay under the row's name, whole", async () => {
   const state = withRightHand(seedState(), { brain: { kind: "claude_code", model: "Sonnet" } });
   const long = "Assinatura corporativa compartilhada do time de operações e atendimento da América Latina";
@@ -205,7 +301,7 @@ test("the worst case keeps its shape: a very long account and owner name stay un
   await settle(8);
   const ai = row(/^IA de quem não tem plano próprio/);
   const value = ai.querySelector(".settings-row__status .rh-value") as HTMLElement;
-  expect(value.textContent).toBe(`Plano ${long} · conta de Maximiliana-Bernardette`);
+  expect(value.textContent).toBe(`Plano ${long} · conta de Maximiliana-Bernardette · Sonnet`);
   // Under the name, in the words' column: never a second column squeezing the name, never cut.
   expect(value.closest(".settings-row__text")).toBeTruthy();
   const css = await Bun.file(new URL("../src/layout.css", import.meta.url).pathname).text();

@@ -64,7 +64,9 @@ if (collisions.length) {
 }
 
 console.log("\nNew upstream commits:");
-console.log((await $`git log --oneline --no-merges HEAD..${theirs}`.quiet().text()).split("\n").slice(0, 30).join("\n"));
+console.log(
+  (await $`git log --oneline --no-merges HEAD..${theirs}`.quiet().text()).split("\n").slice(0, 30).join("\n"),
+);
 if (checkOnly) process.exit(0);
 
 // 2. The merge.
@@ -83,6 +85,8 @@ for (let i = 1; i < after.length; i++) {
 }
 console.log("\nInstalling and checking types...");
 await $`bun install --frozen-lockfile`.quiet().nothrow();
-if ((await $`bun run typecheck`.nothrow()).exitCode !== 0) fail("typecheck failed after the merge (left merged locally).");
-if ((await $`bun run lint`.nothrow().quiet()).exitCode !== 0) fail("lint failed after the merge (left merged locally).");
+if ((await $`bun run typecheck`.nothrow()).exitCode !== 0)
+  fail("typecheck failed after the merge (left merged locally).");
+if ((await $`bun run lint`.nothrow().quiet()).exitCode !== 0)
+  fail("lint failed after the merge (left merged locally).");
 console.log(`\nMerged ${behind} upstream commits into visant/build. Push with: git push origin visant/build`);

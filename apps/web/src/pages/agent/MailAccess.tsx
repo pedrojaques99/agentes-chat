@@ -10,6 +10,7 @@ import {
   MAIL_ACTIONS,
   mailAccessOf,
   normalizePolicy,
+  onlyForOwner,
   toMailLevel,
 } from "@agenteschat/client/lib/mail";
 import { Alert, Button, Card, Chip, CountChip, Icon, Switch } from "@agenteschat/ui";
@@ -134,7 +135,7 @@ function MailboxRow({
   removable: boolean;
 }) {
   const { t } = useTranslation();
-  const { org } = useOrg();
+  const { org, me } = useOrg();
   const { agent } = useAgentEdit();
   const toast = useToast();
   const set = useSetAgentMail(org.id);
@@ -186,7 +187,11 @@ function MailboxRow({
     );
   const count = rulesCount(draft.policy);
   const ownerNote =
-    owner === null ? null : (
+    owner === null ? (
+      onlyForOwner(account, agent, me.user.id) ? (
+        <span className="small muted">{t("mail.agent.onlyYou", { name: agent.name })}</span>
+      ) : null
+    ) : (
       <span className="small muted">
         {owner ? t("mail.agent.ownerOnly", { name: owner }) : t("mail.agent.ownerOnlyUnknown")}
       </span>

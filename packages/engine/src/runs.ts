@@ -302,6 +302,8 @@ export function runErrorDetail(error: string | null | undefined): {
     PERSON_LIMIT,
     COMPUTER_BUSY,
     STUCK_ERROR,
+    // A Codex turn on a Windows computer where MXC can't hold its commands (the runner's own words say what to do).
+    "windows_sandbox",
   ];
   if (simple.includes(error)) return { errorCode: `run.${error}` };
   if (error === "timeout") return { errorCode: "run.computer_timeout", errorParams: { code: error } };
@@ -385,6 +387,25 @@ export function providerFailure(error: string | null | undefined) {
     detail?.errorCode.startsWith("run.provider_") ||
     (detail?.errorCode === "run.our_error" && detail.errorParams?.provider);
   return provider ? detail : null;
+}
+
+/** Who canceled (stored on the run as `canceled_by:{userId}`). */
+export const canceledBy = (error: string | null | undefined) =>
+  error?.startsWith("canceled_by:") ? error.slice("canceled_by:".length) : null;
+
+/**
+ * Whether Continuar can go on from how a run ended (`continueRun`): a person stopped it, its reply says it reached its
+ * step limit or was stuck (`meta.stepLimit`), or its AI provider cut its background work off. A work that ended any
+ * other way is followed up instead (`endWork`).
+ */
+export function continuableEnd(
+  run: Pick<AgentRun, "status" | "error" | "workId" | "transcript">,
+  reply: { meta: Record<string, unknown> } | null | undefined,
+) {
+  if (!run.transcript) return false;
+  if (run.status === "canceled") return canceledBy(run.error) !== null;
+  if (run.status === "failed") return Boolean(run.workId) && providerFailure(run.error) !== null;
+  return run.status === "done" && Boolean(reply?.meta.stepLimit);
 }
 
 export const isTerminal = (status: RunStatus) => RUN_TRANSITIONS[status].length === 0;

@@ -184,7 +184,6 @@
       "shell.threads",
       "skills.agentTitle",
       "skills.source.url",
-      "skills.step",
       "skills.title",
       "skills.version",
       "storage.accessKey",
@@ -204,6 +203,7 @@
       "wiki.form.tags",
       "wiki.import.stat.links",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "wiki.tags",
@@ -467,6 +467,7 @@
       "usageViews.tokens",
       "wiki.audienceRoles",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "work.duration.hours",
       "work.duration.hoursMinutes",
@@ -524,6 +525,7 @@
       "devices.armBuild"
     ],
     "fr": [
+      "channel.tooLong.fileName",
       "calendar.moreRuns",
       "devices.cpus",
       "devices.system.android",
@@ -832,6 +834,7 @@
       "wiki.import.stat.notes",
       "wiki.legend.agents",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.pageCount",
       "wiki.props.addTag",
@@ -923,7 +926,8 @@
       "install.scene.applications",
       "install.page.version",
       "install.page.versionSize",
-      "devices.armBuild"
+      "devices.armBuild",
+      "routines.horizon.agentRoutines"
     ],
     "de": [
       "devices.iphone.steps.account",
@@ -1237,7 +1241,6 @@
       "skills.agentTitle",
       "skills.name",
       "skills.source.url",
-      "skills.step",
       "skills.title",
       "skills.version",
       "storage.bucket",
@@ -1268,6 +1271,7 @@
       "wiki.form.tags",
       "wiki.graph",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "wiki.rich.blocks.code",
@@ -1632,6 +1636,7 @@
       "wiki.home",
       "wiki.import.stat.links",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "work.duration.hours",
@@ -1697,7 +1702,8 @@
       "install.page.beta",
       "install.scene.finder",
       "install.scene.password",
-      "devices.armBuild"
+      "devices.armBuild",
+      "routines.horizon.agentRoutines"
     ],
     "nl": [
       "calendar.moreRuns",
@@ -2089,7 +2095,6 @@
       "shell.threads",
       "skills.agentTitle",
       "skills.source.url",
-      "skills.step",
       "skills.title",
       "skills.version",
       "storage.accessKey",
@@ -2154,6 +2159,7 @@
       "wiki.import.stat.links",
       "wiki.legend.agents",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "wiki.rich.blocks.code",
@@ -2267,9 +2273,13 @@
       "install.scene.account",
       "install.scene.appLabel",
       "install.scene.downloads",
-      "devices.armBuild"
+      "devices.armBuild",
+      "issues.projects.label",
+      "issues.display.field.project",
+      "routines.horizon.agentRoutines"
     ],
     "ja": [
+      "channel.tooLong.fileName",
       "devices.system.android",
       "devices.system.ios",
       "devices.transport.usb",
@@ -2399,6 +2409,7 @@
       "vault.field.keyNamePlaceholder",
       "vault.field.websitePlaceholder",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "endpoint.styles.openai",
       "endpoint.styles.anthropic",
@@ -2426,6 +2437,7 @@
       "devices.armBuild"
     ],
     "ko": [
+      "channel.tooLong.fileName",
       "devices.system.android",
       "devices.system.ios",
       "devices.transport.usb",
@@ -2552,6 +2564,7 @@
       "vault.field.keyNamePlaceholder",
       "vault.field.websitePlaceholder",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "endpoint.styles.openai",
       "endpoint.styles.anthropic",
@@ -2577,6 +2590,7 @@
       "devices.armBuild"
     ],
     "zh-Hans": [
+      "channel.tooLong.fileName",
       "devices.system.android",
       "devices.system.ios",
       "devices.transport.usb",
@@ -2695,6 +2709,7 @@
       "vault.field.keyNamePlaceholder",
       "vault.field.websitePlaceholder",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "endpoint.styles.openai",
       "endpoint.styles.anthropic",
@@ -2935,6 +2950,7 @@
       "toolNames.verb.transfer",
       "toolReview.ok",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "rightHand.field.archive",
@@ -3137,6 +3153,7 @@
       "taskManager.program.terminal",
       "toolNames.order",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "rightHand.field.model",
       "rightHand.profile.model",
@@ -3395,6 +3412,7 @@
       "wiki.import.stat.folders",
       "wiki.import.stat.links",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "wiki.props.addTag",
       "work.duration.minutes",
@@ -3458,6 +3476,7 @@
       "devices.armBuild"
     ],
     "ru": [
+      "channel.tooLong.fileName",
       "devices.system.android",
       "devices.system.ios",
       "devices.transport.usb",
@@ -3564,6 +3583,7 @@
       "onboarding.team.placeholder",
       "taskManager.program.agentes",
       "wiki.legend.obsidian",
+      "wiki.import.source.obsidian",
       "wiki.markdown",
       "widgets.sizes.l",
       "widgets.sizes.m",
@@ -4124,8 +4144,12 @@
       "prefs.general.orgs",
       "server.jev",
       "servers.workspaces",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "es": [
       "common.hours",
@@ -4139,8 +4163,12 @@
       "prefs.general.title",
       "prefs.nav.general",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "fr": [
       "common.hours",
@@ -4157,8 +4185,12 @@
       "prefs.thisMac.agents",
       "prefs.tools.protection",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "de": [
       "device.mac",
@@ -4179,8 +4211,12 @@
       "server.jev",
       "status.offline",
       "tools.browserName",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "it": [
       "common.hours",
@@ -4197,8 +4233,12 @@
       "server.jev",
       "status.offline",
       "tools.browserName",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "nl": [
       "common.minutes",
@@ -4223,8 +4263,12 @@
       "servers.title",
       "status.offline",
       "tools.browserName",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "ja": [
       "connect.placeholder",
@@ -4234,8 +4278,12 @@
       "prefs.accounts.ok",
       "prefs.advanced.claude",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "ko": [
       "connect.placeholder",
@@ -4244,8 +4292,12 @@
       "link.chipTailnet",
       "prefs.advanced.claude",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "zh-Hans": [
       "connect.placeholder",
@@ -4254,8 +4306,12 @@
       "link.chipTailnet",
       "prefs.advanced.claude",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "id": [
       "device.mac",
@@ -4269,8 +4325,12 @@
       "server.jev",
       "status.offline",
       "tools.browserName",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "tr": [
       "device.mac",
@@ -4278,8 +4338,12 @@
       "link.chipTailnet",
       "prefs.advanced.claude",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "pl": [
       "common.minutes",
@@ -4290,8 +4354,12 @@
       "prefs.advanced.claude",
       "server.jev",
       "status.offline",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ],
     "ru": [
       "connect.placeholder",
@@ -4299,8 +4367,12 @@
       "link.chipTailnet",
       "prefs.advanced.claude",
       "server.jev",
+      "tools.antigravityName",
       "tools.claudeName",
-      "tools.codexName"
+      "tools.codexName",
+      "tools.cursorName",
+      "tools.grokName",
+      "tools.opencodeName"
     ]
   }
 }
