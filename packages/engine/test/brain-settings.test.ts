@@ -796,3 +796,21 @@ test("a model its plan's list dropped since: a save that repeats it goes through
     learnPlanModels({ opencode: table });
   }
 });
+
+describe("the computer owner's own MCP servers", () => {
+  test("only who connected the computer lends them, to Claude Code only; another brain turns it off", async () => {
+    const { fx, deps, caio, row, audits } = await world();
+    await setAgentBrain(deps, fx.owner.id, fx.org.id, fx.agent.id, { brain: "claude_code" });
+    // An admin can't lend what is someone else's on their computer.
+    const admin = await setAgentBrain(deps, caio.id, fx.org.id, fx.agent.id, { personalMcp: true }).catch((e) => e);
+    expect(admin).toBeInstanceOf(ForbiddenError);
+    expect(admin.code).toBe("brain.personal_mcp_owner_only");
+    const on = await setAgentBrain(deps, fx.owner.id, fx.org.id, fx.agent.id, { personalMcp: true });
+    expect(on.personalMcp).toBe(true);
+    expect((await row()).brainPersonalMcp).toBe(true);
+    expect((await audits("agent.brain")).at(-1)?.details).toMatchObject({ to: { personalMcp: true } });
+    // Back on the API it has no computer to load them from.
+    await setAgentBrain(deps, fx.owner.id, fx.org.id, fx.agent.id, { brain: "model" });
+    expect((await row()).brainPersonalMcp).toBe(false);
+  });
+});
