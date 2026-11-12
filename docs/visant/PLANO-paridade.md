@@ -39,8 +39,18 @@ Licença: AGPL-3.0. Código do Tucano (Apache-2.0) pode entrar aqui; o caminho i
 
 O Hermes continua ligado durante o teste. Nada dele é desligado.
 
+## Estado (12/11)
+
+- [x] Fase 1: `https://agentes.visant.co` no ar (Traefik do Coolify, Let's Encrypt, DNS A na GoDaddy). Imagem própria `agentes-visant:<sha>` construída de `/opt/agentes/src`.
+- [x] Lacuna 1 (MCP pessoal) no código e em produção.
+- [x] Computador do servidor: usuário `agentes` (modo simples, Ubuntu sem BPF), Node 24 em `/opt/node24`, Claude Code pelo npm, Chromium pelo apt, runner `host` como serviço de usuário (`journalctl --user -u agentes-runner`). Esperando a primeira org.
+- [x] Pacotes de import em `~/Downloads/agentes-import/` (time do Tucano + Vicent do Hermes, sem segredos).
+- [ ] Conta de dono (o dono abre `/opt/agentes/owner-link.txt`).
+- [ ] Import, cérebros, PC pareado, conectores, rotinas, teste 1:1.
+
+Atualizar a imagem: `cd /opt/agentes/src && git pull && docker build -t agentes-visant:$(git rev-parse --short HEAD) .`, trocar `AGENTES_IMAGE` no `.env` e `docker compose up -d`.
+
 ## O que depende do dono
 
-- DNS: registro **A `agentes.visant.co` → `2.24.204.197`**.
 - Login do Claude Code no VPS (uma vez, pelo app: Contas de IA) e no PC (já existe).
 - Reautorizar os conectores OAuth (Linear, Sentry, Supabase) no novo app.
