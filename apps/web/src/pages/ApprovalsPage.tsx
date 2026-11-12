@@ -299,6 +299,9 @@ export function ApprovalsPage() {
       ? all.length
       : all.filter((a) => bucketOf(approvalPhase(a)) === f).length + (f === "pending" ? commands : 0);
   const waiters = [...new Set(mine.map((a) => a.agentId))];
+  // Nothing ever asked: the empty state alone, not a search and filters over nothing.
+  const bare =
+    approvals.isSuccess && all.length === 0 && commands === 0 && !missionWaiting && filter === "pending" && !q;
 
   return (
     <div className="page page--list ap">
@@ -319,25 +322,27 @@ export function ApprovalsPage() {
           }
         />
         <ApprovalsTabs value="requests" />
-        <Toolbar
-          label={t("approvals.filters")}
-          search={
-            <SearchInput
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("approvals.search")}
-              aria-label={t("approvals.search")}
-              className="ap-tools__search"
-            />
-          }
-        >
-          <Segmented
+        {!bare && (
+          <Toolbar
             label={t("approvals.filters")}
-            value={filter}
-            onValueChange={setFilter}
-            options={FILTERS.map((f) => ({ value: f, label: t(`approvals.filter.${f}`), count: countOf(f) }))}
-          />
-        </Toolbar>
+            search={
+              <SearchInput
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("approvals.search")}
+                aria-label={t("approvals.search")}
+                className="ap-tools__search"
+              />
+            }
+          >
+            <Segmented
+              label={t("approvals.filters")}
+              value={filter}
+              onValueChange={setFilter}
+              options={FILTERS.map((f) => ({ value: f, label: t(`approvals.filter.${f}`), count: countOf(f) }))}
+            />
+          </Toolbar>
+        )}
 
         {filter === "pending" && waiters.length > 1 && (
           <div className="ap-waiters">

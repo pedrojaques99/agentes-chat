@@ -344,16 +344,16 @@ describe("Sua conta › Conversa", () => {
         .map((r) => r.getAttribute("title")),
     ).toEqual(names);
     for (const name of names) expect(within(sizes).getByRole("radio", { name }).textContent).toContain("A");
-    // Each step an A in its own size; only the default says its name on screen.
+    // Each step an A in its own size; its name on hover and to screen readers.
     const glyphs = [...sizes.querySelectorAll<HTMLElement>(".chat-look__a")];
     expect(glyphs.map((g) => g.dataset.textSize)).toEqual(["xs", "sm", "md", "lg", "xl"]);
-    expect(sizes.querySelectorAll(".ac-visually-hidden")).toHaveLength(4);
+    expect(sizes.querySelectorAll(".ac-visually-hidden")).toHaveLength(5);
     expect(within(sizes).getByRole("radio", { name: "Padrão" }).getAttribute("aria-checked")).toBe("true");
     expect(document.documentElement.dataset.textSize).toBe("md");
-    // The preview: two of the conversation's own rows at the step's real size, in the look of the switch's choice.
+    // The one preview: the conversation's own rows at the step's real size, in the look of the switch's choice.
     const preview = () => document.querySelector<HTMLElement>(".chat-look__mini--real");
     expect(preview()?.dataset.textSize).toBe("md");
-    expect(preview()?.querySelectorAll("article.ac-msg")).toHaveLength(2);
+    expect(preview()?.querySelectorAll("article.ac-msg")).toHaveLength(3);
     expect(preview()?.querySelector(".channel__messages")?.getAttribute("data-look")).toBe("left");
 
     await click(within(sizes).getByRole("radio", { name: "Maior" }));
@@ -361,10 +361,8 @@ describe("Sua conta › Conversa", () => {
     expect(within(sizes).getByRole("radio", { name: "Maior" }).getAttribute("aria-checked")).toBe("true");
     expect(document.documentElement.dataset.textSize).toBe("xl");
     expect(preview()?.dataset.textSize).toBe("xl");
-    // The looks' small pictures stay at the default size, so a big step never crowds them.
-    const pictures = [...document.querySelectorAll<HTMLElement>(".chat-look__mini:not(.chat-look__mini--real)")];
-    expect(pictures).toHaveLength(6);
-    expect(new Set(pictures.map((m) => m.dataset.textSize))).toEqual(new Set(["md"]));
+    // One picture only: no per-choice thumbnails competing with it.
+    expect(document.querySelectorAll(".chat-look__mini:not(.chat-look__mini--real)")).toHaveLength(0);
     expect(state.me?.organizations[0]?.chatPrefs).toEqual({ textSize: "xl" });
   });
 

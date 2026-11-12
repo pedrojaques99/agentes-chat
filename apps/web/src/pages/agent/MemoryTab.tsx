@@ -501,7 +501,8 @@ export function MemoryTab({ item }: { item?: string }) {
   const { agent, g } = useAgentEdit();
   const memory = useMemory(org.id, agent.id);
   const proposals = useProposals(org.id);
-  const skills = useLearnedSkills(org.id, agent.id).data ?? [];
+  const learnedSkills = useLearnedSkills(org.id, agent.id);
+  const skills = learnedSkills.data ?? [];
   const [picked, setKind] = useState<Kind | "learned" | null>(null);
   const [q, setQ] = useState("");
   const list = memory.data ?? [];
@@ -526,6 +527,8 @@ export function MemoryTab({ item }: { item?: string }) {
     k === "learned" ? list.filter((m) => m.learned && !m.archived).length : filterMemories(list, k, "").length;
   const shown = kind === "learned" ? [] : filterMemories(list, kind, q);
   const rules = list.filter((m) => m.kind === "rule" && !m.archived);
+  // Nothing in any tab: the empty state alone, not a search and tabs over nothing.
+  const bare = memory.isSuccess && learnedSkills.isSuccess && list.length === 0 && skills.length === 0 && !q;
   return (
     <>
       <section className="agp-workcard" aria-label={t("agentPage.memory.counts")}>
@@ -572,38 +575,40 @@ export function MemoryTab({ item }: { item?: string }) {
                 </Link>
               }
             />
-            <Toolbar
-              size="sm"
-              search={
-                <SearchField
-                  size="sm"
-                  aria-label={t("memory.search")}
-                  placeholder={t("memory.searchPlaceholder", g)}
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onClear={() => setQ("")}
-                  clearLabel={t("filters.clearSearch")}
-                />
-              }
-            >
-              <Segmented
+            {!bare && (
+              <Toolbar
                 size="sm"
-                label={t("memory.tabsLabel")}
-                value={kind}
-                onValueChange={setKind}
-                options={(["known", "lessons", "learned", "archived"] as const).map((k) => ({
-                  value: k,
-                  label: t(
-                    k === "lessons"
-                      ? "agentPage.memory.lessons"
-                      : k === "learned"
-                        ? "agentPage.memory.learned"
-                        : `memory.tabs.${k}`,
-                  ),
-                  count: count(k),
-                }))}
-              />
-            </Toolbar>
+                search={
+                  <SearchField
+                    size="sm"
+                    aria-label={t("memory.search")}
+                    placeholder={t("memory.searchPlaceholder", g)}
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    onClear={() => setQ("")}
+                    clearLabel={t("filters.clearSearch")}
+                  />
+                }
+              >
+                <Segmented
+                  size="sm"
+                  label={t("memory.tabsLabel")}
+                  value={kind}
+                  onValueChange={setKind}
+                  options={(["known", "lessons", "learned", "archived"] as const).map((k) => ({
+                    value: k,
+                    label: t(
+                      k === "lessons"
+                        ? "agentPage.memory.lessons"
+                        : k === "learned"
+                          ? "agentPage.memory.learned"
+                          : `memory.tabs.${k}`,
+                    ),
+                    count: count(k),
+                  }))}
+                />
+              </Toolbar>
+            )}
             {memory.isLoading ? (
               <LoadingLine width={260} />
             ) : memory.isError && !memory.data ? (

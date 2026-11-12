@@ -14572,7 +14572,7 @@ export const en = {
     },
     title: "Settings",
     account: {
-      plans: "Your plans' limits",
+      access: "Access",
       device: "On this device",
       /** Yours in this workspace, on every device: the tool summary under each agent reply, off by default. */
       activity: "Show what agents did under each reply",
@@ -14933,7 +14933,6 @@ export const en = {
       hidden: "In a private channel with {{agent}}",
       routine: "Routine {{name}}",
       created: "Agents they created",
-      createdAt: "created on {{date}}",
       audit: "See the agents' actions in Audit",
       noUse: "No use in this period.",
     },

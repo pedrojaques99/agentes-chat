@@ -75,6 +75,8 @@ export function DevicesSection({ start }: { start?: ConnectStart | null }) {
   const list = devices.data?.devices ?? [];
   const counts = deviceCounts(list);
   const rows = deviceRows(list, filter, query);
+  // No device at all, unfiltered: the empty state alone, holding Connect, not a search and filters over nothing.
+  const bare = devices.isSuccess && list.length === 0 && !query && filter === "all";
   const fix = (phone: PhoneDevice, host: ComputerDevice | null) =>
     setConnect({ step: phone.platform === "ios" ? "iphone" : "android", hostId: host?.id ?? null });
 
@@ -82,37 +84,39 @@ export function DevicesSection({ start }: { start?: ConnectStart | null }) {
     <>
       {/* While the workspace computer is on its way, its setup card says where it is. */}
       {view && view.phase !== "ready" && <WorkspaceComputerCard view={view} />}
-      <Toolbar
-        label={t("devices.filter.label")}
-        search={
-          <SearchField
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onClear={() => setQuery("")}
-            clearLabel={t("filters.clearSearch")}
-            placeholder={t("devices.search")}
-            aria-label={t("devices.searchLabel")}
-          />
-        }
-        actions={
-          canConnect && (
-            <Button variant="primary" icon="plus" onClick={() => setConnect({ step: "choose" })}>
-              {t("devices.connect")}
-            </Button>
-          )
-        }
-      >
-        <Segmented
+      {!bare && (
+        <Toolbar
           label={t("devices.filter.label")}
-          value={filter}
-          onValueChange={setFilter}
-          options={(["all", "computers", "phones"] as const).map((v) => ({
-            value: v,
-            label: t(`devices.filter.${v}`),
-            count: counts[v],
-          }))}
-        />
-      </Toolbar>
+          search={
+            <SearchField
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onClear={() => setQuery("")}
+              clearLabel={t("filters.clearSearch")}
+              placeholder={t("devices.search")}
+              aria-label={t("devices.searchLabel")}
+            />
+          }
+          actions={
+            canConnect && (
+              <Button variant="primary" icon="plus" onClick={() => setConnect({ step: "choose" })}>
+                {t("devices.connect")}
+              </Button>
+            )
+          }
+        >
+          <Segmented
+            label={t("devices.filter.label")}
+            value={filter}
+            onValueChange={setFilter}
+            options={(["all", "computers", "phones"] as const).map((v) => ({
+              value: v,
+              label: t(`devices.filter.${v}`),
+              count: counts[v],
+            }))}
+          />
+        </Toolbar>
+      )}
       {(devices.data?.requests.length ?? 0) > 0 && (
         <List className="dv-list" role="list" aria-label={t("devices.request.list")}>
           {devices.data?.requests.map((r) => (
@@ -146,9 +150,13 @@ export function DevicesSection({ start }: { start?: ConnectStart | null }) {
                   ? "devices.empty.phonesTitle"
                   : "devices.empty.title",
             )}
-            // Connect a device is the toolbar's: the empty state adds only a phone's own way in.
+            // Connect a device is the toolbar's (the empty state's when bare): else only a phone's own way in.
             actions={
-              !query && canConnect && filter === "phones" ? (
+              bare && canConnect ? (
+                <Button variant="primary" icon="plus" onClick={() => setConnect({ step: "choose" })}>
+                  {t("devices.connect")}
+                </Button>
+              ) : !query && canConnect && filter === "phones" ? (
                 <Button onClick={() => setConnect({ step: "android" })}>{t("devices.connectPhone")}</Button>
               ) : undefined
             }

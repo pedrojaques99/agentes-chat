@@ -165,39 +165,42 @@ export function IssuesPage() {
             }
           />
           <WorkingNow issues={all} onOpen={toggle} />
-          <Toolbar
-            label={t("issues.filters")}
-            search={
-              <SearchField
-                ref={searchRef}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onClear={() => setQ("")}
-                clearLabel={copy.clearSearch}
-                placeholder={t("issues.search")}
-                aria-label={t("issues.search")}
-                shortcut={<Kbd aria-hidden="true">/</Kbd>}
-              />
-            }
-            actions={
-              <span className="issues-tools">
-                <DisplayButton view={view} onChange={changeView} />
-                {view.group === "stage" && (
-                  <Menu
-                    align="end"
-                    label={t("issues.moreOptions")}
-                    trigger={<Button size="sm" iconOnly icon="more" aria-label={t("issues.moreOptions")} />}
-                  >
-                    <MenuItem icon="layers" onSelect={() => setAddingColumn(true)} disabled={!columns}>
-                      {t("issues.columns.add")}
-                    </MenuItem>
-                  </Menu>
-                )}
-              </span>
-            }
-          >
-            <IssueFilters view={view} issues={all} onChange={changeView} />
-          </Toolbar>
+          {/* No tasks at all: the empty state alone, not a search, filters and display over nothing. */}
+          {!noIssues && (
+            <Toolbar
+              label={t("issues.filters")}
+              search={
+                <SearchField
+                  ref={searchRef}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  onClear={() => setQ("")}
+                  clearLabel={copy.clearSearch}
+                  placeholder={t("issues.search")}
+                  aria-label={t("issues.search")}
+                  shortcut={<Kbd aria-hidden="true">/</Kbd>}
+                />
+              }
+              actions={
+                <span className="issues-tools">
+                  <DisplayButton view={view} onChange={changeView} />
+                  {view.group === "stage" && (
+                    <Menu
+                      align="end"
+                      label={t("issues.moreOptions")}
+                      trigger={<Button size="sm" iconOnly icon="more" aria-label={t("issues.moreOptions")} />}
+                    >
+                      <MenuItem icon="layers" onSelect={() => setAddingColumn(true)} disabled={!columns}>
+                        {t("issues.columns.add")}
+                      </MenuItem>
+                    </Menu>
+                  )}
+                </span>
+              }
+            >
+              <IssueFilters view={view} issues={all} onChange={changeView} />
+            </Toolbar>
+          )}
           {(issues.isLoading || viewLoading || (!columns && columnsQuery.isLoading)) &&
             (view.layout === "board" ? (
               // In the board's own frame and sideways scroller, so it loads where it will stay.

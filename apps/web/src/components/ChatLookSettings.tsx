@@ -7,7 +7,6 @@ import {
   type ChatTextSize,
   type ChatTone,
   chatLookOf,
-  DEFAULT_TEXT_SIZE,
   facesShown,
   openAtOf,
   textSizeOf,
@@ -20,18 +19,16 @@ import {
   Card,
   CardHeader,
   cx,
-  InfoHint,
   Message,
   MessageLookContext,
   MessageText,
-  Radio,
-  RadioGroup,
   Segmented,
 } from "@agenteschat/ui";
 
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AgentAvatar } from "@/components/AgentAvatar";
+import { PrefRow } from "@/components/NoticePrefs";
 import { useOrg } from "@/components/org-context";
 import { useToast } from "@/lib/toast";
 
@@ -104,31 +101,6 @@ function Mini({
   );
 }
 
-/** One choice: its picture over its radio and name, as the cards of a radio group. */
-function Choice({
-  id,
-  value,
-  checked,
-  title,
-  children,
-}: {
-  id: string;
-  value: string;
-  checked: boolean;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <label htmlFor={id} className="ac-option chat-look__card" data-state={checked ? "checked" : "unchecked"}>
-      {children}
-      <span className="chat-look__foot">
-        <Radio value={value} id={id} />
-        <span className="ac-option__title">{title}</span>
-      </span>
-    </label>
-  );
-}
-
 /**
  * Sua conta › Conversa: how conversations look to me, on every device. Channels and DMs each have their own style (a
  * DM has two speakers, so bubbles say who spoke), Bolhas its Clara or Forte, the size of the words in all of them, and
@@ -157,16 +129,6 @@ export function ChatLookSettings() {
     { who: "agent", text: t("settings.account.chat.sample.answer"), time: "14:31" },
     { who: "me", text: t("settings.account.chat.sample.go"), time: "14:32" },
   ];
-  const before: Line[] = [
-    { who: "me", text: t("settings.account.chat.sample.send"), time: "09:12" },
-    { who: "agent", text: t("settings.account.chat.sample.sent"), time: "09:14" },
-  ];
-  const fresh: Line[] = [
-    { who: "agent", text: t("settings.account.chat.sample.new1"), time: "11:02", run: "start" },
-    { who: "agent", text: t("settings.account.chat.sample.new2"), time: "11:40", run: "mid" },
-    { who: "agent", text: t("settings.account.chat.sample.new3"), time: "13:05", run: "mid" },
-    { who: "agent", text: t("settings.account.chat.sample.new4"), time: "13:06", run: "end" },
-  ];
   const names: Record<ChatStyle, string> = {
     comfortable: t("settings.account.chat.comfortable"),
     left: t("settings.account.chat.left"),
@@ -180,63 +142,52 @@ export function ChatLookSettings() {
     lg: t("settings.account.chat.textLg"),
     xl: t("settings.account.chat.textXl"),
   };
+  const kindSwitch = (
+    <Segmented
+      size="sm"
+      label={t("settings.account.chat.where")}
+      value={kind}
+      onValueChange={(v) => setKind(v as "channels" | "dms")}
+      options={[
+        { value: "channels", label: t(modeKey(org, "settings.account.chat.channels")) },
+        { value: "dms", label: t("settings.account.chat.dms") },
+      ]}
+    />
+  );
+  // One preview, the conversation as it will look with every choice below; each choice is one compact control.
   return (
     <Card aria-labelledby="account-chat">
-      <CardHeader id="account-chat" title={t("settings.account.chat.title")} />
+      <CardHeader id="account-chat" title={t("settings.account.chat.title")} action={kindSwitch} />
       <div className="settings-rows">
         <div className="chat-look__group">
-          <div className="chat-look__top ac-actline">
-            <span className="settings-row__text">
-              <span className="ac-hintline">
-                <span className="settings-row__label">{t("settings.account.chat.density")}</span>
-                <InfoHint name={t("common.about", { label: t("settings.account.chat.density") })}>
-                  {t("settings.account.chat.densityHelp")}
-                </InfoHint>
-              </span>
-            </span>
+          <MessageLookContext.Provider value={lookOf(style)}>
+            <Mini className="chat-look__mini--real" look={style} size={textSize} faces={facesShown(style, dm)}>
+              <SampleRows lines={talk} />
+            </Mini>
+          </MessageLookContext.Provider>
+        </div>
+        <PrefRow
+          id="chat-look-density"
+          icon="layers"
+          label={t("settings.account.chat.density")}
+          hint={t("settings.account.chat.densityHelp")}
+          control={
             <Segmented
               size="sm"
-              label={t("settings.account.chat.where")}
-              value={kind}
-              onValueChange={(v) => setKind(v as "channels" | "dms")}
-              options={[
-                { value: "channels", label: t(modeKey(org, "settings.account.chat.channels")) },
-                { value: "dms", label: t("settings.account.chat.dms") },
-              ]}
+              label={t("settings.account.chat.density")}
+              value={style}
+              onValueChange={(v) => save(dm ? { dmStyle: v as ChatStyle } : { channelStyle: v as ChatStyle })}
+              options={CHAT_STYLES.map((v) => ({ value: v, label: names[v] }))}
             />
-          </div>
-          <RadioGroup
-            className="chat-look__cards chat-look__cards--styles"
-            aria-label={t("settings.account.chat.density")}
-            value={style}
-            onValueChange={(v: ChatStyle) => save(dm ? { dmStyle: v } : { channelStyle: v })}
-          >
-            {CHAT_STYLES.map((s) => (
-              <Choice key={s} id={`chat-look-${s}`} value={s} checked={s === style} title={names[s]}>
-                <MessageLookContext.Provider value={lookOf(s)}>
-                  <Mini look={s} size={DEFAULT_TEXT_SIZE} faces={facesShown(s, dm)}>
-                    <SampleRows lines={talk} />
-                  </Mini>
-                </MessageLookContext.Provider>
-              </Choice>
-            ))}
-          </RadioGroup>
-        </div>
+          }
+        />
         {style === "bubbles" && (
-          <div className="settings-row ac-actrow">
-            <span className="settings-row__text ac-actrow__text">
-              <span className="ac-hintline">
-                <span className="settings-row__label">{t(toneLabel)}</span>
-                <InfoHint
-                  name={t("common.about", {
-                    label: t(toneLabel),
-                  })}
-                >
-                  {t(dm ? "settings.account.chat.toneDmsHelp" : "settings.account.chat.toneChannelsHelp")}
-                </InfoHint>
-              </span>
-            </span>
-            <div className="settings-row__end">
+          <PrefRow
+            id="chat-look-tone"
+            icon="bulb"
+            label={t(toneLabel)}
+            hint={t(dm ? "settings.account.chat.toneDmsHelp" : "settings.account.chat.toneChannelsHelp")}
+            control={
               <Segmented
                 size="sm"
                 label={t(toneLabel)}
@@ -247,96 +198,53 @@ export function ChatLookSettings() {
                   { value: "strong", label: t("settings.account.chat.toneStrong") },
                 ]}
               />
-            </div>
-          </div>
-        )}
-        <div className="chat-look__group">
-          <span className="settings-row__text ac-actrow__text">
-            <span className="ac-hintline">
-              <span className="settings-row__label">{t("settings.account.chat.textSize")}</span>
-              <InfoHint name={t("common.about", { label: t("settings.account.chat.textSize") })}>
-                {t("settings.account.chat.textSizeHelp")}
-              </InfoHint>
-            </span>
-          </span>
-          <Segmented
-            size="sm"
-            block
-            label={t("settings.account.chat.textSize")}
-            value={textSize}
-            onValueChange={(v) => save({ textSize: v })}
-            options={CHAT_TEXT_SIZES.map((s) => ({
-              value: s,
-              // An A in the step's own size; the default also says its name, the others to screen readers only.
-              label: (
-                <>
-                  <span className="chat-look__a" data-text-size={s} aria-hidden="true">
-                    A
-                  </span>
-                  {s === DEFAULT_TEXT_SIZE ? sizes[s] : <span className="ac-visually-hidden">{sizes[s]}</span>}
-                </>
-              ),
-              title: sizes[s],
-            }))}
+            }
           />
-          <MessageLookContext.Provider value={lookOf(style)}>
-            <Mini className="chat-look__mini--real" look={style} size={textSize} faces={facesShown(style, dm)}>
-              <SampleRows lines={talk.slice(0, 2)} />
-            </Mini>
-          </MessageLookContext.Provider>
-        </div>
-        <div className="chat-look__group">
-          <span className="settings-row__text ac-actrow__text">
-            <span className="settings-row__label">{t("settings.account.chat.openAt")}</span>
-          </span>
-          <RadioGroup
-            className="chat-look__cards"
-            aria-label={t("settings.account.chat.openAt")}
-            value={openAt}
-            onValueChange={(v: ChatOpenAt) => save({ openAt: v })}
-          >
-            <MessageLookContext.Provider value={lookOf(style)}>
-              <Choice
-                id="chat-look-read"
-                value="read"
-                checked={openAt === "read"}
-                title={t("settings.account.chat.openRead")}
-              >
-                <Mini
-                  className="chat-look__mini--read"
-                  look={style}
-                  size={DEFAULT_TEXT_SIZE}
-                  faces={facesShown(style, dm)}
-                >
-                  <SampleRows lines={before.slice(1)} />
-                  <div className="channel__unread">{t("channel.unreadDivider")}</div>
-                  <SampleRows lines={fresh} />
-                </Mini>
-                <span className="chat-look__pill" aria-hidden="true">
-                  {t("settings.account.chat.sample.newCount")}
-                </span>
-              </Choice>
-              <Choice
-                id="chat-look-latest"
-                value="latest"
-                checked={openAt === "latest"}
-                title={t("settings.account.chat.openLatest")}
-              >
-                <Mini
-                  className="chat-look__mini--end"
-                  look={style}
-                  size={DEFAULT_TEXT_SIZE}
-                  faces={facesShown(style, dm)}
-                >
-                  <SampleRows lines={fresh} />
-                </Mini>
-                <span className="chat-look__composer" aria-hidden="true">
-                  {t("channel.composerDm", { name: SAMPLE_AGENT.name })}
-                </span>
-              </Choice>
-            </MessageLookContext.Provider>
-          </RadioGroup>
-        </div>
+        )}
+        <PrefRow
+          id="chat-look-size"
+          icon="bold"
+          label={t("settings.account.chat.textSize")}
+          hint={t("settings.account.chat.textSizeHelp")}
+          control={
+            <Segmented
+              size="sm"
+              label={t("settings.account.chat.textSize")}
+              value={textSize}
+              onValueChange={(v) => save({ textSize: v as ChatTextSize })}
+              options={CHAT_TEXT_SIZES.map((v) => ({
+                value: v,
+                // An A in the step's own size; its name for screen readers and on hover.
+                label: (
+                  <>
+                    <span className="chat-look__a" data-text-size={v} aria-hidden="true">
+                      A
+                    </span>
+                    <span className="ac-visually-hidden">{sizes[v]}</span>
+                  </>
+                ),
+                title: sizes[v],
+              }))}
+            />
+          }
+        />
+        <PrefRow
+          id="chat-look-open"
+          icon="arrowDown"
+          label={t("settings.account.chat.openAt")}
+          control={
+            <Segmented
+              size="sm"
+              label={t("settings.account.chat.openAt")}
+              value={openAt}
+              onValueChange={(v) => save({ openAt: v as ChatOpenAt })}
+              options={[
+                { value: "read", label: t("settings.account.chat.openRead") },
+                { value: "latest", label: t("settings.account.chat.openLatest") },
+              ]}
+            />
+          }
+        />
       </div>
     </Card>
   );

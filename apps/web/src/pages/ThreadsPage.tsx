@@ -104,6 +104,8 @@ export function ThreadsPage({ initialTab, initialChannel }: { initialTab?: Threa
   const toast = useToast();
   const selected = threads.filter((x) => picked.has(x.id));
   const filtered = Boolean(channel.length || agent.length || needsYou || mine || query);
+  // This tab holds nothing, unfiltered: its empty state alone, not a search and filters over nothing (tabs stay).
+  const bare = !filtered && (missions ? noMissions : list.isSuccess && threads.length === 0);
   const clearFilters = () => {
     setChannel([]);
     setAgent([]);
@@ -175,86 +177,92 @@ export function ThreadsPage({ initialTab, initialChannel }: { initialTab?: Threa
             }))}
           />
         </div>
-        <Toolbar
-          search={
-            <SearchField
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onClear={() => setQ("")}
-              clearLabel={copy.clearSearch}
-              placeholder={
-                tab === "archived" ? t("threads.searchArchived") : missions ? t("missions.search") : t("threads.search")
-              }
-              aria-label={t("threads.search")}
+        {!bare && (
+          <Toolbar
+            search={
+              <SearchField
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onClear={() => setQ("")}
+                clearLabel={copy.clearSearch}
+                placeholder={
+                  tab === "archived"
+                    ? t("threads.searchArchived")
+                    : missions
+                      ? t("missions.search")
+                      : t("threads.search")
+                }
+                aria-label={t("threads.search")}
+              />
+            }
+          >
+            <FilterBar
+              label={t("threads.filters")}
+              clearText={copy.clearAll}
+              onClear={clearFilters}
+              filters={[
+                {
+                  key: "channel",
+                  active: channel.length > 0,
+                  node: (
+                    <FilterChip
+                      label={t("threads.filterChannel")}
+                      icon="channel"
+                      options={channelOptions}
+                      value={channel}
+                      onChange={(v) => setChannel(v.slice(-1))}
+                      valueText={(o) => o.label}
+                      clearLabel={copy.clearOf(t("threads.filterChannel"))}
+                      searchLabel={copy.searchLabel}
+                      searchPlaceholder={copy.searchPlaceholder}
+                      noResults={copy.noResults}
+                    />
+                  ),
+                },
+                {
+                  key: "agent",
+                  active: agent.length > 0,
+                  node: (
+                    <FilterChip
+                      label={t("threads.filterAgent")}
+                      icon="agent"
+                      options={agentOptions}
+                      value={agent}
+                      onChange={(v) => setAgent(v.slice(-1))}
+                      valueText={(o) => o.label}
+                      clearLabel={copy.clearOf(t("threads.filterAgent"))}
+                      searchLabel={copy.searchLabel}
+                      searchPlaceholder={copy.searchPlaceholder}
+                      noResults={copy.noResults}
+                    />
+                  ),
+                },
+                ...(missions
+                  ? []
+                  : [
+                      {
+                        key: "needsYou",
+                        active: needsYou,
+                        node: (
+                          <FilterToggle icon="waiting" pressed={needsYou} onPressedChange={setNeedsYou}>
+                            {t("threads.needsYou")}
+                          </FilterToggle>
+                        ),
+                      },
+                      {
+                        key: "mine",
+                        active: mine,
+                        node: (
+                          <FilterToggle icon="person" pressed={mine} onPressedChange={setMine}>
+                            {t("threads.mine")}
+                          </FilterToggle>
+                        ),
+                      },
+                    ]),
+              ]}
             />
-          }
-        >
-          <FilterBar
-            label={t("threads.filters")}
-            clearText={copy.clearAll}
-            onClear={clearFilters}
-            filters={[
-              {
-                key: "channel",
-                active: channel.length > 0,
-                node: (
-                  <FilterChip
-                    label={t("threads.filterChannel")}
-                    icon="channel"
-                    options={channelOptions}
-                    value={channel}
-                    onChange={(v) => setChannel(v.slice(-1))}
-                    valueText={(o) => o.label}
-                    clearLabel={copy.clearOf(t("threads.filterChannel"))}
-                    searchLabel={copy.searchLabel}
-                    searchPlaceholder={copy.searchPlaceholder}
-                    noResults={copy.noResults}
-                  />
-                ),
-              },
-              {
-                key: "agent",
-                active: agent.length > 0,
-                node: (
-                  <FilterChip
-                    label={t("threads.filterAgent")}
-                    icon="agent"
-                    options={agentOptions}
-                    value={agent}
-                    onChange={(v) => setAgent(v.slice(-1))}
-                    valueText={(o) => o.label}
-                    clearLabel={copy.clearOf(t("threads.filterAgent"))}
-                    searchLabel={copy.searchLabel}
-                    searchPlaceholder={copy.searchPlaceholder}
-                    noResults={copy.noResults}
-                  />
-                ),
-              },
-              ...(missions
-                ? []
-                : [
-                    {
-                      key: "needsYou",
-                      active: needsYou,
-                      node: (
-                        <FilterToggle icon="waiting" pressed={needsYou} onPressedChange={setNeedsYou}>
-                          {t("threads.needsYou")}
-                        </FilterToggle>
-                      ),
-                    },
-                    {
-                      key: "mine",
-                      active: mine,
-                      node: (
-                        <FilterToggle icon="person" pressed={mine} onPressedChange={setMine}>
-                          {t("threads.mine")}
-                        </FilterToggle>
-                      ),
-                    },
-                  ]),
-            ]}
-          />
-        </Toolbar>
+          </Toolbar>
+        )}
         {tab === "archived" && (
           <p className="threads-note ac-iconline">
             <Icon name="lock" size={14} />

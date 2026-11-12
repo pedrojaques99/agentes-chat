@@ -170,6 +170,8 @@ function MemoryView({ agent, item }: { agent: Agent; item?: string }) {
   const items = filterMemories(all, tab, q);
   const count = (x: MemoryTab) => all.filter((m) => inMemoryTab(m, x)).length;
   const pendingProposals = (proposals.data ?? []).filter((p) => p.agentId === agent.id && p.status === "pending");
+  // Nothing remembered at all: no search over nothing (the tabs stay, they are where things will be).
+  const bare = memory.isSuccess && all.length === 0 && !q;
 
   return (
     <div className="page page--full" ref={page}>
@@ -205,18 +207,20 @@ function MemoryView({ agent, item }: { agent: Agent; item?: string }) {
         >
           {null}
         </Tabs>
-        <Toolbar
-          search={
-            <SearchField
-              aria-label={t("memory.search")}
-              placeholder={t("memory.searchPlaceholder", g)}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onClear={() => setQ("")}
-              clearLabel={t("filters.clearSearch")}
-            />
-          }
-        />
+        {!bare && (
+          <Toolbar
+            search={
+              <SearchField
+                aria-label={t("memory.search")}
+                placeholder={t("memory.searchPlaceholder", g)}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onClear={() => setQ("")}
+                clearLabel={t("filters.clearSearch")}
+              />
+            }
+          />
+        )}
       </div>
 
       <List role="tabpanel" aria-label={t(`memory.tabs.${tab}`)}>

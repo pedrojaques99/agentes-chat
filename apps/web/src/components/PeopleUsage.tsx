@@ -258,6 +258,8 @@ function PeopleView({ switcher, person, onLimits }: { switcher: ReactNode; perso
     );
   };
   const nobody = data.people.every((p) => p.runs === 0);
+  // Nobody used anything this month, unfiltered: the empty state alone, not filters over nothing.
+  const bare = nobody && period === "month" && roleId === "all" && agentId === "all" && chips.length === 0;
   return (
     <>
       <div className="pu-head">
@@ -310,49 +312,51 @@ function PeopleView({ switcher, person, onLimits }: { switcher: ReactNode; perso
           {switcher}
         </span>
       </div>
-      <Toolbar size="sm">
-        <Select
-          size="sm"
-          aria-label={t("peopleUsage.periodLabel")}
-          value={period}
-          onValueChange={setPeriod}
-          options={USAGE_PERIODS.map((p) => ({ value: p, label: t(`peopleUsage.period.${p}`) }))}
-        />
-        <Select
-          size="sm"
-          aria-label={t("peopleUsage.role")}
-          value={roleId}
-          onValueChange={setRoleId}
-          options={[
-            { value: "all", label: t("peopleUsage.roleAll") },
-            ...roleList.map((r) => ({
-              value: r.id,
-              label: r.name,
-              leading: <RoleMark color={r.color} icon={r.icon} size={16} />,
-            })),
-          ]}
-        />
-        <Select
-          size="sm"
-          aria-label={t("peopleUsage.agent")}
-          value={agentId}
-          onValueChange={setAgentId}
-          options={[
-            { value: "all", label: t("peopleUsage.agentAll") },
-            ...dir.agents.map((a) => ({ value: a.id, label: a.name })),
-          ]}
-        />
-        {PEOPLE_CHIPS.map((c) => (
-          <FilterToggle
-            key={c}
-            pressed={chips.includes(c)}
-            onPressedChange={(on) => setChips((l) => (on ? [...l, c] : l.filter((x) => x !== c)))}
-            count={counts[c]}
-          >
-            {t(`peopleUsage.chips.${c}`)}
-          </FilterToggle>
-        ))}
-      </Toolbar>
+      {!bare && (
+        <Toolbar size="sm">
+          <Select
+            size="sm"
+            aria-label={t("peopleUsage.periodLabel")}
+            value={period}
+            onValueChange={setPeriod}
+            options={USAGE_PERIODS.map((p) => ({ value: p, label: t(`peopleUsage.period.${p}`) }))}
+          />
+          <Select
+            size="sm"
+            aria-label={t("peopleUsage.role")}
+            value={roleId}
+            onValueChange={setRoleId}
+            options={[
+              { value: "all", label: t("peopleUsage.roleAll") },
+              ...roleList.map((r) => ({
+                value: r.id,
+                label: r.name,
+                leading: <RoleMark color={r.color} icon={r.icon} size={16} />,
+              })),
+            ]}
+          />
+          <Select
+            size="sm"
+            aria-label={t("peopleUsage.agent")}
+            value={agentId}
+            onValueChange={setAgentId}
+            options={[
+              { value: "all", label: t("peopleUsage.agentAll") },
+              ...dir.agents.map((a) => ({ value: a.id, label: a.name })),
+            ]}
+          />
+          {PEOPLE_CHIPS.map((c) => (
+            <FilterToggle
+              key={c}
+              pressed={chips.includes(c)}
+              onPressedChange={(on) => setChips((l) => (on ? [...l, c] : l.filter((x) => x !== c)))}
+              count={counts[c]}
+            >
+              {t(`peopleUsage.chips.${c}`)}
+            </FilterToggle>
+          ))}
+        </Toolbar>
+      )}
       <p className="pu-summary">
         <span data-tone="near">{t("peopleUsage.summary.near", { n: counts.near })}</span>
         {" · "}
@@ -515,8 +519,8 @@ function LiveCard({ live }: { live: PeopleUsage["live"] }) {
   );
 }
 
-/** The month day by day, stacked by agent in their colors, with its legend. */
-function DaysChart({ data, money }: { data: PersonUsage; money: boolean }) {
+/** The month day by day, stacked by agent in their colors, with its legend unless a list below already keys them. */
+function DaysChart({ data, money, legend = true }: { data: PersonUsage; money: boolean; legend?: boolean }) {
   const { t, i18n } = useTranslation();
   const { org } = useOrg();
   const dir = useDirectory(org.id);
@@ -552,14 +556,16 @@ function DaysChart({ data, money }: { data: PersonUsage; money: boolean }) {
           <span>{daysInMonth}</span>
         </div>
       )}
-      <div className="plan-legend">
-        {data.agents.map((a) => (
-          <span key={a.agentId} className="plan-legend__item">
-            <UsageSwatch style={partStyle(dir, a.agentId)} />
-            {agentName(t, dir, a.agentId)} · {amount(a.amount)}
-          </span>
-        ))}
-      </div>
+      {legend && (
+        <div className="plan-legend">
+          {data.agents.map((a) => (
+            <span key={a.agentId} className="plan-legend__item">
+              <UsageSwatch style={partStyle(dir, a.agentId)} />
+              {agentName(t, dir, a.agentId)} · {amount(a.amount)}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -594,11 +600,10 @@ function RecentList({ data }: { data: PersonUsage }) {
                     .join(" · "),
                 ]
             : [
-                r.kind === "private"
-                  ? t("peopleUsage.drawer.private", { agent })
-                  : t("peopleUsage.drawer.hidden", { agent }),
+                r.kind === "private" ? agent : t("peopleUsage.drawer.hidden", { agent }),
                 t("peopleUsage.drawer.runs", { count: r.runs }),
               ];
+        const inline = r.kind !== "work";
         return (
           <li
             key={`${r.kind}-${r.agentId}-${"startedAt" in r ? r.startedAt : r.lastAt}`}
@@ -609,12 +614,13 @@ function RecentList({ data }: { data: PersonUsage }) {
             </span>
             <span className="ac-mediarow__head">
               <span className="pu-recent__title">
-                {r.kind !== "work" && <Icon name="lock" size={14} inline />}
+                {inline && <Icon name="lock" size={14} inline label={t("peopleUsage.drawer.private", { agent })} />}
                 {title}
+                {inline && <span className="muted"> · {line}</span>}
               </span>
             </span>
             <span className="ac-mediarow__end pu-recent__amount tabular">{amount(r.amount)}</span>
-            <span className="ac-mediarow__body muted">{line}</span>
+            {!inline && <span className="ac-mediarow__body muted">{line}</span>}
           </li>
         );
       })}
@@ -763,7 +769,7 @@ function PersonDrawer({ userId, onClose }: { userId: string | null; onClose: () 
           )}
           <section>
             <h4 className="pu-h4">{t("peopleUsage.drawer.days")}</h4>
-            <DaysChart data={data} money={data.money} />
+            <DaysChart data={data} money={data.money} legend={data.agents.length === 0} />
           </section>
           {data.agents.length > 0 && (
             <section>
@@ -772,6 +778,7 @@ function PersonDrawer({ userId, onClose }: { userId: string | null; onClose: () 
                 {data.agents.map((a) => (
                   <li key={a.agentId}>
                     <AgentAvatar agentId={a.agentId} name={agentName(t, dir, a.agentId)} size="sm" />
+                    <UsageSwatch style={partStyle(dir, a.agentId)} />
                     <b>{agentName(t, dir, a.agentId)}</b>
                     <span className="muted">{t("peopleUsage.drawer.runs", { count: a.runs })}</span>
                     <span className="pu-recent__amount tabular">{formatUsd(i18n.language, a.amount)}</span>
@@ -792,9 +799,7 @@ function PersonDrawer({ userId, onClose }: { userId: string | null; onClose: () 
                   <li key={c.agentId}>
                     <AgentAvatar agentId={c.agentId} name={agentName(t, dir, c.agentId)} size="sm" />
                     <b>{agentName(t, dir, c.agentId)}</b>
-                    <span className="muted">
-                      {t("peopleUsage.drawer.createdAt", { date: formatShortDate(i18n.language, c.createdAt) })}
-                    </span>
+                    <span className="muted">{formatShortDate(i18n.language, c.createdAt)}</span>
                   </li>
                 ))}
               </ul>

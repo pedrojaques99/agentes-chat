@@ -14576,7 +14576,7 @@ export const ptBR = {
     },
     title: "Configurações",
     account: {
-      plans: "Limites dos seus planos",
+      access: "Acesso",
       device: "Neste aparelho",
       /** Yours in this workspace, on every device: the tool summary under each agent reply, off by default. */
       activity: "Mostrar o que os agentes fizeram em cada resposta",
@@ -14931,7 +14931,6 @@ export const ptBR = {
       hidden: "Num canal privado com {{agent}}",
       routine: "Rotina {{name}}",
       created: "Agentes que criou",
-      createdAt: "criado em {{date}}",
       audit: "Ver ações dos agentes em Auditoria",
       noUse: "Nenhum uso neste período.",
     },

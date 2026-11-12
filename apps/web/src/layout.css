@@ -13979,6 +13979,28 @@ html:not([data-pointer]) .settings-row--open:focus-visible {
   height: 28px;
   font-size: 12px;
 }
+/* Perfil on its line: the face is the photo's button, the name and the @ are fields that save on leaving. */
+.account-profile__face {
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.account-profile__face:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.account-profile__fields {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-2);
+}
+.account-profile__fields > * {
+  flex: 1;
+  min-width: 0;
+}
 /* On a phone the icon, the words and a switch or a chevron stay on one line. Any other control (a choice of several,
    a select, a field, buttons) goes under the words, from their edge (the 28px icon and the 12px gap), so the rows of
    one card start their controls on one edge. */

@@ -3176,6 +3176,13 @@ html:not([data-pointer]) .ac-tab:focus-visible {
 }
 .ac-planmeter--compact .ac-planmeter__state {
   font-size: 12px;
+  /* Near the limit, the amber bar already says it: the words stay quiet in a list. At the limit they speak up. */
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+.ac-planmeter--compact[data-state="limited"] .ac-planmeter__state {
+  font-weight: 600;
+  color: var(--meter-fill, var(--attention));
 }
 
 /* A month day by day (UsageDays.tsx): a column per day stacked by source, in 1-px rows; days ahead dotted. */

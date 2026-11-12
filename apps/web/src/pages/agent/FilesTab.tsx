@@ -76,7 +76,7 @@ export function FilesTab() {
           </Link>
         }
       />
-      {any && (
+      {(any || !files.isSuccess) && (
         <Toolbar
           size="sm"
           search={

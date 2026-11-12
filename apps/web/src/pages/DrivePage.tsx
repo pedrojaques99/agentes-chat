@@ -169,6 +169,8 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     : rows.length;
 
   const filtered = Boolean(search) || kinds.length > 0 || channelIds.length > 0 || authors.length > 0 || who !== "all";
+  // Nothing in the drive at all (not a search that found nothing): its tools have nothing to work on yet.
+  const bare = list.isSuccess && rows.length === 0 && !filtered;
   const clearFilters = () => {
     setKinds([]);
     setChannelIds([]);
@@ -363,7 +365,7 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
                 >
                   {t("artifacts.trash")}
                 </Button>
-                {uploads && !(list.isSuccess && rows.length === 0 && !filtered) && (
+                {uploads && !bare && (
                   <UploadButton
                     size="md"
                     label={t("files.upload")}
@@ -384,182 +386,185 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
 
         {!trashOpen && (
           <>
-            <Toolbar
-              search={
-                <SearchField
-                  ref={searchRef}
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape" && q) {
-                      e.stopPropagation();
-                      setQ("");
+            {/* An empty drive has nothing to search, filter or lay out: the empty state below is the only way in. */}
+            {!bare && (
+              <Toolbar
+                search={
+                  <SearchField
+                    ref={searchRef}
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape" && q) {
+                        e.stopPropagation();
+                        setQ("");
+                      }
+                    }}
+                    onClear={() => setQ("")}
+                    clearLabel={t("filters.clearSearch")}
+                    placeholder={t("drive.search")}
+                    aria-label={t("drive.search")}
+                    shortcut={
+                      <Kbd title={t("drive.searchHint")} aria-hidden="true">
+                        /
+                      </Kbd>
                     }
-                  }}
-                  onClear={() => setQ("")}
-                  clearLabel={t("filters.clearSearch")}
-                  placeholder={t("drive.search")}
-                  aria-label={t("drive.search")}
-                  shortcut={
-                    <Kbd title={t("drive.searchHint")} aria-hidden="true">
-                      /
-                    </Kbd>
-                  }
-                />
-              }
-              actions={
-                <>
-                  <Menu
-                    align="end"
-                    label={t("drive.arrange")}
-                    trigger={
-                      // On a phone its icon alone, so the search keeps its words whole beside it.
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        icon="layers"
-                        iconOnly={phone}
-                        aria-label={t("drive.arrangeValue", { group: t(`drive.group.${group}`) })}
-                      >
-                        {t(`drive.group.${group}`)}
-                      </Button>
-                    }
-                  >
-                    <MenuRadioGroup
-                      label={t("drive.groupBy")}
-                      value={group}
-                      onValueChange={(v) => setGroup(v as DriveGroup)}
-                      options={DRIVE_GROUPS.map((g) => ({ value: g, label: t(`drive.group.${g}`) }))}
-                    />
-                    <MenuSeparator />
-                    <MenuRadioGroup
-                      label={t("drive.sortBy")}
-                      value={sort}
-                      onValueChange={(v) => setSort(v as DriveSort)}
-                      options={DRIVE_SORTS.map((s) => ({ value: s, label: t(`drive.sort.${s}`) }))}
-                    />
-                  </Menu>
-                  <Segmented<DriveView>
-                    size="sm"
-                    label={t("drive.view")}
-                    value={view}
-                    onValueChange={setView}
-                    className="drive-view"
-                    options={[
-                      {
-                        value: "grid",
-                        label: (
-                          <>
-                            <Icon name="grid" size={16} />
-                            <span className="ac-visually-hidden">{t("drive.viewGrid")}</span>
-                          </>
-                        ),
-                      },
-                      {
-                        value: "list",
-                        label: (
-                          <>
-                            <Icon name="list" size={16} />
-                            <span className="ac-visually-hidden">{t("drive.viewList")}</span>
-                          </>
-                        ),
-                      },
-                    ]}
                   />
-                </>
-              }
-            >
-              <Segmented<DriveWho>
-                label={t("drive.who")}
-                value={who}
-                onValueChange={setWho}
-                options={[
-                  { value: "all", label: t("drive.everyone") },
-                  {
-                    value: "agents",
-                    label: (
-                      <>
-                        <Icon name="agent" size={16} />
-                        {t("drive.agents")}
-                      </>
-                    ),
-                  },
-                  {
-                    value: "people",
-                    label: (
-                      <>
-                        <Icon name="person" size={16} />
-                        {t("drive.people")}
-                      </>
-                    ),
-                  },
-                ]}
-              />
-              <FilterBar
-                label={t("drive.filters")}
-                clearText={t("drive.clear")}
-                onClear={clearFilters}
-                filters={[
-                  {
-                    key: "channel",
-                    active: channelIds.length > 0,
-                    node: (
-                      <FilterChip
-                        label={t("drive.channel")}
-                        icon="channel"
-                        multiple
-                        options={channelOptions}
-                        value={channelIds}
-                        onChange={setChannelIds}
-                        valueText={(o) => o.label}
-                        countText={(count) => t("filters.channels", { count })}
-                        clearLabel={clearOf(t("drive.channel"))}
-                        {...chipText}
+                }
+                actions={
+                  <>
+                    <Menu
+                      align="end"
+                      label={t("drive.arrange")}
+                      trigger={
+                        // On a phone its icon alone, so the search keeps its words whole beside it.
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon="layers"
+                          iconOnly={phone}
+                          aria-label={t("drive.arrangeValue", { group: t(`drive.group.${group}`) })}
+                        >
+                          {t(`drive.group.${group}`)}
+                        </Button>
+                      }
+                    >
+                      <MenuRadioGroup
+                        label={t("drive.groupBy")}
+                        value={group}
+                        onValueChange={(v) => setGroup(v as DriveGroup)}
+                        options={DRIVE_GROUPS.map((g) => ({ value: g, label: t(`drive.group.${g}`) }))}
                       />
-                    ),
-                  },
-                  {
-                    key: "author",
-                    active: authors.length > 0,
-                    node: (
-                      <FilterChip
-                        label={t("drive.author")}
-                        icon="person"
-                        multiple
-                        options={authorOptions}
-                        value={authors}
-                        onChange={setAuthors}
-                        valueText={(o) => o.label}
-                        countText={(count) => t("filters.people", { count })}
-                        clearLabel={clearOf(t("drive.author"))}
-                        {...chipText}
+                      <MenuSeparator />
+                      <MenuRadioGroup
+                        label={t("drive.sortBy")}
+                        value={sort}
+                        onValueChange={(v) => setSort(v as DriveSort)}
+                        options={DRIVE_SORTS.map((s) => ({ value: s, label: t(`drive.sort.${s}`) }))}
                       />
-                    ),
-                  },
-                  ...(kindOptions.length > 0
-                    ? [
+                    </Menu>
+                    <Segmented<DriveView>
+                      size="sm"
+                      label={t("drive.view")}
+                      value={view}
+                      onValueChange={setView}
+                      className="drive-view"
+                      options={[
                         {
-                          key: "kind",
-                          active: kinds.length > 0,
-                          node: (
-                            <FilterChip
-                              label={t("drive.kind")}
-                              icon="file"
-                              multiple
-                              options={kindOptions}
-                              value={kinds}
-                              onChange={(v) => setKinds(v as ArtifactKind[])}
-                              countText={(count) => t("filters.kinds", { count })}
-                              clearLabel={clearOf(t("drive.kind"))}
-                              {...chipText}
-                            />
+                          value: "grid",
+                          label: (
+                            <>
+                              <Icon name="grid" size={16} />
+                              <span className="ac-visually-hidden">{t("drive.viewGrid")}</span>
+                            </>
                           ),
                         },
-                      ]
-                    : []),
-                ]}
-              />
-            </Toolbar>
+                        {
+                          value: "list",
+                          label: (
+                            <>
+                              <Icon name="list" size={16} />
+                              <span className="ac-visually-hidden">{t("drive.viewList")}</span>
+                            </>
+                          ),
+                        },
+                      ]}
+                    />
+                  </>
+                }
+              >
+                <Segmented<DriveWho>
+                  label={t("drive.who")}
+                  value={who}
+                  onValueChange={setWho}
+                  options={[
+                    { value: "all", label: t("drive.everyone") },
+                    {
+                      value: "agents",
+                      label: (
+                        <>
+                          <Icon name="agent" size={16} />
+                          {t("drive.agents")}
+                        </>
+                      ),
+                    },
+                    {
+                      value: "people",
+                      label: (
+                        <>
+                          <Icon name="person" size={16} />
+                          {t("drive.people")}
+                        </>
+                      ),
+                    },
+                  ]}
+                />
+                <FilterBar
+                  label={t("drive.filters")}
+                  clearText={t("drive.clear")}
+                  onClear={clearFilters}
+                  filters={[
+                    {
+                      key: "channel",
+                      active: channelIds.length > 0,
+                      node: (
+                        <FilterChip
+                          label={t("drive.channel")}
+                          icon="channel"
+                          multiple
+                          options={channelOptions}
+                          value={channelIds}
+                          onChange={setChannelIds}
+                          valueText={(o) => o.label}
+                          countText={(count) => t("filters.channels", { count })}
+                          clearLabel={clearOf(t("drive.channel"))}
+                          {...chipText}
+                        />
+                      ),
+                    },
+                    {
+                      key: "author",
+                      active: authors.length > 0,
+                      node: (
+                        <FilterChip
+                          label={t("drive.author")}
+                          icon="person"
+                          multiple
+                          options={authorOptions}
+                          value={authors}
+                          onChange={setAuthors}
+                          valueText={(o) => o.label}
+                          countText={(count) => t("filters.people", { count })}
+                          clearLabel={clearOf(t("drive.author"))}
+                          {...chipText}
+                        />
+                      ),
+                    },
+                    ...(kindOptions.length > 0
+                      ? [
+                          {
+                            key: "kind",
+                            active: kinds.length > 0,
+                            node: (
+                              <FilterChip
+                                label={t("drive.kind")}
+                                icon="file"
+                                multiple
+                                options={kindOptions}
+                                value={kinds}
+                                onChange={(v) => setKinds(v as ArtifactKind[])}
+                                countText={(count) => t("filters.kinds", { count })}
+                                clearLabel={clearOf(t("drive.kind"))}
+                                {...chipText}
+                              />
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </Toolbar>
+            )}
 
             {filtered && list.isSuccess && rows.length > 0 && (
               <div className="drive-summary">

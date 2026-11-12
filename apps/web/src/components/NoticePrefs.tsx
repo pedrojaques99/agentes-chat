@@ -152,6 +152,8 @@ export function PrefRow({
   const toggle = isValidElement(control) && control.type === Switch;
   const switchId = toggle ? ((control.props as { id?: string }).id ?? `${id}-switch`) : undefined;
   const described = [hint && !onOpen && `${id}-help`, status && `${id}-status`].filter(Boolean).join(" ");
+  // A plain sentence of help shows on hover over the whole line and is read with the control: no ⓘ beside the name.
+  const tip = typeof hint === "string" && !onOpen ? hint : undefined;
   const end = toggle
     ? cloneElement(control as ReactElement<{ id?: string; "aria-describedby"?: string }>, {
         id: switchId,
@@ -173,7 +175,14 @@ export function PrefRow({
   );
   const words = (
     <span className={actions ? "settings-row__text" : "settings-row__text ac-actrow__text"}>
-      {hint && !onOpen ? (
+      {tip ? (
+        <>
+          {name}
+          <span id={`${id}-help`} className="ac-visually-hidden">
+            {tip}
+          </span>
+        </>
+      ) : hint && !onOpen ? (
         <span className="ac-hintline">
           {name}
           <InfoHint id={`${id}-help`} name={t("common.about", { label })}>
@@ -194,7 +203,7 @@ export function PrefRow({
   // icon a column beside three lines.
   if (actions)
     return (
-      <div className="settings-row settings-row--lead settings-row--acts ac-actline">
+      <div className="settings-row settings-row--lead settings-row--acts ac-actline" title={tip}>
         <span className="settings-row__lead">
           {face}
           {words}
@@ -227,6 +236,7 @@ export function PrefRow({
           ? "settings-row ac-actrow settings-row--lead settings-row--toggle"
           : "settings-row ac-actrow settings-row--lead"
       }
+      title={tip}
     >
       {body}
     </div>

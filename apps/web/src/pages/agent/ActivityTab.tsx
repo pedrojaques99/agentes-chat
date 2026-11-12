@@ -207,6 +207,8 @@ export function ActivityTab() {
   const limit = detail.data?.monthlyBudgetUsd ?? detail.data?.defaultBudgetUsd;
   const used = detail.data?.budgetUsedPercent ?? 0;
   const days = groupByDay(visible);
+  // No runs at all: the empty state alone (its own button is the way in), not a search or filters over nothing.
+  const bare = runs.isSuccess && list.length === 0;
   return (
     <>
       <MonthStrip
@@ -225,54 +227,56 @@ export function ActivityTab() {
         }
       />
       <Card as="section" className="agp-card" aria-label={t("agentPage.activity.title")}>
-        <Toolbar
-          size="sm"
-          search={
-            <SearchField
-              size="sm"
-              aria-label={t("agent.runsSearch")}
-              placeholder={t("agent.runsPlaceholder")}
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setShown(RUNS_PAGE);
-              }}
-              onClear={() => {
-                setQ("");
-                setShown(RUNS_PAGE);
-              }}
-              clearLabel={t("filters.clearSearch")}
-            />
-          }
-        >
-          <Segmented
+        {!bare && (
+          <Toolbar
             size="sm"
-            label={t("agentPage.activity.filter")}
-            value={filter}
-            onValueChange={(f) => {
-              setFilter(f);
-              setShown(RUNS_PAGE);
-            }}
-            options={[
-              { value: "all" as const, label: t("agentPage.activity.filters.all") },
-              {
-                value: "failed" as const,
-                label: t("agentPage.activity.filters.failed"),
-                count: failures,
-              },
-              {
-                value: "waiting" as const,
-                label: t("agentPage.activity.filters.waiting"),
-                count: waiting,
-              },
-              {
-                value: "routines" as const,
-                label: t("agentPage.activity.filters.routines"),
-                count: routineCount,
-              },
-            ]}
-          />
-        </Toolbar>
+            search={
+              <SearchField
+                size="sm"
+                aria-label={t("agent.runsSearch")}
+                placeholder={t("agent.runsPlaceholder")}
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setShown(RUNS_PAGE);
+                }}
+                onClear={() => {
+                  setQ("");
+                  setShown(RUNS_PAGE);
+                }}
+                clearLabel={t("filters.clearSearch")}
+              />
+            }
+          >
+            <Segmented
+              size="sm"
+              label={t("agentPage.activity.filter")}
+              value={filter}
+              onValueChange={(f) => {
+                setFilter(f);
+                setShown(RUNS_PAGE);
+              }}
+              options={[
+                { value: "all" as const, label: t("agentPage.activity.filters.all") },
+                {
+                  value: "failed" as const,
+                  label: t("agentPage.activity.filters.failed"),
+                  count: failures,
+                },
+                {
+                  value: "waiting" as const,
+                  label: t("agentPage.activity.filters.waiting"),
+                  count: waiting,
+                },
+                {
+                  value: "routines" as const,
+                  label: t("agentPage.activity.filters.routines"),
+                  count: routineCount,
+                },
+              ]}
+            />
+          </Toolbar>
+        )}
         {runs.isLoading ? (
           <LoadingList count={4} />
         ) : runs.isError && !runs.data ? (

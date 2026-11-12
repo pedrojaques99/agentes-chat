@@ -101,21 +101,9 @@ const refreshes = (state: State) =>
   state.calls.filter((c) => c.method === "machines.refreshAccountUsage").map((c) => c.args);
 
 describe("Sua conta: your plans' limits", () => {
-  test("each plan your agents think with: its mark, its name and its compact line, opening Uso", async () => {
-    const { router } = await go("settings/account", onPlans());
-    const card = screen().getByRole("region", { name: "Limites dos seus planos" });
-    const plan = within(card).getByRole("button", { name: /^Claude Team/ });
-    expect(plan.querySelector(".settings-row__icon .ac-brand")?.getAttribute("data-mark")).toBeTruthy();
-    expect(plan.querySelector(".settings-row__label")?.textContent).toBe("Claude Team");
-    // Its tightest windows and one bar for the fullest: the line the agents' facts and AI accounts draw.
-    expect(plan.querySelector(".ac-planmeter__line")?.textContent).toBe("semana 40% · 5h 12%");
-    expect(
-      within(plan)
-        .getAllByRole("meter")
-        .map((m) => m.getAttribute("aria-valuenow")),
-    ).toEqual(["40"]);
-    await click(plan);
-    expect(router.state.location.pathname).toBe(`/org/${ORG_ID}/settings/usage`);
+  test("Sua conta keeps no copy of them: the plans live in IA e uso", async () => {
+    await go("settings/account", onPlans());
+    expect(plansCard()).toBeNull();
   });
 
   test("no window known yet, or no agent thinks with it: no card, never 0%", async () => {
@@ -124,12 +112,6 @@ describe("Sua conta: your plans' limits", () => {
     cleanup();
     await go("settings/account", onPlans(), [{ ...TEAM, usedBy: [] }]);
     expect(plansCard()).toBeNull();
-  });
-
-  test("opening it asks your computers to look your plans' usage up again", async () => {
-    const state = onPlans();
-    await go("settings/account", state);
-    expect(refreshes(state)).toEqual([[ORG_ID]]);
   });
 });
 

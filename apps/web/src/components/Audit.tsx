@@ -91,30 +91,34 @@ export function AuditSection({ agent }: { agent?: string }) {
     if (last?.[0] === label) last[1].push(row);
     else days.push([label, [row]]);
   }
+  // Nothing logged yet, unfiltered: the empty state alone, not filters over nothing.
+  const bare = audit.isSuccess && rows.length === 0 && show === "all" && agentId === ANY;
   return (
     <section className="audit" aria-label={t("settings.section.audit")}>
-      <Toolbar
-        label={t("audit.filters")}
-        actions={
-          show !== "people" && (
-            <Select
-              size="sm"
-              value={agentId}
-              onValueChange={setAgentId}
-              options={agentOptions}
-              aria-label={t("audit.agent")}
-              className="audit__agent"
-            />
-          )
-        }
-      >
-        <Segmented
+      {!bare && (
+        <Toolbar
           label={t("audit.filters")}
-          value={show}
-          onValueChange={setShow}
-          options={AUDIT_SHOWS.map((s) => ({ value: s, label: t(`audit.filter.${s}`) }))}
-        />
-      </Toolbar>
+          actions={
+            show !== "people" && (
+              <Select
+                size="sm"
+                value={agentId}
+                onValueChange={setAgentId}
+                options={agentOptions}
+                aria-label={t("audit.agent")}
+                className="audit__agent"
+              />
+            )
+          }
+        >
+          <Segmented
+            label={t("audit.filters")}
+            value={show}
+            onValueChange={setShow}
+            options={AUDIT_SHOWS.map((s) => ({ value: s, label: t(`audit.filter.${s}`) }))}
+          />
+        </Toolbar>
+      )}
 
       {audit.isPending ? (
         <LoadingList count={6} trailing />

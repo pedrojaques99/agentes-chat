@@ -1,6 +1,6 @@
-import { type AgentStyle, keys, useAiAccounts, useSetAgentStyle, useSetShowActivity } from "@agenteschat/client";
+import { type AgentStyle, keys, useSetAgentStyle, useSetShowActivity } from "@agenteschat/client";
 import { authErrorText, errorText } from "@agenteschat/client/lib/errors";
-import { browserTimezone, isTimeZone, timezoneName, zoneDisplayName } from "@agenteschat/client/lib/routines";
+import { browserTimezone, isTimeZone } from "@agenteschat/client/lib/routines";
 import {
   AffixInput,
   Alert,
@@ -15,14 +15,12 @@ import {
   Field,
   Input,
   Locked,
-  PlanMeter,
-  ProviderLogo,
   Segmented,
   Switch,
 } from "@agenteschat/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { Link } from "@tanstack/react-router";
+import { type KeyboardEvent, useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useApi } from "@/api/context";
 import type { AuthResult } from "@/auth/client";
@@ -39,7 +37,6 @@ import { localePatch, rememberLocale } from "@/i18n";
 import { type MenuLook, menuLook, onMenuLookChange, setMenuLook } from "@/lib/context-menu";
 import { inDesktopApp } from "@/lib/desktop";
 import { useOpenParam } from "@/lib/open-param";
-import { ownPlanLines, planMeterText } from "@/lib/plan-usage";
 import { onSoundChoiceChange, type SoundChoice, setSoundChoice, soundChoice } from "@/lib/sounds";
 import { type ThemePreference, useTheme } from "@/lib/theme";
 import { useToast } from "@/lib/toast";
@@ -52,46 +49,47 @@ import { LanguageSelect } from "./LanguageSelect";
  * language, sounds, the desktop app's menus), and last, deleting the account.
  */
 export function AccountSection() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { org, me } = useOrg();
   const dir = useDirectory(org.id);
-  const navigate = useNavigate();
   const api = useApi();
-  const plans = ownPlanLines(t, useAiAccounts(org.id).data, dir.agents, me.user.id);
   const showActivity = useSetShowActivity(org.id);
   const agentStyle = useSetAgentStyle(org.id);
   const toast = useToast();
-  // Looking at your plans: their usage is looked up again (it comes back as `machine.updated`).
-  useEffect(() => {
-    void api.machines.refreshAccountUsage(org.id).catch(() => undefined);
-  }, [api, org.id]);
   const theme = useTheme();
   const look = useSyncExternalStore(onMenuLookChange, menuLook, () => "ours" as const);
   const sounds = useSyncExternalStore(onSoundChoiceChange, soundChoice, soundChoice);
-  const [profile, setProfile] = useState<"name" | "timezone" | null>(null);
   const [phone, setPhone] = useState(false);
   // Adding a password and deleting the account: their dialogs are the account button's, kept in the address so a
   // sign-in again comes back to them.
   const [, setAccount] = useOpenParam("account");
   const mine = dir.memberById.get(me.user.id);
   const zone = mine?.timezone || browserTimezone() || "UTC";
+  const qc = useQueryClient();
+  // The time zone changes right on its row: a pick saves, no dialog in between.
+  const setZone = useMutation({
+    mutationFn: (timezone: string) => api.orgs.updateMe(org.id, { timezone }),
+    meta: { silent: true },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.members(org.id) });
+      void qc.invalidateQueries({ queryKey: keys.people(org.id) });
+    },
+    onError: (e) => toast.show(errorText(t, e)),
+  });
   return (
     <>
       <Card aria-label={t("shell.profile")}>
         <div className="settings-rows">
-          <PrefRow
-            id="account-profile"
-            lead={<MyFace className="settings-row__face" />}
-            label={t("shell.profile")}
-            status={t("shell.profileHint")}
-            onOpen={() => setProfile("name")}
-          />
+          <ProfileRow />
           <PrefRow
             id="account-zone"
             icon="clock"
             label={t("shell.timezone")}
-            status={zoneDisplayName(zone, i18n.language) ?? timezoneName(zone, i18n.language)}
-            onOpen={() => setProfile("timezone")}
+            control={
+              <Locked when={setZone.isPending}>
+                <ZoneSelect value={zone} onChange={(z) => z !== zone && setZone.mutate(z)} />
+              </Locked>
+            }
           />
           <PrefRow
             id="account-activity"
@@ -133,41 +131,9 @@ export function AccountSection() {
               }
             />
           )}
-          <PrefRow
-            id="account-phone"
-            icon="phone"
-            label={t("shell.openOnPhone")}
-            status={t("shell.openOnPhoneHint")}
-            onOpen={() => setPhone(true)}
-          />
-          <PrefRow
-            id="account-password"
-            icon="key"
-            label={t(me.user.hasPassword === false ? "shell.addPassword" : "shell.newPassword")}
-            status={t(me.user.hasPassword === false ? "shell.addPasswordHint" : "shell.newPasswordRow")}
-            onOpen={() => setAccount("password")}
-          />
         </div>
       </Card>
-      {plans.length > 0 && (
-        <Card aria-labelledby="account-plans">
-          <CardHeader id="account-plans" title={t("settings.account.plans")} />
-          <div className="settings-rows">
-            {plans.map((p) => (
-              <PrefRow
-                key={p.key}
-                id={`account-plan-${p.key}`}
-                lead={<ProviderLogo id={p.logo} size="sm" />}
-                label={p.name}
-                status={<PlanMeter compact usage={p.usage} text={planMeterText(t, i18n.language)} />}
-                onOpen={() =>
-                  void navigate({ to: "/org/$orgId/settings/$section", params: { orgId: org.id, section: "usage" } })
-                }
-              />
-            ))}
-          </div>
-        </Card>
-      )}
+      {/* Your plans' limits live in IA e uso (open to everyone): one door, not a copy here. */}
       {/* A server from before the choice sends no `chatPrefs` and can't keep one. */}
       {org.chatPrefs !== undefined && <ChatLookSettings />}
       <Card aria-labelledby="account-device">
@@ -245,6 +211,26 @@ export function AccountSection() {
           )}
         </div>
       </Card>
+      {/* Rarely touched: getting in from elsewhere, kept out of the daily preferences. */}
+      <Card aria-labelledby="account-access">
+        <CardHeader id="account-access" title={t("settings.account.access")} />
+        <div className="settings-rows">
+          <PrefRow
+            id="account-phone"
+            icon="phone"
+            label={t("shell.openOnPhone")}
+            status={t("shell.openOnPhoneHint")}
+            onOpen={() => setPhone(true)}
+          />
+          <PrefRow
+            id="account-password"
+            icon="key"
+            label={t(me.user.hasPassword === false ? "shell.addPassword" : "shell.newPassword")}
+            status={t(me.user.hasPassword === false ? "shell.addPasswordHint" : "shell.newPasswordRow")}
+            onOpen={() => setAccount("password")}
+          />
+        </div>
+      </Card>
       <Card aria-labelledby="account-delete" className="settings-danger">
         <CardHeader
           id="account-delete"
@@ -269,9 +255,96 @@ export function AccountSection() {
           }
         />
       </Card>
-      <ProfileDialog focus={profile} onClose={() => setProfile(null)} />
       <OpenOnPhoneDialog open={phone} onClose={() => setPhone(false)} />
     </>
+  );
+}
+
+/**
+ * Perfil, right on its line: the face opens the photo builder; the name (the account's, the same in every workspace)
+ * and the @ here save when you leave the field or press Enter. No dialog in between.
+ */
+function ProfileRow() {
+  const { t } = useTranslation();
+  const { org, me } = useOrg();
+  const api = useApi();
+  const auth = useAuth();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const dir = useDirectory(org.id);
+  const mine = dir.memberById.get(me.user.id);
+  const [name, setName] = useState(me.user.name);
+  const [handle, setHandle] = useState(mine?.handle ?? "");
+  const [photo, setPhoto] = useState(false);
+  useEffect(() => setName(me.user.name), [me.user.name]);
+  useEffect(() => setHandle(mine?.handle ?? ""), [mine?.handle]);
+  const save = useMutation({
+    mutationFn: async (patch: { name?: string; handle?: string }) => {
+      if (patch.name !== undefined) {
+        const result = await auth.updateName(patch.name);
+        if (!result.ok) throw new NameRefused(result);
+      }
+      if (patch.handle !== undefined) await api.orgs.updateMe(org.id, { handle: patch.handle });
+    },
+    meta: { silent: true },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.me });
+      void qc.invalidateQueries({ queryKey: keys.members(org.id) });
+      void qc.invalidateQueries({ queryKey: keys.people(org.id) });
+      toast.show(t("shell.profileSaved"));
+    },
+    onError: (e) => {
+      setName(me.user.name);
+      setHandle(mine?.handle ?? "");
+      toast.show(e instanceof NameRefused ? authErrorText(t, e.result) : errorText(t, e));
+    },
+  });
+  const commitName = () => {
+    const next = name.trim();
+    if (!next) setName(me.user.name);
+    else if (next !== me.user.name) save.mutate({ name: next });
+  };
+  const commitHandle = () => {
+    const next = handle.trim();
+    if (next && next !== (mine?.handle ?? "")) save.mutate({ handle: next });
+    else setHandle(mine?.handle ?? "");
+  };
+  const enter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") e.currentTarget.blur();
+  };
+  return (
+    <div className="settings-row ac-actrow settings-row--lead account-profile">
+      <button
+        type="button"
+        className="settings-row__icon account-profile__face"
+        onClick={() => setPhoto(true)}
+        aria-label={t("photo.change")}
+        title={t("photo.change")}
+      >
+        <MyFace className="settings-row__face" />
+      </button>
+      <Locked when={save.isPending}>
+        <span className="account-profile__fields">
+          <Input
+            aria-label={t("auth.yourName")}
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={enter}
+          />
+          <AffixInput
+            aria-label={t("shell.handle")}
+            prefix="@"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            onBlur={commitHandle}
+            onKeyDown={enter}
+          />
+        </span>
+      </Locked>
+      <ChangeAvatarDialog open={photo} onClose={() => setPhoto(false)} />
+    </div>
   );
 }
 

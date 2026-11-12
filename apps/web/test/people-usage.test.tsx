@@ -154,7 +154,8 @@ describe("IA e uso › Pessoas", () => {
     const drawer = screen().getByRole("dialog", { name: "João" });
     expect(text(drawer)).toContain("Limite deste mês: US$ 30,00");
     expect(text(drawer)).toContain("Proposta para a Lumen Tiles");
-    expect(text(drawer)).toContain("Conversa privada com Atlas");
+    // A DM is the agent's name behind the lock; the lock says it is private.
+    expect(within(drawer).getByRole("img", { name: "Conversa privada com Atlas" })).toBeTruthy();
     expect(text(drawer)).toContain("6 pedidos");
     expect(within(drawer).getByRole("button", { name: /^Aumentar para US\$\s45,00 este mês$/ })).toBeTruthy();
   });

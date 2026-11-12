@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { DeleteAgentDialog } from "@/components/DeleteAgentDialog";
+import { useInviteDialog } from "@/components/invite/InviteDialog";
 import { ErrorState, LoadingCards } from "@/components/Loading";
 import { useOrg } from "@/components/org-context";
 import { TeamChart } from "@/components/team/TeamChart";
@@ -79,6 +80,13 @@ export function TeamPage() {
   const noAgents = view !== "usage" && !!data && agents.length === 0;
   const look = useRightHandLook();
   const maker = can(org, "create_agents");
+  // People join from here too: the workspace's invite dialog (ADR 0090), the same one the sidebar menu opens.
+  const invite = useInviteDialog();
+  const invites = can(org, "invite_people") && invite && (
+    <Button icon="plus" onClick={() => invite.open()}>
+      {t("shell.invite")}
+    </Button>
+  );
   // The empty state takes over the head's buttons: one way in, in the middle of the page.
   const makes = maker && (
     <>
@@ -102,7 +110,14 @@ export function TeamPage() {
             t("team.sectorsCount", { count: groups.length }),
           ].join(" · ")
         }
-        actions={!noAgents && makes}
+        actions={
+          (invites || (!noAgents && makes)) && (
+            <>
+              {invites}
+              {!noAgents && makes}
+            </>
+          )
+        }
       >
         <Segmented
           value={view}
