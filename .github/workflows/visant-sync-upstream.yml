@@ -1,0 +1,50 @@
+# Fork only (pedrojaques99/agentes-chat): brings visant/build up to agentes-chat/agentes-chat main twice a day.
+# Merged and checked -> pushed to visant/build. Anything else -> nothing pushed, an issue says why.
+# Production is not touched: deploying stays a manual step on the VPS.
+name: visant sync upstream
+
+on:
+  schedule:
+    - cron: "0 9,21 * * *" # 06:00 and 18:00 in Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: visant-sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'pedrojaques99/agentes-chat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: visant/build
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - name: Merge upstream and check
+        id: sync
+        shell: bash # -eo pipefail: the script's exit code, not tee's
+        run: |
+          git config user.name "visant-sync"
+          git config user.email "visant-sync@users.noreply.github.com"
+          bun scripts/visant/sync-upstream.ts 2>&1 | tee sync.log
+      - name: Push
+        if: success()
+        run: git push origin visant/build
+      - name: Say why it stopped
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Upstream sync stopped $(date -u +%F)"
+          body="$(tail -n 40 sync.log)"$'\n\n'"Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          open=$(gh issue list --state open --search "Upstream sync stopped in:title" --json number --jq '.[0].number')
+          if [ -n "$open" ]; then gh issue comment "$open" --body "$body"; else gh issue create --title "$title" --body "$body"; fi
