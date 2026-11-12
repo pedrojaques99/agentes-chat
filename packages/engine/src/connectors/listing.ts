@@ -74,6 +74,7 @@ export const CONNECTOR_BRANDS: Record<string, { file: string; color: string | nu
   meta: { file: "meta", color: "#0467DF" },
   klaviyo: { file: "klaviyo", color: null },
   millionsend: { file: "millionsend", color: null },
+  visantlabs: { file: "visantlabs", color: null },
   semrush: { file: "semrush", color: "#FF642D" },
   ahrefs: { file: "ahrefs", color: "#FF8800" },
   wix: { file: "wix", color: null },
