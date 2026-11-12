@@ -1362,7 +1362,6 @@
     "uses_one": "{{count}} kez kullanıldı",
     "uses_other": "{{count}} kez kullanıldı",
     "confirmed": "Bir kişi tarafından onaylandı",
-    "unconfirmed": "Henüz onaylanmadı",
     "confirm": "Onayla",
     "confirmedToast": "Onaylandı",
     "details": "Teknik ayrıntılar",

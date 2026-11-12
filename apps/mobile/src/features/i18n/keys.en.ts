@@ -1422,7 +1422,6 @@ export const featureKeysEn = {
     uses_one: "Used {{count}} time",
     uses_other: "Used {{count}} times",
     confirmed: "Confirmed by a person",
-    unconfirmed: "Not confirmed yet",
     confirm: "Confirm",
     confirmedToast: "Confirmed",
     details: "Technical details",

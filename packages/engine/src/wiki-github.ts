@@ -1,3 +1,4 @@
+import { SECRET_FILE } from "./agent-import";
 import { zip } from "./docx";
 import { ValidationError } from "./errors";
 import { can, requirePermission } from "./organizations";
@@ -13,7 +14,10 @@ export const WIKI_GITHUB_LIMITS = { bytes: 100 * 1024 * 1024, fileBytes: 50 * 10
 const NOTE = /\.(md|markdown)$/i;
 /** What a note may embed (the Drive's kinds the import sends). */
 const ATTACHMENT = /\.(png|jpe?g|gif|webp|svg|avif|bmp|pdf|mp4|mov|webm|mp3|wav|m4a|ogg|xlsx?|csv|docx?|pptx?|txt)$/i;
-/** Hidden folders and files (`.git`, `.github`, `.obsidian`, `.env`) and installed packages: never read. */
+/**
+ * Hidden folders and files (`.git`, `.github`, `.obsidian`, `.env`) and installed packages: never read. Nor are the
+ * files where apps keep keys and sign-ins (`SECRET_FILE`: `credentials.csv`, `secrets.txt`), whatever names them.
+ */
 const LEFT_OUT = /(^|\/)(\.[^/]*|node_modules)(\/|$)/;
 
 const tooLarge = () =>
@@ -23,8 +27,8 @@ const tooLarge = () =>
   );
 
 /**
- * The Markdown notes at or below a GitHub link, and the files beside them a note may embed, as a zip with paths
- * relative to the link. Nothing is saved: the app reviews it as it reviews a folder, then imports. A private
+ * The Markdown notes at or below a GitHub link, and the files a note names (an image, a PDF), as a zip with paths
+ * relative to the link: a file no note mentions never leaves the server. Nothing is saved: the app reviews it as it reviews a folder, then imports. A private
  * repository is read through the workspace's GitHub (the GitHub App's token for it, else the connection's) for who
  * edits any agent (`manage_agents`, as installing a skill from one asks); tokens never leave the server.
  */
@@ -40,8 +44,10 @@ export async function readGithubNotes(deps: GithubReadDeps, actorId: string, org
   }
   const base = target.path.replace(/^\/+|\/+$/g, "");
   const prefix = base ? `${base}/` : "";
+  const nameOf = (path: string) => path.split("/").pop() ?? path;
   const inside = [...files]
     .filter(([path]) => path.startsWith(prefix) && !LEFT_OUT.test(path.slice(prefix.length)))
+    .filter(([path]) => !SECRET_FILE.test(nameOf(path)))
     .map(([path, entry]) => ({ path: path.slice(prefix.length), entry }));
   const notes = inside.filter((f) => NOTE.test(f.path));
   if (notes.length === 0) {
@@ -49,14 +55,21 @@ export async function readGithubNotes(deps: GithubReadDeps, actorId: string, org
   }
   let total = notes.reduce((n, f) => n + f.entry.size, 0);
   if (notes.length > WIKI_GITHUB_LIMITS.notes || total > WIKI_GITHUB_LIMITS.bytes) throw tooLarge();
-  // Attachments while they fit, the smallest first: a note keeps its text without them.
+  const read = notes.map((f) => ({ path: f.path, data: inflateZipEntry(archive, f.entry) }));
+  const text = read.map((f) => new TextDecoder().decode(f.data)).join("\n");
+  /** A note names the file, as written or as a link encodes it. */
+  const named = (path: string) => text.includes(nameOf(path)) || text.includes(encodeURIComponent(nameOf(path)));
+  // Only what a note names, while it fits, the smallest first: a note keeps its text without them.
   const attachments = inside
-    .filter((f) => ATTACHMENT.test(f.path) && f.entry.size <= WIKI_GITHUB_LIMITS.fileBytes)
+    .filter((f) => ATTACHMENT.test(f.path) && f.entry.size <= WIKI_GITHUB_LIMITS.fileBytes && named(f.path))
     .sort((a, b) => a.entry.size - b.entry.size)
     .filter((f) => {
       if (total + f.entry.size > WIKI_GITHUB_LIMITS.bytes) return false;
       total += f.entry.size;
       return true;
     });
-  return zip([...notes, ...attachments].map((f) => [f.path, inflateZipEntry(archive, f.entry)]));
+  return zip([
+    ...read.map((f): [string, Uint8Array] => [f.path, f.data]),
+    ...attachments.map((f): [string, Uint8Array] => [f.path, inflateZipEntry(archive, f.entry)]),
+  ]);
 }

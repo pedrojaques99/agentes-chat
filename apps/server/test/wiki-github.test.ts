@@ -16,6 +16,12 @@ const http = (async (input: string | URL | Request) => {
       ["brain-main/README.md", "# Brain"],
       ["brain-main/clients/acme.md", "![logo](../img/logo.png)"],
       ["brain-main/img/logo.png", new Uint8Array([1, 2, 3])],
+      // No note names these: they stay on the server, as where keys are kept does even when named.
+      ["brain-main/img/unused.png", new Uint8Array([4])],
+      ["brain-main/finance/report.csv", "a,b"],
+      ["brain-main/secrets.txt", "KEY=1"],
+      ["brain-main/notes/keys.md", "See secrets.txt and credentials.md"],
+      ["brain-main/credentials.md", "KEY=1"],
       ["brain-main/.github/workflows/ci.md", "ci"],
       ["brain-main/.env", "KEY=1"],
       ["brain-main/src/run.sh", "echo"],
@@ -47,7 +53,7 @@ test("the notes behind a GitHub link come as a zip: Markdown and what it may emb
   const repository = await read("https://github.com/acme/brain");
   expect(repository.status).toBe(200);
   expect(repository.headers.get("content-type")).toBe("application/zip");
-  expect(await paths(repository)).toEqual(["README.md", "clients/acme.md", "img/logo.png"]);
+  expect(await paths(repository)).toEqual(["README.md", "clients/acme.md", "notes/keys.md", "img/logo.png"]);
 
   expect(await paths(await read("https://github.com/acme/brain/tree/main/clients"))).toEqual(["acme.md"]);
   expect(await paths(await read("https://github.com/acme/brain/blob/main/clients/acme.md"))).toEqual(["acme.md"]);

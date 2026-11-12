@@ -13262,26 +13262,15 @@
   "agentPage.access.filters.ask": {
     "value": "Ask for approval"
   },
-  "agentPage.access.allConnectors": {
-    "value": "Connectors:"
-  },
-  "agentPage.access.onlyRead": {
-    "value": "Read only"
-  },
+  "agentPage.access.setAll": "Change all",
   "agentPage.access.connectors": {
     "value": "{{org}}'s connectors"
   },
   "agentPage.access.connectorsPersonal": {
     "value": "Your connectors"
   },
-  "agentPage.access.oneLevel": {
-    "value": "One level per app"
-  },
   "agentPage.access.builtin": {
     "value": "Built into agentes"
-  },
-  "agentPage.access.builtinHelp": {
-    "value": "Drive, tasks, memory and more"
   },
   "agentPage.access.noMatch": {
     "value": "Nothing matching “{{q}}”"
@@ -15287,9 +15276,6 @@
   },
   "newAgent.connectOther": {
     "value": "Connect another app"
-  },
-  "newAgent.opensConnectors": {
-    "value": "opens Connectors"
   },
   "newAgent.approvalsNote": {
     "value": "Merge, deploy and rollback ask for approval in chat, unless the agent never asks."
@@ -26910,9 +26896,7 @@
   "access.cellAsks": {
     "value": "{{agent}} in {{resource}}: {{level}}, sensitive actions ask for approval"
   },
-  "access.asks": {
-    "value": "{{tool}} asks for approval"
-  },
+  "access.asksList": "Asks for approval: {{tools}}",
   "access.asksMore": {
     "value": {
       "one": "and {{count}} more",
@@ -26921,9 +26905,6 @@
   },
   "access.asksLegend": {
     "value": "asks for approval"
-  },
-  "access.noneText": {
-    "value": "No access."
   },
   "access.customText": {
     "value": "Granted tool by tool. Pick a level to simplify it."
@@ -30799,9 +30780,6 @@
   "database.agent.title": {
     "value": "Databases"
   },
-  "database.agent.help": {
-    "value": "Databases {{org}} connected. The agent only reads."
-  },
   "database.agent.levelText": {
     "value": "Queries the tables the rules allow, read-only."
   },
@@ -31162,17 +31140,8 @@
   "mail.agent.title": {
     "value": "Email"
   },
-  "mail.agent.help": {
-    "value": "One row per {{org}} mailbox."
-  },
   "mail.agent.none": {
     "value": "{{org}} hasn't connected any email yet."
-  },
-  "mail.agent.levelText.read": {
-    "value": "Searches and reads email. Nothing changes in the mailbox."
-  },
-  "mail.agent.levelText.write": {
-    "value": "Reads, drafts and organizes. Sending, replying and forwarding ask for approval."
   },
   "mail.agent.canDelete": {
     "value": "Can delete email"
@@ -31191,9 +31160,6 @@
       "one": "{{count}} rule",
       "other": "{{count}} rules"
     }
-  },
-  "mail.agent.noRules": {
-    "value": "No extra rules"
   },
   "mail.agent.save": {
     "value": "Save"
@@ -31214,7 +31180,7 @@
     "value": "Agents can't use it until it's reconnected."
   },
   "mail.agent.ownerOnly": {
-    "value": "Only {{name}} can give access: they connected this mailbox."
+    "value": "Only {{name}} gives access to this mailbox."
   },
   "mail.agent.ownerOnlyUnknown": {
     "value": "Only the person who connected this mailbox can give access."
@@ -31222,6 +31188,7 @@
   "mail.agent.onlyYou": {
     "value": "{{name}} uses this mailbox only for you, in your DM."
   },
+  "mail.agent.onlyYouAll": "{{name}} uses your mailboxes only for you, in your DM.",
   "mail.agent.remove": {
     "value": "Remove access"
   },

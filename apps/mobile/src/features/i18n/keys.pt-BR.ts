@@ -1386,7 +1386,6 @@ export const featureKeysPtBR = {
     uses_one: "Usada {{count}} vez",
     uses_other: "Usada {{count}} vezes",
     confirmed: "Confirmada por uma pessoa",
-    unconfirmed: "Ainda sem confirmação",
     confirm: "Confirmar",
     confirmedToast: "Confirmada",
     details: "Detalhes técnicos",

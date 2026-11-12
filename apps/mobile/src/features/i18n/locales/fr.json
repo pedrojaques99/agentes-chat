@@ -1439,7 +1439,6 @@
     "uses_many": "Utilisé {{count}} fois",
     "uses_other": "Utilisé {{count}} fois",
     "confirmed": "Confirmé par une personne",
-    "unconfirmed": "Pas encore confirmé",
     "confirm": "Confirmer",
     "confirmedToast": "Confirmée",
     "details": "Détails techniques",

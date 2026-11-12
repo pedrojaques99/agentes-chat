@@ -590,7 +590,7 @@ function Profile({ id }: { id: string }) {
                 />
               ),
             )}
-            {/* Its mailboxes beside its apps (ADR 0038): a tap on one's own changes the level. */}
+            {/* Its mailboxes beside its apps (ADR 0038): a tap on one's own picks the level. */}
             {mailboxes.map((m) =>
               m.remove ? (
                 <ButtonRow
@@ -617,8 +617,10 @@ function Profile({ id }: { id: string }) {
                   icon="mail"
                   label={m.address}
                   {...(m.sub ? { sub: m.sub, subLines: 2 } : {})}
+                  {...(m.hint ? { hint: m.hint } : {})}
                   value={m.level}
-                  {...(m.onPress ? { onPress: m.onPress } : {})}
+                  // The value changes in its row, through the app's picker: its mark, not a chevron to a screen.
+                  {...(m.onPress ? { menu: true, onPress: m.onPress } : {})}
                 />
               ),
             )}
@@ -1010,7 +1012,14 @@ function GivenRules({ agentId, name, rightHand }: { agentId: string; name: strin
     ]);
   return (
     <>
-      <GroupedHeader>{t("agentPage.memory.rules")}</GroupedHeader>
+      <GroupedHeader
+        hint={{
+          name: t("common.about", { label: t("agentPage.memory.rules") }),
+          text: t(rightHand ? "agentPage.memory.rulesNoteRightHand" : "agentPage.memory.rulesNote"),
+        }}
+      >
+        {t("agentPage.memory.rules")}
+      </GroupedHeader>
       <GroupedList>
         {list.map((m) => {
           const row = (
@@ -1041,9 +1050,6 @@ function GivenRules({ agentId, name, rightHand }: { agentId: string; name: strin
           );
         })}
       </GroupedList>
-      <GroupedFooter>
-        {t(rightHand ? "agentPage.memory.rulesNoteRightHand" : "agentPage.memory.rulesNote")}
-      </GroupedFooter>
     </>
   );
 }

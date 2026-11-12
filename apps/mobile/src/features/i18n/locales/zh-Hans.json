@@ -1282,7 +1282,6 @@
     "agentLine_other": "{{count}} 条记忆",
     "uses_other": "已使用 {{count}} 次",
     "confirmed": "已由成员确认",
-    "unconfirmed": "尚未确认",
     "confirm": "确认",
     "confirmedToast": "已确认",
     "details": "技术细节",

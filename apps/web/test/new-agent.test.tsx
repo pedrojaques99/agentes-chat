@@ -518,7 +518,7 @@ describe("Criar agente: what gets created", () => {
     await click(within(github).getByRole("radio", { name: "Ler e escrever" }));
     // Writing: the sensitive action shows as asking for approval.
     expect(screen().getByRole("list", { name: "Conectores e níveis" }).textContent).toContain(
-      "Fazer merge pede aprovação",
+      "Pede aprovação: Fazer merge",
     );
     await proceed(3);
     await click(screen().getByRole("button", { name: "Criar Iris" }));

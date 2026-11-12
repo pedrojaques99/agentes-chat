@@ -1751,7 +1751,6 @@
       "agentComputer.button",
       "agentComputer.phone.trackpad",
       "agentComputer.state.offline",
-      "agentPage.access.allConnectors",
       "agentPage.access.filter",
       "agentPage.activity.filters.routines",
       "agentPage.activity.inMonth",

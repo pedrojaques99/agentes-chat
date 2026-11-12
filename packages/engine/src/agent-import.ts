@@ -36,7 +36,7 @@ const ALLOWED = [
 ];
 const MEMORY = ALLOWED.length - 1;
 /** Where other apps keep keys and sign-ins: never read, even when the name fits the list. */
-const SECRET_FILE =
+export const SECRET_FILE =
   /^(\.env.*|auth(-profiles)?\.json|credentials?\..*|secrets?\..*|mcp-(oauth|tokens).*|cursor-session\.json)$/i;
 /** Requests to GitHub at a time. */
 const PARALLEL = 8;
