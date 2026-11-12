@@ -96,6 +96,7 @@ import { StorageSection } from "@/components/StorageSettings";
 import { TeamMemoryCard } from "@/components/TeamMemory";
 import { VoiceSettingsSection } from "@/components/VoiceSettings";
 import { VaultSection } from "@/components/vault/VaultSection";
+import { UpstreamCard } from "@/components/visant/UpstreamCard";
 import { WorkspaceModeDialog } from "@/components/WorkspaceModeDialog";
 import { ZoneSelect } from "@/components/ZoneSelect";
 import { useCentreCurrent } from "@/hooks/useCentreCurrent";
@@ -637,6 +638,7 @@ function GeneralSection() {
       <TeamMemoryCard />
 
       <UsageStatisticsCard />
+      <UpstreamCard />
       {org.role === "owner" && !org.deletion && <DeleteWorkspaceCard />}
       <OrgLogoDialog open={logo} onClose={() => setLogo(false)} />
       <WorkspaceModeDialog
