@@ -57,8 +57,14 @@ O Hermes continua ligado durante o teste. Nada dele é desligado.
 - [x] **Prova em produção (12/11):**
   - Rollo pelo chat: 384 ferramentas do Premiere, Figma e jaques-os (`supervisor.js status`);
   - Vicent: `hostname` = srv1591821, skills da casa, rotina das 8h.
-- [ ] Conectores: Visant Labs e visant-board (o dono cola a chave), Linear (o dono autoriza o OAuth).
-- [ ] Runner do PC como serviço: o dono roda `bun apps/server/runner/main.ts service install` em `Z:\Cursorgentes-chat` (o classificador bloqueia que eu crie a tarefa).
+- [x] Conectores ativos, testados pelo chat em 12/11 (só leitura):
+  - Linear: o Norton contou 26 issues abertas no VSN;
+  - Visant Labs (OAuth; a correção do CSP `form-action` foi para o ar no visantlabs-os): o Rollo listou 32 guias de marca;
+  - Visant Board (chave): o Miguel leu clientes. O MCP do board não tem listagem por data, uma lacuna do lado do board;
+  - MillionSend: o Torres leu, e não há campanhas.
+- [x] Runner do PC permanente: `agentes-runner.vbs` na pasta Inicializar do usuário (o `schtasks ONLOGON` exige admin).
+- [x] App desktop: atalho `agentes.chat` na Área de Trabalho (`chrome --app=https://agentes.visant.co`).
+- [x] PR upstream preparado: `feat/visant-labs-connector` (Visant Labs como conector de um clique).
 - [ ] Teste 1:1 das 10 tarefas.
 
 Atualizar a imagem: `cd /opt/agentes/src && git pull && docker build -t agentes-visant:$(git rev-parse --short HEAD) .`, trocar `AGENTES_IMAGE` no `.env` e `docker compose up -d`.
