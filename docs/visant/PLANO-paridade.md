@@ -49,8 +49,17 @@ O Hermes continua ligado durante o teste. Nada dele é desligado.
   - PC pareado pelo runner do fork (`bun apps/server/runner/main.ts pair|start`);
   - Rollo com `claude_code`, a conta Claude Max do PC e "Usar meus MCPs deste computador" ligado;
   - pelo chat, ele listou cerca de 382 ferramentas do Premiere e as do Figma, e rodou `node desktop/supervisor.js status` no jaques-os (8 de 26 serviços no ar). Resposta em cerca de 20 s.
-- [ ] Conta de dono (o dono abre `/opt/agentes/owner-link.txt`).
-- [ ] Import, cérebros, PC pareado, conectores, rotinas, teste 1:1.
+- [x] Conta de dono e workspace **Visant**; Claude Max logado no computador do servidor.
+- [x] Import em produção: o time do Tucano (7) mais o #visant-team; o Vicent pelo Hermes (2 skills, 3 rotinas, 3 memórias).
+- [x] Cérebros:
+  - Miguel e Vicent no `srv1591821`, com `claude_code` e a conta Max;
+  - Rollo, Félix, Ageu, Torres, Norton e Darlan no **PC Visant**, com `claude_code`, a conta do PC e `personalMcp` ligado.
+- [x] **Prova em produção (12/11):**
+  - Rollo pelo chat: 384 ferramentas do Premiere, Figma e jaques-os (`supervisor.js status`);
+  - Vicent: `hostname` = srv1591821, skills da casa, rotina das 8h.
+- [ ] Conectores: Visant Labs e visant-board (o dono cola a chave), Linear (o dono autoriza o OAuth).
+- [ ] Runner do PC como serviço: o dono roda `bun apps/server/runner/main.ts service install` em `Z:\Cursorgentes-chat` (o classificador bloqueia que eu crie a tarefa).
+- [ ] Teste 1:1 das 10 tarefas.
 
 Atualizar a imagem: `cd /opt/agentes/src && git pull && docker build -t agentes-visant:$(git rev-parse --short HEAD) .`, trocar `AGENTES_IMAGE` no `.env` e `docker compose up -d`.
 
