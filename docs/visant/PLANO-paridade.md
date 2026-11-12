@@ -45,6 +45,10 @@ O Hermes continua ligado durante o teste. Nada dele é desligado.
 - [x] Lacuna 1 (MCP pessoal) no código e em produção.
 - [x] Computador do servidor: usuário `agentes` (modo simples, Ubuntu sem BPF), Node 24 em `/opt/node24`, Claude Code pelo npm, Chromium pelo apt, runner `host` como serviço de usuário (`journalctl --user -u agentes-runner`). Esperando a primeira org.
 - [x] Pacotes de import em `~/Downloads/agentes-import/` (time do Tucano + Vicent do Hermes, sem segredos).
+- [x] **Prova local de ponta a ponta (12/11)**, numa instância de teste em `localhost:3300` (PGlite), com o time importado do Tucano:
+  - PC pareado pelo runner do fork (`bun apps/server/runner/main.ts pair|start`);
+  - Rollo com `claude_code`, a conta Claude Max do PC e "Usar meus MCPs deste computador" ligado;
+  - pelo chat, ele listou cerca de 382 ferramentas do Premiere e as do Figma, e rodou `node desktop/supervisor.js status` no jaques-os (8 de 26 serviços no ar). Resposta em cerca de 20 s.
 - [ ] Conta de dono (o dono abre `/opt/agentes/owner-link.txt`).
 - [ ] Import, cérebros, PC pareado, conectores, rotinas, teste 1:1.
 
