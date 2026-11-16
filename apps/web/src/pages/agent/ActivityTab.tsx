@@ -1,6 +1,7 @@
 import type { Run } from "@agenteschat/client";
 import { useAgentDetail, useChannels, useRoutines, useRuns, useUsage } from "@agenteschat/client";
-import { runErrorText } from "@agenteschat/client/lib/errors";
+import type { BrainScreen } from "@agenteschat/client/lib/agent-edit";
+import { FIX_BRAIN_SCREEN, failedRunFix, runErrorText, runErrorWords } from "@agenteschat/client/lib/errors";
 import {
   capitalize,
   dayLabel,
@@ -40,6 +41,7 @@ import { colorOf } from "@/components/Sky";
 import { groupByDay, isRoutineRun, type RunFilter, runMatches } from "@/lib/agent-edit";
 import { lookOf } from "@/lib/look";
 import { usageShown } from "@/lib/plan-usage";
+import { BrainDialog } from "./brain/BrainDialog";
 import { useAgentEdit } from "./context";
 import { RunChip, runWhere } from "./pieces";
 
@@ -49,8 +51,8 @@ export const RUNS_PAGE = 20;
 /** Why a run failed, in the person's language (the server's code), else its own words. */
 const failure = (t: TFunction, run: Run) =>
   runErrorText(t, run.errorCode, run.errorParams) ??
-  run.errorParams?.detail ??
-  run.error ??
+  runErrorWords(run.errorParams?.detail) ??
+  runErrorWords(run.error) ??
   t("agentPage.activity.errors.unknown");
 
 /**
@@ -177,6 +179,7 @@ export function ActivityTab() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<RunFilter>("all");
   const [shown, setShown] = useState(RUNS_PAGE);
+  const [brainAt, setBrainAt] = useState<BrainScreen | null>(null);
   const prompts = useMemo(
     () => (routines.data ?? []).flatMap((r) => (r.agentId === agent.id && r.prompt ? [r.prompt] : [])),
     [routines.data, agent.id],
@@ -209,8 +212,16 @@ export function ActivityTab() {
   const days = groupByDay(visible);
   // No runs at all: the empty state alone (its own button is the way in), not a search or filters over nothing.
   const bare = runs.isSuccess && list.length === 0;
+  // Another model or account, opened in place on "Quem pensa", beside the newest run that failed for want of one.
+  const fixOf = (r: Run) => {
+    const fix = r.status === "failed" ? failedRunFix(r.errorCode, { keys: false, admin: true, owner: true }) : null;
+    return fix === "changeModel" ? (can("model") ? fix : null) : fix === "changeAccount" && can("brain") ? fix : null;
+  };
+  const fixRun = list.find(fixOf);
+  const fix = fixRun ? fixOf(fixRun) : null;
   return (
     <>
+      {brainAt && <BrainDialog at={brainAt} onClose={() => setBrainAt(null)} />}
       <MonthStrip
         color={colorOf(agent)}
         month={month}
@@ -340,6 +351,13 @@ export function ActivityTab() {
                               <Icon name="alert" size={14} />
                               {/* A computer's own code, worded generically, only on hover (as in the chat). */}
                               <span title={r.errorParams?.code}>{failure(t, r)}</span>
+                            </span>
+                          )}
+                          {fix && r.id === fixRun?.id && (
+                            <span>
+                              <Button size="sm" onClick={() => setBrainAt(FIX_BRAIN_SCREEN[fix])}>
+                                {t(`usageCard.${fix}`)}
+                              </Button>
                             </span>
                           )}
                           {r.deniedRepo && saved.repos?.mode === "some" && !covers(saved.repos.list, r.deniedRepo) && (
