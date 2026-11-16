@@ -492,6 +492,7 @@ jobs:
 
       # Unsigned for now: SmartScreen asks once ("More info › Run anyway") until a code-signing certificate.
       - name: Build the app (NSIS)
+        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -500,6 +501,14 @@ jobs:
           projectPath: apps/desktop
           tauriScript: bun run tauri
           args: --config src-tauri/tauri.native.conf.json
+
+      - name: Build the app (NSIS, unsigned updater on fork)
+        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY == '' }}
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
+        with:
+          projectPath: apps/desktop
+          tauriScript: bun run tauri
+          args: --config src-tauri/tauri.native.conf.json --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       # What the installer puts next to the app: the two sidecars and the server's files.
       - name: Check the app's files
@@ -514,18 +523,20 @@ jobs:
           test -s "$RELEASE/licenses/agent-browser/LICENSE"
 
       - name: Name the build files and the checksum
+        env:
+          HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         shell: bash
         run: |
           BUNDLE=apps/desktop/src-tauri/target/release/bundle/nsis
           SRC=$(ls "$BUNDLE"/*-setup.exe | head -1)
-          if [ -z "$SRC" ] || [ ! -s "$SRC.sig" ]; then
-            echo "::error::No signed installer in $BUNDLE"
+          if [ -z "$SRC" ] || { [ "$HAS_UPDATER_KEY" = "true" ] && [ ! -s "$SRC.sig" ]; }; then
+            echo "::error::No installer in $BUNDLE"
             exit 1
           fi
           NAME="agentes_${VERSION}_${{ matrix.arch }}-setup.exe"
           mkdir -p out
           cp "$SRC" "out/$NAME"
-          cp "$SRC.sig" "out/$NAME.sig"
+          if [ -s "$SRC.sig" ]; then cp "$SRC.sig" "out/$NAME.sig"; fi
           (cd out && sha256sum "$NAME" > "$NAME.sha256")
           ls -l out
 
