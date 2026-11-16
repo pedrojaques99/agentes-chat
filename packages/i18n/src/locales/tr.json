@@ -3269,7 +3269,7 @@
       "gemini": {
         "title": "Gemini planınız",
         "tiers": "Google AI Pro, Google AI Ultra veya Gemini Enterprise",
-        "warning": "Google, kişisel bir Gemini planını başka uygulamaların içinde kullanmanın hesabın askıya alınmasına yol açabileceğini söylüyor."
+        "warning": "Google, kişisel bir Gemini planını başka uygulamaların içinde kullanmanın hesabın askıya alınmasına yol açabileceğini söylüyor. Bu riskten kaçınmak için bir Gemini API anahtarı veya Gemini Enterprise kullanın."
       },
       "zen": {
         "title": "OpenCode",
@@ -4210,6 +4210,7 @@
     "seeNewer": "Daha yeni isteği gör",
     "computerAway": "{{agent}} bilgisayarı şu anda yanıt vermiyor. Bu istek {{time}} saatine kadar açık kalır. Birazdan yeniden deneyin.",
     "computerPaused": "{{agent}} bilgisayarı sahibi tarafından duraklatıldı. Bu istek {{time}} saatine kadar açık kalır.",
+    "insecureContext": "Bu sayfa https üzerinden açılmadı, bu yüzden tarayıcı anahtarı kilitlemiyor. Sayfayı https:// (veya localhost) adresinden açın.",
     "failed": "İletilemedi. Ajanın bilgisayarı açık mı?",
     "changed": "Bu istek sen yanıtlarken değişti. Hiçbir şey gönderilmedi. Yeniden gönder.",
     "empty": "Değeri yazın.",

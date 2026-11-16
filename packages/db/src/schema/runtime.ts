@@ -407,6 +407,8 @@ export const usageRecords = pgTable(
     index().on(t.orgId, t.personId, t.createdAt),
     // The operator's work analytics read every workspace's usage in a range of dates.
     index().on(t.createdAt),
+    // Usage by run (the task list, routines, cost): read per run id, never by time.
+    index().on(t.runId),
   ],
 );
 

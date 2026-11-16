@@ -3281,7 +3281,7 @@
       "gemini": {
         "title": "Je Gemini-abonnement",
         "tiers": "Google AI Pro, Google AI Ultra of Gemini Enterprise",
-        "warning": "Volgens Google kan het gebruik van een persoonlijk Gemini-abonnement in andere apps ertoe leiden dat het account wordt geschorst."
+        "warning": "Volgens Google kan het gebruik van een persoonlijk Gemini-abonnement in andere apps ertoe leiden dat het account wordt geschorst. Gebruik een Gemini-API-sleutel of Gemini Enterprise om dat risico te vermijden."
       },
       "zen": {
         "title": "OpenCode",
@@ -4225,6 +4225,7 @@
     "seeNewer": "Nieuwer verzoek bekijken",
     "computerAway": "De computer van {{agent}} antwoordt nu niet. Dit verzoek blijft open tot {{time}}. Probeer het zo opnieuw.",
     "computerPaused": "De computer van {{agent}} is door de eigenaar gepauzeerd. Dit verzoek blijft open tot {{time}}.",
+    "insecureContext": "Deze pagina is niet via https geopend, dus de browser vergrendelt de sleutel niet. Open hem via https:// (of localhost).",
     "failed": "Kon het niet leveren. Staat de computer van de agent aan?",
     "changed": "Dit verzoek is gewijzigd terwijl je antwoordde. Er is niets verzonden. Stuur het opnieuw.",
     "empty": "Typ de waarde.",

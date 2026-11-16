@@ -8057,7 +8057,7 @@
     "value": "Google AI Pro, Google AI Ultra or Gemini Enterprise"
   },
   "connectAi.plan.gemini.warning": {
-    "value": "Google says using a personal Gemini plan inside other apps can get the account suspended."
+    "value": "Google says using a personal Gemini plan inside other apps can get the account suspended. To avoid that risk, use a Gemini API key or Gemini Enterprise."
   },
   "connectAi.plan.zen.title": {
     "value": "OpenCode"
@@ -10334,6 +10334,9 @@
   },
   "secret.computerPaused": {
     "value": "{{agent}}'s computer is paused by its owner. This request stays open until {{time}}."
+  },
+  "secret.insecureContext": {
+    "value": "This page isn't open over https, so the browser won't lock the key. Open it at https:// (or localhost)."
   },
   "secret.failed": {
     "value": "Couldn't deliver it. Is the agent's computer on?"

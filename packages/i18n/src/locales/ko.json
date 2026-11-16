@@ -3152,7 +3152,7 @@
       "gemini": {
         "title": "내 Gemini 요금제",
         "tiers": "Google AI Pro, Google AI Ultra 또는 Gemini Enterprise",
-        "warning": "Google에 따르면 개인 Gemini 요금제를 다른 앱 안에서 사용하면 계정이 정지될 수 있어요."
+        "warning": "Google에 따르면 개인 Gemini 요금제를 다른 앱 안에서 사용하면 계정이 정지될 수 있어요. 이 위험을 피하려면 Gemini API 키나 Gemini Enterprise를 사용하세요."
       },
       "zen": {
         "title": "OpenCode",
@@ -4080,6 +4080,7 @@
     "seeNewer": "새 요청 보기",
     "computerAway": "{{agent}}의 컴퓨터가 지금 응답하지 않아요. 이 요청은 {{time}}까지 열려 있어요. 잠시 후 다시 시도하세요.",
     "computerPaused": "소유자가 {{agent}}의 컴퓨터를 일시 중지했어요. 이 요청은 {{time}}까지 열려 있어요.",
+    "insecureContext": "이 페이지는 https로 열려 있지 않아 브라우저가 키를 잠그지 않습니다. https://(또는 localhost)로 여세요.",
     "failed": "전달하지 못했어요. 에이전트의 컴퓨터가 켜져 있나요?",
     "changed": "답하는 동안 이 요청이 바뀌었어요. 아무것도 보내지 않았어요. 다시 보내 주세요.",
     "empty": "값을 입력하세요.",

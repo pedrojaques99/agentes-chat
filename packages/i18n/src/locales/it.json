@@ -3400,7 +3400,7 @@
       "gemini": {
         "title": "Il tuo piano Gemini",
         "tiers": "Google AI Pro, Google AI Ultra o Gemini Enterprise",
-        "warning": "Google dice che usare un piano Gemini personale all'interno di altre app può portare alla sospensione dell'account."
+        "warning": "Google dice che usare un piano Gemini personale all'interno di altre app può portare alla sospensione dell'account. Per evitare questo rischio, usa una chiave API di Gemini o Gemini Enterprise."
       },
       "zen": {
         "title": "OpenCode",
@@ -4359,6 +4359,7 @@
     "seeNewer": "Vedi la richiesta più recente",
     "computerAway": "Il computer di {{agent}} non risponde in questo momento. Questa richiesta resta aperta fino alle {{time}}. Riprova tra un attimo.",
     "computerPaused": "Il computer di {{agent}} è in pausa per scelta del proprietario. Questa richiesta resta aperta fino alle {{time}}.",
+    "insecureContext": "Questa pagina non è aperta in https, quindi il browser non blocca la chiave. Aprila su https:// (o localhost).",
     "failed": "Non è stato possibile consegnarlo. Il computer dell'agente è acceso?",
     "changed": "Questa richiesta è cambiata mentre rispondevi. Non è stato inviato nulla. Inviala di nuovo.",
     "empty": "Scrivi il valore.",

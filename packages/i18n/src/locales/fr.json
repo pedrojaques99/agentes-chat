@@ -3398,7 +3398,7 @@
       "gemini": {
         "title": "Votre abonnement Gemini",
         "tiers": "Google AI Pro, Google AI Ultra ou Gemini Enterprise",
-        "warning": "Google indique qu'utiliser un abonnement Gemini personnel dans d'autres applications peut entraîner la suspension du compte."
+        "warning": "Google indique qu'utiliser un abonnement Gemini personnel dans d'autres applications peut entraîner la suspension du compte. Pour éviter ce risque, utilisez une clé API Gemini ou Gemini Enterprise."
       },
       "zen": {
         "title": "OpenCode",
@@ -4358,6 +4358,7 @@
     "seeNewer": "Voir la demande plus récente",
     "computerAway": "L'ordinateur de {{agent}} ne répond pas pour le moment. Cette demande reste ouverte jusqu'à {{time}}. Réessayez dans un instant.",
     "computerPaused": "L'ordinateur de {{agent}} est mis en pause par son propriétaire. Cette demande reste ouverte jusqu'à {{time}}.",
+    "insecureContext": "Cette page n'est pas ouverte en https, le navigateur ne verrouille donc pas la clé. Ouvrez-la en https:// (ou localhost).",
     "failed": "Impossible de le transmettre. L'ordinateur de l'agent est-il allumé ?",
     "changed": "Cette demande a changé pendant que vous répondiez. Rien n'a été envoyé. Renvoyez-la.",
     "empty": "Saisissez la valeur.",

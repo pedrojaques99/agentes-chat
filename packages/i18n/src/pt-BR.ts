@@ -3462,7 +3462,8 @@ export const ptBR = {
       gemini: {
         title: "Seu plano do Gemini",
         tiers: "Google AI Pro, Google AI Ultra ou Gemini Enterprise",
-        warning: "O Google diz que usar um plano pessoal do Gemini dentro de outros apps pode suspender a conta.",
+        warning:
+          "O Google diz que usar um plano pessoal do Gemini dentro de outros apps pode suspender a conta. Para não correr esse risco, use uma chave de API do Gemini ou o Gemini Enterprise.",
       },
       zen: { title: "OpenCode", tiers: "Modelos grátis, ou a sua chave do OpenCode" },
       zai: { tiers: "Lite, Pro ou Max" },
@@ -4455,6 +4456,8 @@ export const ptBR = {
     computerAway:
       "O computador de {{agent}} não está respondendo agora. O pedido continua aberto até {{time}}. Tente de novo em instantes.",
     computerPaused: "O dono pausou o computador de {{agent}}. O pedido continua aberto até {{time}}.",
+    insecureContext:
+      "Esta página não está aberta em https, então o navegador não tranca a chave. Abra pelo endereço https:// (ou localhost).",
     failed: "Não deu para entregar. O computador do agente está ligado?",
     changed: "Este pedido mudou enquanto você respondia. Nada foi enviado. Envie de novo.",
     empty: "Digite o valor.",

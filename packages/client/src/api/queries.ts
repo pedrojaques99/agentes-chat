@@ -1742,11 +1742,19 @@ export function cacheAgentProposal(
   void qc.invalidateQueries({ queryKey: keys.agentProposal(orgId, where.messageId) });
 }
 
-/** A new message's `clientId`: sent again with the same one (its answer was lost), it's written only once. */
-export const newClientId = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+/**
+ * A new message's `clientId`: sent again with the same one (its answer was lost), it's written only once. A v4 UUID
+ * also on a plain-http page, where `crypto.randomUUID` is missing but `getRandomValues` isn't, since some routes take
+ * only a UUID.
+ */
+export const newClientId = (): string => {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = ((b[6] ?? 0) & 0x0f) | 0x40;
+  b[8] = ((b[8] ?? 0) & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+};
 
 /**
  * What `chat.post` gets for a message of mine: the quoted message, the files by id and a GIF or a sticker by what

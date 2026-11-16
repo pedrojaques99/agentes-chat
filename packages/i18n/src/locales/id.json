@@ -3162,7 +3162,7 @@
       "gemini": {
         "title": "Paket Gemini-mu",
         "tiers": "Google AI Pro, Google AI Ultra, atau Gemini Enterprise",
-        "warning": "Google menyatakan bahwa memakai paket Gemini pribadi di dalam aplikasi lain bisa membuat akun ditangguhkan."
+        "warning": "Google menyatakan bahwa memakai paket Gemini pribadi di dalam aplikasi lain bisa membuat akun ditangguhkan. Untuk menghindari risiko itu, pakai kunci API Gemini atau Gemini Enterprise."
       },
       "zen": {
         "title": "OpenCode",
@@ -4093,6 +4093,7 @@
     "seeNewer": "Lihat permintaan yang lebih baru",
     "computerAway": "Komputer {{agent}} tidak merespons saat ini. Permintaan ini tetap terbuka sampai {{time}}. Coba lagi sebentar lagi.",
     "computerPaused": "Komputer {{agent}} dijeda oleh pemiliknya. Permintaan ini tetap terbuka sampai {{time}}.",
+    "insecureContext": "Halaman ini tidak dibuka lewat https, jadi browser tidak mengunci kuncinya. Buka di https:// (atau localhost).",
     "failed": "Tidak bisa dikirim. Apakah komputer agen menyala?",
     "changed": "Permintaan ini berubah saat kamu menjawab. Tidak ada yang terkirim. Kirim lagi.",
     "empty": "Ketik nilainya.",

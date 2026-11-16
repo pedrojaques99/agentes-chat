@@ -3154,7 +3154,7 @@
       "gemini": {
         "title": "あなたのGeminiプラン",
         "tiers": "Google AI Pro、Google AI Ultra、またはGemini Enterprise",
-        "warning": "Googleによると、個人のGeminiプランを他のアプリ内で使うと、アカウントが停止されることがあります。"
+        "warning": "Googleによると、個人のGeminiプランを他のアプリ内で使うと、アカウントが停止されることがあります。このリスクを避けるには、Gemini APIキーまたはGemini Enterpriseを使ってください。"
       },
       "zen": {
         "title": "OpenCode",
@@ -4082,6 +4082,7 @@
     "seeNewer": "新しいリクエストを見る",
     "computerAway": "{{agent}}のコンピューターが今は応答していません。このリクエストは{{time}}まで開いています。少ししてからもう一度お試しください。",
     "computerPaused": "{{agent}}のコンピューターは所有者が一時停止しています。このリクエストは{{time}}まで開いています。",
+    "insecureContext": "このページは https で開かれていないため、ブラウザーはキーを保護できません。https://(または localhost)で開いてください。",
     "failed": "送信できませんでした。エージェントのコンピューターの電源は入っていますか？",
     "changed": "回答中にこのリクエストが変更されました。何も送信されていません。もう一度送信してください。",
     "empty": "値を入力してください。",

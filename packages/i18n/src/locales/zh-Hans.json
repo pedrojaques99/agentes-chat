@@ -3155,7 +3155,7 @@
       "gemini": {
         "title": "你的 Gemini 套餐",
         "tiers": "Google AI Pro、Google AI Ultra 或 Gemini Enterprise",
-        "warning": "Google 表示，在其他应用中使用个人 Gemini 套餐可能导致账号被停用。"
+        "warning": "Google 表示，在其他应用中使用个人 Gemini 套餐可能导致账号被停用。为避免这一风险，请使用 Gemini API 密钥或 Gemini Enterprise。"
       },
       "zen": {
         "title": "OpenCode",
@@ -4083,6 +4083,7 @@
     "seeNewer": "查看更新的请求",
     "computerAway": "{{agent}} 的电脑目前没有响应。此请求在 {{time}} 前保持开放。请稍后重试。",
     "computerPaused": "{{agent}} 的电脑已被所有者暂停。此请求在 {{time}} 前保持开放。",
+    "insecureContext": "此页面不是通过 https 打开的,因此浏览器无法锁定密钥。请通过 https://(或 localhost)打开。",
     "failed": "无法送达。智能体的电脑开着吗？",
     "changed": "你回复时此请求已更改。未发送任何内容。请重新发送。",
     "empty": "请输入值。",
