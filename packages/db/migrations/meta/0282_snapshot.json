@@ -1,6 +1,6 @@
 {
-  "id": "b1c7274e-727e-41e8-8e97-370d297741b1",
-  "prevId": "a39c9ef5-7575-4e38-92e0-cc3f1f6464a5",
+  "id": "054dc6b4-63b8-4096-b4b9-b8c5d4b57069",
+  "prevId": "eefbf165-a463-4baf-9f94-b3c1e2cdfdc9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -318,6 +318,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "brain_personal_mcp": {
+          "name": "brain_personal_mcp",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "brain_account_id": {
           "name": "brain_account_id",
@@ -19379,6 +19386,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "usage_records_run_id_index": {
+          "name": "usage_records_run_id_index",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -27131,6 +27153,21 @@
             },
             {
               "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "routine_runs_agent_run_id_index": {
+          "name": "routine_runs_agent_run_id_index",
+          "columns": [
+            {
+              "expression": "agent_run_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
