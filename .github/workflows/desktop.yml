@@ -491,8 +491,15 @@ jobs:
         run: rm -rf apps/desktop/src-tauri/target/release/bundle
 
       # Unsigned for now: SmartScreen asks once ("More info › Run anyway") until a code-signing certificate.
+      - name: Check updater signing key
+        id: updater_key
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: echo "present=$([ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Build the app (NSIS)
-        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        if: ${{ steps.updater_key.outputs.present == 'true' }}
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -503,7 +510,7 @@ jobs:
           args: --config src-tauri/tauri.native.conf.json
 
       - name: Build the app (NSIS, unsigned updater on fork)
-        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY == '' }}
+        if: ${{ steps.updater_key.outputs.present != 'true' }}
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         with:
           projectPath: apps/desktop
@@ -523,13 +530,11 @@ jobs:
           test -s "$RELEASE/licenses/agent-browser/LICENSE"
 
       - name: Name the build files and the checksum
-        env:
-          HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         shell: bash
         run: |
           BUNDLE=apps/desktop/src-tauri/target/release/bundle/nsis
           SRC=$(ls "$BUNDLE"/*-setup.exe | head -1)
-          if [ -z "$SRC" ] || { [ "$HAS_UPDATER_KEY" = "true" ] && [ ! -s "$SRC.sig" ]; }; then
+          if [ -z "$SRC" ] || { [ "${{ steps.updater_key.outputs.present }}" = "true" ] && [ ! -s "$SRC.sig" ]; }; then
             echo "::error::No installer in $BUNDLE"
             exit 1
           fi
