@@ -6851,6 +6851,9 @@
   "rightHand.computerNoHome": {
     "value": "No computer yet. It gets one when this workspace has a computer of its own."
   },
+  "rightHand.computerNoHomeServer": {
+    "value": "No browser yet. Set up <guide>this server as the agents' computer</guide> to give it one."
+  },
   "rightHand.addComputer": {
     "value": "Add a computer"
   },
@@ -37978,6 +37981,9 @@
   "devices.reason.xcode_too_old": {
     "value": "Xcode is too old for this iOS"
   },
+  "devices.reason.ios_behind_xcode": {
+    "value": "This iPhone's iOS is older than Xcode's"
+  },
   "devices.reason.device_support": {
     "value": "The Mac is getting the iPhone tools"
   },
@@ -38055,6 +38061,9 @@
   },
   "devices.fix.xcode_too_old": {
     "value": "Update Xcode"
+  },
+  "devices.fix.ios_behind_xcode": {
+    "value": "Update the iPhone"
   },
   "devices.fix.device_support": {
     "value": "Keep the Mac on"
@@ -38880,6 +38889,9 @@
   },
   "devices.iphone.teamLimitText": {
     "value": "Remove an app you built yourself from the iPhone: a free Apple Account allows 3."
+  },
+  "devices.iphone.iosBehind": {
+    "value": "This iPhone runs iOS {{ios}} and Xcode on this Mac is for iOS {{sdk}}. Update the iPhone: Settings › General › Software Update."
   },
   "devices.iphone.xcodeOld": {
     "value": "{{name}} runs iOS {{version}} and Xcode on {{mac}} knows iOS {{sdk}} at most. Install Xcode {{major}}, then run this in Terminal."

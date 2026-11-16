@@ -117,6 +117,8 @@ export const SHOWN_ONLY: Record<Condition, readonly string[]> = {
     "browser.inCard.noComputer",
     "browser.live.noComputer",
     "computers.hostMissing",
+    // Lodi's computer row on a self-hosted server (`rightHandNoComputer` with `selfHosted`).
+    "rightHand.computerNoHomeServer",
     "connectAi.wait.connecting",
     "errors.mission.unavailable",
     // The feedback form's line on who reads it, where the server isn't one of agentes.chat's own (`auth-config.cloud`).

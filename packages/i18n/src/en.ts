@@ -2973,6 +2973,8 @@ export const en = {
       "Used in channels and in work that runs on its own. The whole workspace shares this place. Keep nothing private here.",
     /** The row where it has none for anyone: the workspace has no computer of its own. */
     computerNoHome: "No computer yet. It gets one when this workspace has a computer of its own.",
+    /** The same row on a self-hosted server: this server made the agents' computer gives it one. `guide`: the setup guide. */
+    computerNoHomeServer: "No browser yet. Set up <guide>this server as the agents' computer</guide> to give it one.",
     addComputer: "Add a computer",
     /** The row where the workspace's computer runs every agent as one OS user. */
     computerOneUser:
@@ -15698,6 +15700,7 @@ export const en = {
       ui_automation_off: "UI Automation is off",
       xcode_missing: "Xcode isn't installed on the Mac",
       xcode_too_old: "Xcode is too old for this iOS",
+      ios_behind_xcode: "This iPhone's iOS is older than Xcode's",
       device_support: "The Mac is getting the iPhone tools",
       helper_missing: "The test helper isn't set up yet",
       helper_expired: "The test helper needs renewing",
@@ -15728,6 +15731,7 @@ export const en = {
       ui_automation_off: "Turn on UI Automation",
       xcode_missing: "Install Xcode",
       xcode_too_old: "Update Xcode",
+      ios_behind_xcode: "Update the iPhone",
       device_support: "Keep the Mac on",
       helper_missing: "Open the app on the Mac",
       helper_expired: "Open the app on the Mac",
@@ -16098,6 +16102,9 @@ export const en = {
       helperText: "Built and renewed by the Mac every 7 days. A free Apple Account in Xcode is enough.",
       helperUntrustedText: "Tap the developer's name, then Trust.",
       teamLimitText: "Remove an app you built yourself from the iPhone: a free Apple Account allows 3.",
+      /** `sdk`: the iOS version the Mac's Xcode is for ("26.2"). Settings › General › Software Update are the iPhone's own menu names. */
+      iosBehind:
+        "This iPhone runs iOS {{ios}} and Xcode on this Mac is for iOS {{sdk}}. Update the iPhone: Settings › General › Software Update.",
       /** The iPhone is on a newer iOS than the Mac's Xcode knows. A Terminal command shows under it. */
       xcodeOld:
         "{{name}} runs iOS {{version}} and Xcode on {{mac}} knows iOS {{sdk}} at most. Install Xcode {{major}}, then run this in Terminal.",

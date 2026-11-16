@@ -879,12 +879,11 @@ export function AskBar({
 }) {
   const { t } = useTranslation();
   const dir = useDirectory();
-  const { colors: c, shadows } = useTheme();
+  const { colors: c } = useTheme();
   const reduced = useReducedMotion();
   const { ask, more } = away;
   const agent = dir.agentById.get(ask.agentId);
   const name = agent?.name ?? t("channel.unknownAgent");
-  const color = agentLook(agent).color;
   const what = ask.what.replace(/\s+/g, " ").trim();
   // The name is marked to draw in ink; the string's own tags only say where it goes.
   const sentence = t(`ask.bar.${ask.kind}`, {
@@ -903,12 +902,8 @@ export function AskBar({
   const see = onSee;
   return (
     <View style={styles.dock}>
-      <Animated.View
-        entering={reduced ? undefined : FadeIn.duration(160)}
-        style={[styles.pill, { backgroundColor: c.glassSolid, boxShadow: `${shadows.e1}, ${shadows.top}` }]}
-      >
-        <Sky color={color} surface="raised" depth={0.95} fade={0} style={[StyleSheet.absoluteFill, styles.band]} />
-        <View style={[styles.tok, { backgroundColor: c.glassSolid }]}>
+      <Animated.View entering={reduced ? undefined : FadeIn.duration(160)} style={styles.pill}>
+        <View style={[styles.tok, { backgroundColor: c.bg }]}>
           <AgentFace agentId={ask.agentId} size={18} mode="idle" />
         </View>
         <WaitMark />
@@ -976,29 +971,17 @@ export function WaitingHereBar({
 }) {
   const { t } = useTranslation();
   const dir = useDirectory();
-  const { colors: c, shadows } = useTheme();
+  const { colors: c } = useTheme();
   const reduced = useReducedMotion();
   const agent = agentId ? dir.agentById.get(agentId) : undefined;
   const words = t("ask.bar.here", { count });
   return (
     <View style={styles.dock}>
-      <Animated.View
-        entering={reduced ? undefined : FadeIn.duration(160)}
-        style={[styles.pill, { backgroundColor: c.glassSolid, boxShadow: `${shadows.e1}, ${shadows.top}` }]}
-      >
+      <Animated.View entering={reduced ? undefined : FadeIn.duration(160)} style={styles.pill}>
         {agent ? (
-          <>
-            <Sky
-              color={agentLook(agent).color}
-              surface="raised"
-              depth={0.95}
-              fade={0}
-              style={[StyleSheet.absoluteFill, styles.band]}
-            />
-            <View style={[styles.tok, { backgroundColor: c.glassSolid }]}>
-              <AgentFace agentId={agent.id} size={18} mode="idle" />
-            </View>
-          </>
+          <View style={[styles.tok, { backgroundColor: c.bg }]}>
+            <AgentFace agentId={agent.id} size={18} mode="idle" />
+          </View>
         ) : null}
         <WaitMark />
         <Pressable
@@ -1098,8 +1081,8 @@ const styles = StyleSheet.create({
   done: { alignSelf: "stretch" },
   // The breathing square centered in the pill's 14-point mark.
   waitMark: { width: 14, height: 14, alignItems: "center", justifyContent: "center" },
-  // The bar: the working line's shape and width (WorkingLine, the composer's edges), so one replaces the other
-  // without moving.
+  // The bar: the working line's shape and width (WorkingLine, the composer's edges), bare as it is, so one replaces
+  // the other without moving.
   dock: { paddingBottom: 6 },
   pill: {
     flexDirection: "row",
@@ -1110,7 +1093,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: "hidden",
   },
-  band: { opacity: 0.55 },
   tok: { padding: 1.5, borderRadius: 7 },
   words: { flex: 1, minWidth: 0 },
   sep: { width: StyleSheet.hairlineWidth * 2, height: 16, marginHorizontal: 2 },
