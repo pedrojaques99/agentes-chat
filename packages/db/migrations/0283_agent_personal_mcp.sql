@@ -1,1 +1,1 @@
-ALTER TABLE "agents" ADD COLUMN "brain_personal_mcp" boolean DEFAULT false NOT NULL;
+ALTER TABLE "agents" ADD COLUMN IF NOT EXISTS "brain_personal_mcp" boolean DEFAULT false NOT NULL;
