@@ -16879,6 +16879,7 @@ export const en = {
     },
     title: "Settings",
     account: {
+      plans: "Your plans' limits",
       access: "Access",
       device: "On this device",
       /** Yours in this workspace, on every device: the tool summary under each agent reply, off by default. */

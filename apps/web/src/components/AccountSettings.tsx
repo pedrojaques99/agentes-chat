@@ -32,12 +32,15 @@ import {
   Icon,
   Input,
   Locked,
+  PlanMeter,
+  ProviderLogo,
   Segmented,
   Switch,
   useNow,
 } from "@agenteschat/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type KeyboardEvent, useEffect, useState, useSyncExternalStore } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useApi } from "@/api/context";
 import type { AuthResult } from "@/auth/client";
@@ -58,6 +61,7 @@ import { picksAppIcon } from "@/lib/app-icon";
 import { type MenuLook, menuLook, onMenuLookChange, setMenuLook } from "@/lib/context-menu";
 import { inDesktopApp } from "@/lib/desktop";
 import { useOpenParam } from "@/lib/open-param";
+import { ownPlanLines, planMeterText } from "@/lib/plan-usage";
 import { onSoundChoiceChange, type SoundChoice, setSoundChoice, soundChoice } from "@/lib/sounds";
 import { STORAGE_KEYS, sessionStore } from "@/lib/storage";
 import { type ThemePreference, useTheme } from "@/lib/theme";
@@ -71,16 +75,23 @@ import { LanguageSelect } from "./LanguageSelect";
  * the app icon (ADR 0179), language, sounds, the desktop app's menus), and last, deleting the account.
  */
 export function AccountSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { org, me } = useOrg();
   const dir = useDirectory(org.id);
+  const navigate = useNavigate();
   const api = useApi();
+  const plans = ownPlanLines(t, useAiAccounts(org.id).data, dir.agents, me.user.id);
   const showActivity = useSetShowActivity(org.id);
   const agentStyle = useSetAgentStyle(org.id);
   const toast = useToast();
+  // Looking at your plans: their usage is looked up again (it comes back as `machine.updated`).
+  useEffect(() => {
+    void api.machines.refreshAccountUsage(org.id).catch(() => undefined);
+  }, [api, org.id]);
   const theme = useTheme();
   const look = useSyncExternalStore(onMenuLookChange, menuLook, () => "ours" as const);
   const sounds = useSyncExternalStore(onSoundChoiceChange, soundChoice, soundChoice);
+  const [profile, setProfile] = useState<"name" | "timezone" | null>(null);
   const [phone, setPhone] = useState(false);
   const icon = useAppIcon();
   const iconName = useAppIconName(icon);
@@ -92,22 +103,17 @@ export function AccountSection() {
   const [deletingOrg, setDeletingOrg] = useOpenParam("delete");
   const mine = dir.memberById.get(me.user.id);
   const zone = mine?.timezone || browserTimezone() || "UTC";
-  const qc = useQueryClient();
-  // The time zone changes right on its row: a pick saves, no dialog in between.
-  const setZone = useMutation({
-    mutationFn: (timezone: string) => api.orgs.updateMe(org.id, { timezone }),
-    meta: { silent: true },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: keys.members(org.id) });
-      void qc.invalidateQueries({ queryKey: keys.people(org.id) });
-    },
-    onError: (e) => toast.show(errorText(t, e)),
-  });
   return (
     <>
       <Card aria-label={t("shell.profile")}>
         <div className="settings-rows">
-          <ProfileRow />
+          <PrefRow
+            id="account-profile"
+            lead={<MyFace className="settings-row__face" />}
+            label={t("shell.profile")}
+            status={t("shell.profileHint")}
+            onOpen={() => setProfile("name")}
+          />
           <PrefRow
             id="account-email"
             icon="mail"
@@ -119,15 +125,8 @@ export function AccountSection() {
             id="account-zone"
             icon="clock"
             label={t("shell.timezone")}
-            control={
-              <Locked when={setZone.isPending}>
-                <ZoneSelect
-                  aria-label={t("shell.timezone")}
-                  value={zone}
-                  onChange={(z) => z !== zone && setZone.mutate(z)}
-                />
-              </Locked>
-            }
+            status={zoneDisplayName(zone, i18n.language) ?? timezoneName(zone, i18n.language)}
+            onOpen={() => setProfile("timezone")}
           />
           <PrefRow
             id="account-activity"
@@ -169,9 +168,41 @@ export function AccountSection() {
               }
             />
           )}
+          <PrefRow
+            id="account-phone"
+            icon="phone"
+            label={t("shell.openOnPhone")}
+            status={t("shell.openOnPhoneHint")}
+            onOpen={() => setPhone(true)}
+          />
+          <PrefRow
+            id="account-password"
+            icon="key"
+            label={t(me.user.hasPassword === false ? "shell.addPassword" : "shell.newPassword")}
+            status={t(me.user.hasPassword === false ? "shell.addPasswordHint" : "shell.newPasswordRow")}
+            onOpen={() => setAccount("password")}
+          />
         </div>
       </Card>
-      {/* Your plans' limits live in IA e uso (open to everyone): one door, not a copy here. */}
+      {plans.length > 0 && (
+        <Card aria-labelledby="account-plans">
+          <CardHeader id="account-plans" title={t("settings.account.plans")} />
+          <div className="settings-rows">
+            {plans.map((p) => (
+              <PrefRow
+                key={p.key}
+                id={`account-plan-${p.key}`}
+                lead={<ProviderLogo id={p.logo} size="sm" />}
+                label={p.name}
+                status={<PlanMeter compact usage={p.usage} text={planMeterText(t, i18n.language)} />}
+                onOpen={() =>
+                  void navigate({ to: "/org/$orgId/settings/$section", params: { orgId: org.id, section: "usage" } })
+                }
+              />
+            ))}
+          </div>
+        </Card>
+      )}
       {/* A server from before the choice sends no `chatPrefs` and can't keep one. */}
       {org.chatPrefs !== undefined && <ChatLookSettings />}
       <Card aria-labelledby="account-device">
@@ -259,26 +290,6 @@ export function AccountSection() {
         </div>
         <AppIconDialog open={iconPicker} onClose={() => setIconPicker(false)} />
       </Card>
-      {/* Rarely touched: getting in from elsewhere, kept out of the daily preferences. */}
-      <Card aria-labelledby="account-access">
-        <CardHeader id="account-access" title={t("settings.account.access")} />
-        <div className="settings-rows">
-          <PrefRow
-            id="account-phone"
-            icon="phone"
-            label={t("shell.openOnPhone")}
-            status={t("shell.openOnPhoneHint")}
-            onOpen={() => setPhone(true)}
-          />
-          <PrefRow
-            id="account-password"
-            icon="key"
-            label={t(me.user.hasPassword === false ? "shell.addPassword" : "shell.newPassword")}
-            status={t(me.user.hasPassword === false ? "shell.addPasswordHint" : "shell.newPasswordRow")}
-            onOpen={() => setAccount("password")}
-          />
-        </div>
-      </Card>
       <Card aria-labelledby="account-delete" className="settings-danger">
         <CardHeader
           id="account-delete"
@@ -303,15 +314,10 @@ export function AccountSection() {
         </div>
         {owner && <DeleteWorkspaceDialog org={org} open={deletingOrg !== null} onClose={() => setDeletingOrg(null)} />}
       </Card>
+      <ProfileDialog focus={profile} onClose={() => setProfile(null)} />
       <OpenOnPhoneDialog open={phone} onClose={() => setPhone(false)} />
     </>
   );
-}
-
-class NameRefused extends Error {
-  constructor(readonly result: Extract<AuthResult, { ok: false }>) {
-    super(result.code);
-  }
 }
 
 class AuthRefused extends Error {

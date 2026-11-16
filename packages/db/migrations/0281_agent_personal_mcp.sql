@@ -1,0 +1,1 @@
+ALTER TABLE "agents" ADD COLUMN "brain_personal_mcp" boolean DEFAULT false NOT NULL;

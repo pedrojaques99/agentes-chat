@@ -16783,6 +16783,7 @@ export const ptBR = {
     },
     title: "Configurações",
     account: {
+      plans: "Limites dos seus planos",
       access: "Acesso",
       device: "Neste aparelho",
       /** Yours in this workspace, on every device: the tool summary under each agent reply, off by default. */

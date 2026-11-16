@@ -288,7 +288,55 @@ export function IssuesPage() {
                   shortcut={<Kbd aria-hidden="true">/</Kbd>}
                 />
               }
+              actions={
+                <span className="issues-tools">
+                  <DisplayButton view={view} onChange={changeView} />
+                  {(view.group === "stage" || (project && posts)) && (
+                    <Menu
+                      align="end"
+                      label={t("issues.moreOptions")}
+                      trigger={<Button size="sm" iconOnly icon="more" aria-label={t("issues.moreOptions")} />}
+                    >
+                      {view.group === "stage" && (
+                        <MenuItem icon="layers" onSelect={() => setAddingColumn(true)} disabled={!columns}>
+                          {t("issues.columns.add")}
+                        </MenuItem>
+                      )}
+                      {project && posts && (
+                        <>
+                          {view.group === "stage" && <MenuSeparator />}
+                          <MenuItem icon="edit" onSelect={() => setProjectDialog("edit")}>
+                            {t("issues.projects.edit")}
+                          </MenuItem>
+                          <MenuItem
+                            icon="archive"
+                            disabled={projectAction.isPending}
+                            onSelect={() =>
+                              projectAction.mutate({
+                                type: "update",
+                                projectId: project.id,
+                                archived: !project.archived,
+                              })
+                            }
+                          >
+                            {t(project.archived ? "issues.projects.unarchive" : "issues.projects.archive")}
+                          </MenuItem>
+                          <MenuItem icon="trash" danger onSelect={() => setProjectDialog("delete")}>
+                            {t("issues.projects.delete")}
+                          </MenuItem>
+                        </>
+                      )}
+                    </Menu>
+                  )}
+                </span>
+              }
             >
+              <ProjectChip
+                data={projectsQuery.data}
+                value={projectParam}
+                onChange={setProjectParam}
+                onNew={posts ? () => setProjectDialog("new") : undefined}
+              />
               <IssueFilters view={view} issues={all} onChange={changeView} />
             </Toolbar>
           )}
