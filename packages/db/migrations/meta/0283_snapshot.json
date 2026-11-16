@@ -1,6 +1,6 @@
 {
-  "id": "eefbf165-a463-4baf-9f94-b3c1e2cdfdc9",
-  "prevId": "b1c7274e-727e-41e8-8e97-370d297741b1",
+  "id": "d0887ac8-b49a-4529-aacb-2b93c9ace32a",
+  "prevId": "126e2bab-f67f-44d6-998c-e7c1bba9243e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -318,6 +318,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "brain_personal_mcp": {
+          "name": "brain_personal_mcp",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "brain_account_id": {
           "name": "brain_account_id",
@@ -4054,6 +4061,22 @@
           ],
           "isUnique": false,
           "where": "\"messages\".\"author_agent_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "messages_agent_run_id_index": {
+          "name": "messages_agent_run_id_index",
+          "columns": [
+            {
+              "expression": "agent_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"messages\".\"agent_run_id\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -14790,7 +14813,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "agent_budget_periods_org_id_period_start_index": {
+          "name": "agent_budget_periods_org_id_period_start_index",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "agent_budget_periods_org_id_agent_id_agents_org_id_id_fk": {
           "name": "agent_budget_periods_org_id_agent_id_agents_org_id_id_fk",
@@ -15472,6 +15517,28 @@
           "concurrently": true,
           "method": "btree",
           "with": {}
+        },
+        "agent_run_steps_tool_call_run_idx": {
+          "name": "agent_run_steps_tool_call_run_idx",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"agent_run_steps\".\"kind\" = 'tool_call'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -15835,6 +15902,28 @@
           "method": "btree",
           "with": {}
         },
+        "agent_runs_org_id_brain_session_id_index": {
+          "name": "agent_runs_org_id_brain_session_id_index",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "brain_session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"agent_runs\".\"brain_session_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "agent_runs_waiting_machine_idx": {
           "name": "agent_runs_waiting_machine_idx",
           "columns": [
@@ -15967,7 +16056,24 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "agent_scopes_connection_id_index": {
+          "name": "agent_scopes_connection_id_index",
+          "columns": [
+            {
+              "expression": "connection_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"agent_scopes\".\"connection_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "agent_scopes_org_id_agent_id_agents_org_id_id_fk": {
           "name": "agent_scopes_org_id_agent_id_agents_org_id_id_fk",
