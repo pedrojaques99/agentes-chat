@@ -10,15 +10,7 @@ import {
   useRoutines,
   useUsage,
 } from "@agenteschat/client";
-import {
-  entryButton,
-  entryKind,
-  entryLine,
-  entryPortrait,
-  entryState,
-  pictureWhen,
-  surfaceOf,
-} from "@agenteschat/client/lib/agent-computer";
+import { entryButton, entryLine, entryState, pictureWhen, surfaceOf } from "@agenteschat/client/lib/agent-computer";
 import { seesDetails } from "@agenteschat/client/lib/audience";
 import { computerName } from "@agenteschat/client/lib/computer";
 import { ErrorBoundary } from "@agenteschat/client/lib/error-boundary";
@@ -31,7 +23,7 @@ import { agentFaceWord } from "@agenteschat/client/lib/presence";
 import { isRightHand } from "@agenteschat/client/lib/right-hand";
 import { siteHost } from "@agenteschat/client/lib/secret-requests";
 import { isPersonal } from "@agenteschat/client/lib/workspace-mode";
-import { Button, ComputerPortrait, GroupHeading, Icon, InfoHint, PresenceBadge, Switch } from "@agenteschat/ui";
+import { Button, GroupHeading, Icon, InfoHint, PresenceBadge, Switch } from "@agenteschat/ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -260,7 +252,7 @@ function ComputerSection({ agent }: { agent: Agent }) {
   const watch = t("browser.card.watch");
   return (
     <Section title={t("agentComputer.button")}>
-      {picture ? (
+      {picture && (
         <button
           type="button"
           className="dm-side__screen"
@@ -274,12 +266,6 @@ function ComputerSection({ agent }: { agent: Agent }) {
             <Icon name="fullscreen" size={14} />
           </span>
         </button>
-      ) : (
-        shows && (
-          <div className="dm-side__noscreen">
-            <ComputerPortrait kind={entryKind(f.edition, view.machine)} state={entryPortrait(state, f.setup)} />
-          </div>
-        )
       )}
       <p className="dm-side__using">
         <b>

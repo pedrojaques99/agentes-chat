@@ -1924,6 +1924,7 @@ function AgentRow({
           agentId={a.id}
           name={a.name}
           size="sm"
+          framed={false}
           presence={shown?.presence ?? null}
           presenceLabel={word ?? undefined}
           asleep={isOutOfOffice(shown?.line)}
@@ -2022,7 +2023,7 @@ function RightHandRow({
       data-unread={unread > 0}
       data-right-hand=""
     >
-      <AgentAvatar agentId={a.id} name={a.name} size="sm" presence={shown?.presence ?? null} />
+      <AgentAvatar agentId={a.id} name={a.name} size="sm" framed={false} presence={shown?.presence ?? null} />
       <span className="sidebar__item-text">
         <span className="sidebar__item-label ac-captop">{a.name}</span>
         <span className="sidebar__item-role ac-tag">{label}</span>
