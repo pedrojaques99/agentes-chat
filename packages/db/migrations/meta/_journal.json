@@ -1996,6 +1996,13 @@
       "when": 1794917194719,
       "tag": "0289_outside_collaborators",
       "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1794921125798,
+      "tag": "0287_agent_personal_mcp",
+      "breakpoints": true
     }
   ]
 }

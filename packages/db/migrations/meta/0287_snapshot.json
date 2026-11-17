@@ -1,6 +1,6 @@
 {
-  "id": "75d2e078-9fdd-4699-80fa-8a0277af1d68",
-  "prevId": "5519dbfa-b59f-4f6b-bea3-7971b9856f88",
+  "id": "245b84fa-3953-49a1-9b74-a37385f053f1",
+  "prevId": "8c2fbe6b-58f9-4b7b-812c-eacd256d20ba",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -319,6 +319,13 @@
           "notNull": true,
           "default": true
         },
+        "brain_personal_mcp": {
+          "name": "brain_personal_mcp",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "brain_account_id": {
           "name": "brain_account_id",
           "type": "uuid",
@@ -330,6 +337,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "brain_account_pinned": {
+          "name": "brain_account_pinned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "brain_effort": {
           "name": "brain_effort",
@@ -10195,6 +10209,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'everyone'"
+        },
+        "use_order": {
+          "name": "use_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "auth_method": {
           "name": "auth_method",
@@ -22922,6 +22942,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "outside_of": {
+          "name": "outside_of",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "expires_at": {
           "name": "expires_at",
           "type": "timestamp with time zone",
@@ -23299,6 +23325,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'{}'::jsonb"
+        },
+        "outside_of": {
+          "name": "outside_of",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
