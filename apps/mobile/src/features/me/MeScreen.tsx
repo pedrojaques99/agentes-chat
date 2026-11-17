@@ -1,4 +1,4 @@
-import { useApi, useAuthConfig, useIssues, useMe, useOverview } from "@agenteschat/client";
+import { useApi, useArchivedChannels, useAuthConfig, useIssues, useMe, useOverview } from "@agenteschat/client";
 import { showsAbout } from "@agenteschat/client/lib/about";
 import { PHONE_APP_ICON } from "@agenteschat/client/lib/app-icons";
 import { isPersonal, modeKey } from "@agenteschat/client/lib/workspace-mode";
@@ -53,9 +53,22 @@ import { useChangePhoto } from "./parts";
 import { useWorkspacesAcross, WorkspaceMark } from "./WorkspacesPages";
 
 /** The rows of Você's Work group. */
-type WorkRow = "issues" | "proposals" | "routines" | "wiki" | "drive" | "dashboards" | "memory" | "threads" | "team";
-/** A team's workspace: Threads is a tab and Team a row of Agents. */
-const TEAM_WORK: WorkRow[] = ["issues", "proposals", "routines", "wiki", "drive", "dashboards", "memory"];
+type WorkRow =
+  | "issues"
+  | "proposals"
+  | "routines"
+  | "wiki"
+  | "drive"
+  | "dashboards"
+  | "memory"
+  | "threads"
+  | "team"
+  | "archived";
+/**
+ * A team's workspace: Threads is a tab and Team a row of Agents. Archived channels last, only while there are some (no
+ * longer a link at the end of Conversas).
+ */
+const TEAM_WORK: WorkRow[] = ["issues", "proposals", "routines", "wiki", "drive", "dashboards", "memory", "archived"];
 /**
  * A personal workspace (ADR 0159): what its sidebar keeps in sight first, then the rest of its More; Threads (no tab
  * there) and Team (no row in Agents) live here, Team last.
@@ -70,6 +83,7 @@ const PERSONAL_WORK: WorkRow[] = [
   "dashboards",
   "memory",
   "team",
+  "archived",
 ];
 
 /** Opens a screen over this page with the platform's push (back comes here). */
@@ -138,6 +152,7 @@ export function MeScreen() {
   const band = insets.top + 62 + PHOTO_OVERLAP;
   const issues = useIssues(org.orgId);
   const proposals = useOverview(org.orgId).data?.proposalsWaitingForMe ?? 0;
+  const archived = useArchivedChannels(org.orgId).data?.length ?? 0;
   const push = usePushSwitch().on;
   const server = useAuthConfig().data;
   const about = showsAbout(server);
@@ -231,6 +246,17 @@ export function MeScreen() {
       />
     ),
     team: <GroupedRow key="team" icon="members" label={t("team.title")} chevron onPress={() => open("/team")} />,
+    archived:
+      archived > 0 ? (
+        <GroupedRow
+          key="archived"
+          icon="archive"
+          label={t("channel.archivedTitle")}
+          value={String(archived)}
+          chevron
+          onPress={() => open("/archived-channels")}
+        />
+      ) : null,
   };
   const soundValue = sounds === "off" ? t("mobile.me.soundsOff") : styleLabel(sounds);
   const themeValue = t(`mobile.theme.${theme.preference}`);

@@ -3,6 +3,7 @@ import type { SFSymbolIcon } from "expo-router/native-tabs";
 import { type ReactNode, useLayoutEffect, useMemo, useRef } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { ScrollToTopGuard } from "react-native-screens/experimental";
+import { barGlyph } from "./barGlyphs";
 import { IconButton, usePlateEdge } from "./IconButton";
 import type { IconName } from "./icons.data";
 import { HeaderSlot, useHeaderSlot } from "./navigation";
@@ -42,6 +43,16 @@ export interface HeaderAction {
 const IOS = Platform.OS === "ios";
 
 type Described = Omit<HeaderAction, "onPress" | "menu"> & { menu?: Omit<HeaderMenuItem, "onPress">[] };
+
+/**
+ * A system bar button's image (iOS): our line icon, as the tab bar's glyphs are ours, so a bar of system buttons and
+ * one of our own views look the same; its SF Symbol only if the icon couldn't be drawn. A menu's rows keep the
+ * system's symbols, as its own menus do.
+ */
+const barIcon = ({ icon, sf }: { icon: IconName; sf: SFSymbolName }) => {
+  const glyph = barGlyph(icon);
+  return glyph ? { type: "image" as const, source: glyph } : { type: "sfSymbol" as const, name: sf };
+};
 
 /**
  * Header options for a screen's actions. On iOS the right actions are native `UIBarButtonItem`s
@@ -94,7 +105,7 @@ export function useHeaderActionOptions({
                     type: "menu" as const,
                     label: a.label,
                     accessibilityLabel: a.label,
-                    icon: { type: "sfSymbol" as const, name: a.sf },
+                    icon: barIcon(a),
                     menu: {
                       items: a.menu.map((m, j) => ({
                         type: "action" as const,
@@ -109,7 +120,7 @@ export function useHeaderActionOptions({
                     type: "button" as const,
                     label: a.label,
                     accessibilityLabel: a.label,
-                    icon: { type: "sfSymbol" as const, name: a.sf },
+                    icon: barIcon(a),
                     disabled: a.disabled,
                     onPress: press(i),
                   },
@@ -121,7 +132,7 @@ export function useHeaderActionOptions({
               type: "button" as const,
               label: a.label,
               accessibilityLabel: a.label,
-              icon: { type: "sfSymbol" as const, name: a.sf },
+              icon: barIcon(a),
               onPress: pressLeft(i),
             }))
         : hasLeft

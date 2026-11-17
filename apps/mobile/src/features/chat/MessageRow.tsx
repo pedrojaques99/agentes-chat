@@ -574,7 +574,6 @@ function RowBody({
           <ClippedMessage id={m.id} behind={[(bubbled && look.fill) || c.bubble]} ink={solidInk}>
             <MessageText
               body={body}
-              muted={m.local === "pending"}
               selectable={false}
               accent={accent}
               channelRefs={channelRefsOf(m.meta)}
@@ -582,7 +581,8 @@ function RowBody({
               {...(solidInk ? { ink: solidInk } : {})}
             />
           </ClippedMessage>
-          {myBubble && !m.local ? stamp : null}
+          {/* On its way too (its own clock): the bubble keeps its size when the server's copy takes its place. */}
+          {myBubble && m.local !== "failed" ? stamp : null}
         </View>
       </View>
     ) : player ? (
@@ -647,8 +647,8 @@ function RowBody({
           </View>
         </RowPartContext.Provider>
         {/* One time per run of my rows (they group a few minutes apart), under its last, the receipt's mark ending
-            its line; a send in flight says so. */}
-        {!m.local && (run === "end" || run === "solo") && !myBubble ? (
+            its line; a send in flight has it too (its own clock), so nothing moves when the server's copy lands. */}
+        {m.local !== "failed" && (run === "end" || run === "solo") && !myBubble ? (
           <View style={[styles.meTime, { marginTop: rhythm.part / 2 }]}>
             <Text variant="caption" tone="faint">
               {when.time(m.createdAt)}
@@ -776,7 +776,6 @@ function RowBody({
   const messageWords = body ? (
     <MessageText
       body={body}
-      muted={m.local === "pending"}
       selectable={false}
       accent={accent}
       channelRefs={channelRefsOf(m.meta)}
@@ -786,7 +785,7 @@ function RowBody({
   const saying = (text: string) => (
     <MessageText
       body={text}
-      muted={m.local === "pending" || workOver}
+      muted={workOver}
       selectable={false}
       accent={accent}
       channelRefs={channelRefsOf(m.meta)}
@@ -1058,13 +1057,19 @@ function useDoubleTapHint(id: string | null): boolean {
   return shown;
 }
 
-/** My message on its way: "Enviando" only past half a second; offline, a clock and when it will go. */
+/** Past this long with no answer from the server (ms), a send says "Sending" under it. */
+const SLOW_SEND_MS = 2000;
+
+/**
+ * My message on its way reads as sent the moment it is (its words in ink, its time): "Sending" only when the server is
+ * really slow to take it (`SLOW_SEND_MS`); offline, a clock and when it will go.
+ */
 function Sending({ offline, end }: { offline: boolean; end: boolean }) {
   const { t } = useTranslation();
   const c = useColors();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setSlow(true), 500);
+    const timer = setTimeout(() => setSlow(true), SLOW_SEND_MS);
     return () => clearTimeout(timer);
   }, []);
   if (!offline && !slow) return null;

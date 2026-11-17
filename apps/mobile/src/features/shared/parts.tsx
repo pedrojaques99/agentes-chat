@@ -278,7 +278,11 @@ export function PushedHeader({
               },
             ],
           }
-        : null),
+        : // Said either way, as the large title: a bar that drops its system buttons for `right` (a conversation's bar
+          // when a counted button shows) kept them from the earlier options, and they hide `right` on iOS.
+          IOS
+          ? { unstable_headerRightItems: undefined }
+          : null),
       headerRight: hasRight
         ? () => (
             <BarPressable>

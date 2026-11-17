@@ -155,6 +155,7 @@ import {
   type ComposerProps,
   type ComposerWorking,
   Count,
+  type HeaderAction,
   Icon,
   IconButton,
   LineIcon,
@@ -217,7 +218,7 @@ import { type OpenedMessages, OpenedMessagesContext } from "./ClippedMessage";
 import { ConversationSwitcher } from "./ConversationSwitcher";
 import { takeComposerRequest, useComposerRequest } from "./composer-request";
 import { DATE_PILL_IDLE_MS, DatePill } from "./DatePill";
-import { DmComputerButton } from "./DmComputerButton";
+import { DmComputerButton, DmComputerWords, dmComputerAction } from "./DmComputerButton";
 import { createDockHeight, type DockHeight } from "./dock-height";
 import { EventLine } from "./EventLine";
 import { FirstDay } from "./FirstDay";
@@ -359,6 +360,8 @@ const NATIVE_MENU = Platform.OS === "ios";
  * end; Android's list stops at it (its stretch is drawn, never in the offset).
  */
 const PEEK = Platform.OS === "ios";
+/** The bar's plain buttons are the system's own on iOS (`barActions`). */
+const IOS_BAR = Platform.OS === "ios";
 /** The notifications line was shown and answered here: it doesn't come back on this screen. */
 const OFFER_DONE = "done";
 /** How long the list keeps ignoring the keyboard after what covered it closed (its closing animation, ms). */
@@ -2172,6 +2175,28 @@ function Chat({
         <IconButton icon="more" label={t("mobile.chat.options")} onPress={openOptions} />
       </>
     ) : null;
+  // On iOS the plain buttons (the computer, search, "…") are the system's own bar buttons: UIKit places them and takes
+  // the tap anywhere on them, where our views in the bar answered only a still tap right on the icon. A counted button
+  // (the agent's tasks, the computer's line) has no system form, so while one shows the bar stays ours (`right`).
+  const [computerWords, setComputerWords] = useState<string | null>(null);
+  const counted = Boolean((dmAgentId && agentTasks) || (queueShown && barQueue && queueMachineId));
+  const barActions: HeaderAction[] | undefined =
+    IOS_BAR && !counted && ((isThread && info) || dm || channel)
+      ? [
+          ...(dmComputer && computerWords ? [dmComputerAction(dmComputer.agentId, computerWords, leavePlace)] : []),
+          ...(searchPlace && !dm
+            ? [
+                {
+                  icon: "search" as const,
+                  sf: "magnifyingglass" as const,
+                  label: t("searchPage.searchHere"),
+                  onPress: openSearch,
+                },
+              ]
+            : []),
+          { icon: "more", sf: "ellipsis", label: t("mobile.chat.options"), onPress: openOptions },
+        ]
+      : undefined;
 
   const placeholder = isThread
     ? rootTask
@@ -2888,7 +2913,13 @@ function Chat({
         ) : null}
         {/* A clear bar on every conversation (DM, channel, thread): the band behind it is ours, below, so the
             system's scroll edge never makes one look different from another. */}
-        <PushedHeader title={pill ?? title} plate solid={false} right={right} />
+        <PushedHeader
+          title={pill ?? title}
+          plate
+          solid={false}
+          {...(barActions ? { actions: barActions } : { right })}
+        />
+        {IOS_BAR && dmComputer ? <DmComputerWords agentId={dmComputer.agentId} onWords={setComputerWords} /> : null}
         {hasPin ? (
           // The bar is see-through (the conversation runs under it): an open mission's card starts below it. Pinned
           // messages have no bar here: they wait above the first message, revealed by pulling down (`PinnedLines`).

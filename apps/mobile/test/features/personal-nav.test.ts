@@ -49,7 +49,7 @@ describe("You in a personal workspace", () => {
     expect(me).toContain("<WorkspaceMark org={org.org} size={36} />");
   });
 
-  test("Work leads with Routines and Drive and ends with Team; a team's keeps its order", () => {
+  test("Work leads with Routines and Drive and ends with Team, then the archived channels; a team's keeps its order", () => {
     const list = (name: string) => {
       const from = me.indexOf(`const ${name}: WorkRow[] = [`);
       return me
@@ -67,8 +67,18 @@ describe("You in a personal workspace", () => {
       "dashboards",
       "memory",
       "team",
+      "archived",
     ]);
-    expect(list("TEAM_WORK")).toEqual(["issues", "proposals", "routines", "wiki", "drive", "dashboards", "memory"]);
+    expect(list("TEAM_WORK")).toEqual([
+      "issues",
+      "proposals",
+      "routines",
+      "wiki",
+      "drive",
+      "dashboards",
+      "memory",
+      "archived",
+    ]);
     expect(me).toContain('onPress={() => open("/team")}');
   });
 
