@@ -606,6 +606,8 @@ export interface ApiClient {
     /** The workspace logo (admins): a square image (JSON only: base64), already cropped. */
     setLogo(orgId: string, input: { imageBase64: string; contentType: string }): Promise<{ logo: string }>;
     removeLogo(orgId: string): Promise<void>;
+    /** The workspace's accent color (admins, ADR 0193): a "#rrggbb", or null for the default. */
+    setAccent(orgId: string, accent: string | null): Promise<{ accent: string | null }>;
     /**
      * A signed link that opens the workspace's plan and billing on the billing service (owners and admins; ADR
      * 0079). Navigate to it at once and keep it nowhere else: it lasts 5 minutes and opens once. `billing.off` 404

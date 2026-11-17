@@ -9362,9 +9362,6 @@
   "actionCard.agentProposal.aiNone": {
     "value": "No AI yet. Connect one after creating it"
   },
-  "actionCard.agentProposal.reviewTitle": {
-    "value": "Review {{name}}"
-  },
   "actionCard.agentProposal.lines": {
     "value": "What {{name}} gets"
   },
@@ -17525,9 +17522,6 @@
   "newAgent.proposalNoAccess": {
     "value": "Only people in its conversation can see this proposal."
   },
-  "newAgent.backToChat": {
-    "value": "Back to the conversation"
-  },
   "newAgent.and": {
     "value": " and "
   },
@@ -17899,6 +17893,117 @@
   },
   "newAgentCard.namesRoll": {
     "value": "Other names"
+  },
+  "newAgentCard.proposal.lead": {
+    "value": "Adjust what {{name}} proposed. You can change everything later."
+  },
+  "newAgentCard.proposal.leadNarrow": {
+    "value": "{{name}}'s proposal: {{why}}"
+  },
+  "newAgentCard.proposal.side": {
+    "value": "The proposal"
+  },
+  "newAgentCard.proposal.from": {
+    "value": "Proposed by {{name}}"
+  },
+  "newAgentCard.proposal.changed": {
+    "value": "What you changed"
+  },
+  "newAgentCard.proposal.changedNone": {
+    "value": "Nothing yet. What you change on the card shows here, with Undo."
+  },
+  "newAgentCard.proposal.undo": {
+    "value": "Undo"
+  },
+  "newAgentCard.proposal.changes.changed": {
+    "value": "changed"
+  },
+  "newAgentCard.proposal.changes.added": {
+    "value": "added"
+  },
+  "newAgentCard.proposal.changes.removed": {
+    "value": "removed"
+  },
+  "newAgentCard.proposal.changes.how": {
+    "value": "How it works"
+  },
+  "newAgentCard.proposal.firstTask": {
+    "value": "First task"
+  },
+  "newAgentCard.proposal.firstTaskPlaceholder": {
+    "value": "What to ask first (optional)"
+  },
+  "newAgentCard.proposal.firstTaskHint": {
+    "value": "Ready in your chat with {{name}}. Just send it."
+  },
+  "newAgentCard.proposal.firstTaskHintBlank": {
+    "value": "Ready in your chat with it. Just send it."
+  },
+  "newAgentCard.proposal.firstTaskNone": {
+    "value": "With no task, the chat opens empty."
+  },
+  "newAgentCard.proposal.after": {
+    "value": "After it's created"
+  },
+  "newAgentCard.proposal.afterAi": {
+    "value": "Connect an AI for {{name}} to think with"
+  },
+  "newAgentCard.proposal.afterAiBlank": {
+    "value": "Connect an AI for it to think with"
+  },
+  "newAgentCard.proposal.afterApp": {
+    "value": "Connect {{app}}"
+  },
+  "newAgentCard.proposal.afterNone": {
+    "value": "Nothing. {{name}} starts working as soon as it's created."
+  },
+  "newAgentCard.proposal.afterNoneBlank": {
+    "value": "Nothing. It starts working as soon as it's created."
+  },
+  "newAgentCard.proposal.discard": {
+    "value": "Discard proposal"
+  },
+  "newAgentCard.proposal.otherChannel": {
+    "value": "Another channel"
+  },
+  "newAgentCard.proposal.chooseChannels": {
+    "value": "Choose channels"
+  },
+  "newAgentCard.proposal.channelsNone": {
+    "value": "Only in its chat with you."
+  },
+  "newAgentCard.proposal.channel.lead": {
+    "value": "Where {{name}} will work."
+  },
+  "newAgentCard.proposal.channel.leadBlank": {
+    "value": "Where it will work."
+  },
+  "newAgentCard.proposal.channel.does": {
+    "value": "{{name}} answers when called in {{channel}} and reads what goes on there."
+  },
+  "newAgentCard.proposal.channel.doesBlank": {
+    "value": "It answers when called in {{channel}} and reads what goes on there."
+  },
+  "newAgentCard.proposal.channel.remove": {
+    "value": "Remove from {{channel}}"
+  },
+  "newAgentCard.proposal.routine.label": {
+    "value": "Routine"
+  },
+  "newAgentCard.proposal.routine.lead": {
+    "value": "{{when}}, in {{channel}}."
+  },
+  "newAgentCard.proposal.routine.leadDm": {
+    "value": "{{when}}, in its chat with you."
+  },
+  "newAgentCard.proposal.routine.starts": {
+    "value": "Starts once {{name}} is created. Change its time and text in Routines."
+  },
+  "newAgentCard.proposal.routine.startsBlank": {
+    "value": "Starts once it's created. Change its time and text in Routines."
+  },
+  "newAgentCard.proposal.routine.remove": {
+    "value": "Remove the routine"
   },
   "newAgentCard.skill.opens": {
     "value": "{{name}} opens this manual when the topic comes up. You edit it in Skills."
@@ -27346,6 +27451,33 @@
   },
   "orgLogo.removed": {
     "value": "Logo removed."
+  },
+  "orgAccent.label": {
+    "value": "Accent color"
+  },
+  "orgAccent.change": {
+    "value": "Change color"
+  },
+  "orgAccent.useDefault": {
+    "value": "Use the default"
+  },
+  "orgAccent.suggested": {
+    "value": "Suggested colors"
+  },
+  "orgAccent.sampleMention": {
+    "value": "@Agent"
+  },
+  "orgAccent.sampleLink": {
+    "value": "A link"
+  },
+  "orgAccent.save": {
+    "value": "Save color"
+  },
+  "orgAccent.saved": {
+    "value": "Accent color updated."
+  },
+  "orgAccent.reset": {
+    "value": "Back to the default color."
   },
   "look.previous": {
     "value": "Previous"
@@ -40760,8 +40892,71 @@
   "audit.removed": {
     "value": "Removed"
   },
+  "audit.operatorRead.sentence": {
+    "value": "{{who}} read {{what}}"
+  },
+  "audit.operatorRead.who.server": {
+    "value": "Whoever runs this server"
+  },
+  "audit.operatorRead.who.cloud": {
+    "value": "agentes.chat support"
+  },
+  "audit.operatorRead.what.message": {
+    "value": "a message"
+  },
+  "audit.operatorRead.what.run_step": {
+    "value": "a step of an agent's work"
+  },
+  "audit.operatorRead.what.agent": {
+    "value": "an agent's instructions"
+  },
+  "audit.operatorRead.what.routine": {
+    "value": "a routine"
+  },
+  "audit.operatorRead.what.task": {
+    "value": "a background task"
+  },
+  "audit.operatorRead.what.channel": {
+    "value": "a channel's name"
+  },
+  "audit.operatorRead.what.connection": {
+    "value": "a connection's details"
+  },
+  "audit.operatorRead.what.support_request": {
+    "value": "a support request"
+  },
+  "audit.operatorRead.what.direct": {
+    "value": "something in a private conversation"
+  },
+  "audit.operatorRead.what.other": {
+    "value": "something in the workspace"
+  },
+  "audit.operatorRead.request.plain": {
+    "value": "at {{name}}'s request"
+  },
+  "audit.operatorRead.request.app": {
+    "value": "at {{name}}'s request, sent from the app"
+  },
+  "audit.operatorRead.request.email": {
+    "value": "at {{name}}'s request, sent by email"
+  },
+  "audit.operatorRead.request.operator": {
+    "value": "at {{name}}'s request, recorded by whoever runs this server"
+  },
+  "audit.operatorRead.request.support": {
+    "value": "at {{name}}'s request, recorded by support"
+  },
+  "audit.operatorRead.fault": {
+    "value": "to diagnose a failed or stuck run"
+  },
+  "audit.operatorRead.ai": {
+    "value": "with an AI assistant"
+  },
   "audit.change.mergedWithoutAsking": {
     "value": "Merged in {{repo}} without asking"
+  },
+  "audit.change.accentChanged": {
+    "value": "Changed the workspace's accent color"
   },
   "audit.change.pattern": {
     "value": "{{verb}} {{area}}"

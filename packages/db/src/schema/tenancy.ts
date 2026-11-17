@@ -40,6 +40,8 @@ export const organizations = pgTable("organizations", {
   context: text().notNull().default(""),
   /** The workspace logo (`/api/app/org-logos/{orgId}/{hash}.{ext}`), uploaded by an admin; null = the agent mark. */
   logo: text(),
+  /** The workspace's accent, a lower-case "#rrggbb" (ADR 0193): the agent colors its apps derive; null = the default. */
+  accent: text(),
   /**
    * Set by the people who run this server through the operator API (ADR 0056): `hold` stops its agents,
    * `suspended` the whole workspace. With the notice `silent` the workspace is told only that it is paused,

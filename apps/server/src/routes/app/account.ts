@@ -59,6 +59,7 @@ import {
   setAvatar,
   setMyLocale,
   setMyWorkArea,
+  setOrgAccent,
   setOrgLogo,
   settleJoinRequests,
   setWallpaperPhoto,
@@ -114,7 +115,7 @@ import {
   requireSession,
   security,
 } from "./context";
-import { Invitation, Member, Organization, Role } from "./schemas";
+import { AccentColor, Invitation, Member, Organization, Role } from "./schemas";
 
 const tags = ["Account"];
 /** E-mail lookups on the sign-in screen: enough for typos and a few accounts, not for listing who has one. */
@@ -265,6 +266,7 @@ export function accountRoutes(deps: AppDeps) {
           permissions: [...m.permissions],
           rank: m.rank,
           logo: m.orgLogo ?? null,
+          accent: m.orgAccent ?? null,
           ...(m.orgCreatedAt ? { createdAt: m.orgCreatedAt.toISOString() } : {}),
           ...(m.start ? { start: m.start } : {}),
           showActivity: m.showActivity ?? false,
@@ -1316,7 +1318,12 @@ export function accountRoutes(deps: AppDeps) {
       const limit = await deps.adapters.rateLimiter.consume(`org-logo:${orgId}`, { limit: 20, windowMs: 3600_000 });
       if (!limit.allowed) return apiError(c, 429, "rate_limited", "Too many logo changes. Try again later.");
       return c.json(
-        await setOrgLogo({ db, blobs: deps.adapters.platformBlobs }, user.id, orgId, c.req.valid("json")),
+        await setOrgLogo(
+          { db, blobs: deps.adapters.platformBlobs, pubsub: deps.adapters.pubsub },
+          user.id,
+          orgId,
+          c.req.valid("json"),
+        ),
         200,
       );
     },
@@ -1333,8 +1340,39 @@ export function accountRoutes(deps: AppDeps) {
       responses: { 204: noContent[204], ...errors },
     }),
     async (c) => {
-      await removeOrgLogo({ db, blobs: deps.adapters.platformBlobs }, c.get("user").id, c.req.valid("param").orgId);
+      await removeOrgLogo(
+        { db, blobs: deps.adapters.platformBlobs, pubsub: deps.adapters.pubsub },
+        c.get("user").id,
+        c.req.valid("param").orgId,
+      );
       return c.body(null, 204);
+    },
+  );
+
+  // The workspace's accent (ADR 0193): an admin picks it; every member's apps paint with it.
+  app.openapi(
+    createRoute({
+      method: "put",
+      path: "/organizations/{orgId}/accent",
+      tags,
+      security,
+      summary: "Set the workspace's accent color, or null for the default. Admins.",
+      request: { params: OrgParams, body: body(z.object({ accent: AccentColor.nullable() })) },
+      responses: {
+        200: json(z.object({ accent: AccentColor.nullable() })),
+        429: errorResponse("Too many accent changes (`rate_limited`)"),
+        ...errors,
+      },
+    }),
+    async (c) => {
+      const user = c.get("user");
+      const { orgId } = c.req.valid("param");
+      const { accent } = c.req.valid("json");
+      await requirePermission(db, user.id, orgId, "configure");
+      // Each change makes every member's open apps refetch.
+      const limit = await deps.adapters.rateLimiter.consume(`org-accent:${orgId}`, { limit: 20, windowMs: 3600_000 });
+      if (!limit.allowed) return apiError(c, 429, "rate_limited", "Too many color changes. Try again later.");
+      return c.json(await setOrgAccent({ db, pubsub: deps.adapters.pubsub }, user.id, orgId, accent), 200);
     },
   );
 
@@ -1509,6 +1547,7 @@ export function accountRoutes(deps: AppDeps) {
           // What the agents know of the workspace: only for who configures it.
           context: can(membership, "configure") ? (org?.context ?? "") : "",
           logo: org?.logo ?? null,
+          accent: org?.accent ?? null,
           mode: await workspaceMode(db, orgId),
         },
         200,

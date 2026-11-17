@@ -523,6 +523,21 @@ export function useUpdateOrganization(orgId: string) {
 
 // ── Organization ────────────────────────────────────────────────────────────
 
+/** The workspace's accent color (admins, ADR 0193): `GET /me` carries it to every app, this one at once. */
+export function useSetOrgAccent(orgId: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (accent: string | null) => api.orgs.setAccent(orgId, accent),
+    onSuccess: ({ accent }) => {
+      qc.setQueryData<Me>(keys.me, (me) =>
+        me ? { ...me, organizations: me.organizations.map((o) => (o.id === orgId ? { ...o, accent } : o)) } : me,
+      );
+      void qc.invalidateQueries({ queryKey: keys.me });
+    },
+  });
+}
+
 export const useOrganization = (orgId: string) => {
   const api = useApi();
   return useQuery({ queryKey: [...keys.org(orgId), "detail"], queryFn: () => api.orgs.get(orgId) });

@@ -3820,7 +3820,6 @@
       "aiAccount": "Denkt met {{account}}",
       "aiModel": "Denkt via de API",
       "aiNone": "Nog geen AI. Koppel er een na het aanmaken",
-      "reviewTitle": "{{name}} bekijken",
       "lines": "Wat {{name}} krijgt",
       "aChannel": "een kanaal",
       "anApp": "een app",
@@ -7195,7 +7194,6 @@
     "adminsOnlyPersonal": "Vraag iemand die deze ruimte beheert of je agents mag maken.",
     "proposalClosed": "Over dit voorstel is al beslist of het is verlopen.",
     "proposalNoAccess": "Alleen mensen in het gesprek ervan kunnen dit voorstel zien.",
-    "backToChat": "Terug naar het gesprek",
     "and": " en ",
     "routine": "Routine",
     "routineKeep": "De routine {{name}} maken",
@@ -7370,6 +7368,51 @@
     "otherSkill": "Andere skill",
     "namesLead": "Wat dacht je van",
     "namesRoll": "Andere namen",
+    "proposal": {
+      "lead": "Pas aan wat {{name}} voorstelde. Je kunt later alles wijzigen.",
+      "leadNarrow": "Voorstel van {{name}}: {{why}}",
+      "side": "Het voorstel",
+      "from": "Voorgesteld door {{name}}",
+      "changed": "Wat je hebt gewijzigd",
+      "changedNone": "Nog niets. Wat je op de kaart wijzigt, verschijnt hier, met Ongedaan maken.",
+      "undo": "Ongedaan maken",
+      "changes": {
+        "changed": "gewijzigd",
+        "added": "toegevoegd",
+        "removed": "verwijderd",
+        "how": "Hoe het werkt"
+      },
+      "firstTask": "Eerste taak",
+      "firstTaskPlaceholder": "Wat je eerst vraagt (optioneel)",
+      "firstTaskHint": "Staat klaar in je chat met {{name}}. Gewoon versturen.",
+      "firstTaskHintBlank": "Staat klaar in je chat ermee. Gewoon versturen.",
+      "firstTaskNone": "Zonder taak opent de chat leeg.",
+      "after": "Na het aanmaken",
+      "afterAi": "Een AI koppelen waarmee {{name}} denkt",
+      "afterAiBlank": "Een AI koppelen waarmee het denkt",
+      "afterApp": "{{app}} koppelen",
+      "afterNone": "Niets. {{name}} gaat aan de slag zodra het is aangemaakt.",
+      "afterNoneBlank": "Niets. Het gaat aan de slag zodra het is aangemaakt.",
+      "discard": "Voorstel verwerpen",
+      "otherChannel": "Ander kanaal",
+      "chooseChannels": "Kanalen kiezen",
+      "channelsNone": "Alleen in de chat met jou.",
+      "channel": {
+        "lead": "Waar {{name}} gaat werken.",
+        "leadBlank": "Waar het gaat werken.",
+        "does": "{{name}} antwoordt als het in {{channel}} wordt geroepen en leest wat daar gebeurt.",
+        "doesBlank": "Het antwoordt als het in {{channel}} wordt geroepen en leest wat daar gebeurt.",
+        "remove": "Uit {{channel}} halen"
+      },
+      "routine": {
+        "label": "Routine",
+        "lead": "{{when}}, in {{channel}}.",
+        "leadDm": "{{when}}, in de chat met jou.",
+        "starts": "Start zodra {{name}} is aangemaakt. Tijd en tekst wijzig je bij Routines.",
+        "startsBlank": "Start zodra het is aangemaakt. Tijd en tekst wijzig je bij Routines.",
+        "remove": "Routine verwijderen"
+      }
+    },
     "skill": {
       "opens": "{{name}} opent deze handleiding als het onderwerp opduikt. Je bewerkt hem bij Skills.",
       "opensBlank": "Hij opent deze handleiding als het onderwerp opduikt. Je bewerkt hem bij Skills.",
@@ -11287,6 +11330,17 @@
     "remove": "Logo verwijderen",
     "saved": "Logo bijgewerkt.",
     "removed": "Logo verwijderd."
+  },
+  "orgAccent": {
+    "label": "Accentkleur",
+    "change": "Kleur wijzigen",
+    "useDefault": "Standaard gebruiken",
+    "suggested": "Voorgestelde kleuren",
+    "sampleMention": "@Agent",
+    "sampleLink": "Een link",
+    "save": "Kleur opslaan",
+    "saved": "Accentkleur bijgewerkt.",
+    "reset": "Terug naar de standaardkleur."
   },
   "look": {
     "previous": "Vorige",
@@ -16625,8 +16679,37 @@
     },
     "system": "Systeem",
     "removed": "Verwijderd",
+    "operatorRead": {
+      "sentence": "{{who}} las {{what}}",
+      "who": {
+        "server": "Wie deze server beheert,",
+        "cloud": "De support van agentes.chat"
+      },
+      "what": {
+        "message": "een bericht",
+        "run_step": "een stap uit het werk van een agent",
+        "agent": "de instructies van een agent",
+        "routine": "een routine",
+        "task": "een taak op de achtergrond",
+        "channel": "de naam van een kanaal",
+        "connection": "de gegevens van een verbinding",
+        "support_request": "een supportverzoek",
+        "direct": "iets uit een privégesprek",
+        "other": "iets uit de werkruimte"
+      },
+      "request": {
+        "plain": "op verzoek van {{name}}",
+        "app": "op verzoek van {{name}}, verstuurd vanuit de app",
+        "email": "op verzoek van {{name}}, verstuurd per e-mail",
+        "operator": "op verzoek van {{name}}, vastgelegd door wie deze server beheert",
+        "support": "op verzoek van {{name}}, vastgelegd door support"
+      },
+      "fault": "om een mislukte of vastgelopen run te onderzoeken",
+      "ai": "met een AI-assistent"
+    },
     "change": {
       "mergedWithoutAsking": "Gemerged in {{repo}} zonder te vragen",
+      "accentChanged": "Heeft de accentkleur van de werkruimte gewijzigd",
       "pattern": "{{verb}}: {{area}}",
       "approval": {
         "approved": "Een verzoek goedgekeurd",

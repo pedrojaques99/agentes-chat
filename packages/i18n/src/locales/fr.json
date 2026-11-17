@@ -3966,7 +3966,6 @@
       "aiAccount": "Réfléchit avec {{account}}",
       "aiModel": "Réfléchit via l'API",
       "aiNone": "Pas encore d'IA. Connectez-en une après la création",
-      "reviewTitle": "Examiner {{name}}",
       "lines": "Ce que {{name}} reçoit",
       "aChannel": "un canal",
       "anApp": "une app",
@@ -7420,7 +7419,6 @@
     "adminsOnlyPersonal": "Demandez à une personne qui gère cet espace de vous laisser créer des agents.",
     "proposalClosed": "Cette proposition a déjà été tranchée ou a expiré.",
     "proposalNoAccess": "Seules les personnes de sa conversation peuvent voir cette proposition.",
-    "backToChat": "Retour à la conversation",
     "and": " et ",
     "routine": "Routine",
     "routineKeep": "Créer la routine {{name}}",
@@ -7597,6 +7595,52 @@
     "otherSkill": "Autre skill",
     "namesLead": "Et si c'était",
     "namesRoll": "Autres noms",
+    "proposal": {
+      "lead": "Ajustez ce que {{name}} a proposé. Vous pourrez tout changer plus tard.",
+      "leadNarrow": "Proposition de {{name}} : {{why}}",
+      "side": "La proposition",
+      "from": "Proposé par {{name}}",
+      "changed": "Ce que vous avez changé",
+      "changedNone": "Rien pour l’instant. Ce que vous changez sur la carte s’affiche ici, avec Annuler.",
+      "undo": "Annuler",
+      "changes": {
+        "changed": "modifié",
+        "added": "ajouté",
+        "removed": "retiré",
+        "how": "Sa façon de travailler"
+      },
+      "firstTask": "Première tâche",
+      "firstTaskPlaceholder": "Quoi demander en premier (facultatif)",
+      "firstTaskHint": "Prête dans votre discussion avec {{name}}. Il suffit de l’envoyer.",
+      "firstTaskHintBlank": "Prête dans votre discussion avec lui. Il suffit de l’envoyer.",
+      "firstTaskNone": "Sans tâche, la discussion s’ouvre vide.",
+      "after": "Après la création",
+      "afterAi": "Connecter une IA pour que {{name}} réfléchisse",
+      "afterAiBlank": "Connecter une IA pour qu’il réfléchisse",
+      "afterApp": "Connecter {{app}}",
+      "afterNone": "Rien. {{name}} se met au travail dès sa création.",
+      "afterNoneBlank": "Rien. Il se met au travail dès sa création.",
+      "discard": "Rejeter la proposition",
+      "otherChannel": "Autre canal",
+      "chooseChannels": "Choisir des canaux",
+      "channelsNone": "Seulement dans sa discussion avec vous.",
+      "channel": {
+        "lead": "Où {{name}} va travailler.",
+        "leadBlank": "Où il va travailler.",
+        "does": "{{name}} répond quand on l’appelle dans {{channel}} et lit ce qui s’y passe.",
+        "doesBlank": "Il répond quand on l’appelle dans {{channel}} et lit ce qui s’y passe.",
+        "remove": "Retirer de {{channel}}"
+      },
+      "routine": {
+        "label": "Routine",
+        "lead": "{{when}}, dans {{channel}}.",
+        "leadDm": "{{when}}, dans sa discussion avec vous.",
+        "starts": "Démarre dès que {{name}} est créé. L’heure et le texte se changent dans Routines.",
+        "starts_female": "Démarre dès que {{name}} est créée. L’heure et le texte se changent dans Routines.",
+        "startsBlank": "Démarre dès qu’il est créé. L’heure et le texte se changent dans Routines.",
+        "remove": "Retirer la routine"
+      }
+    },
     "skill": {
       "opens": "{{name}} ouvre ce manuel quand le sujet se présente. Tu le modifies dans Skills.",
       "opensBlank": "Il ouvre ce manuel quand le sujet se présente. Tu le modifies dans Skills.",
@@ -11654,6 +11698,17 @@
     "remove": "Retirer le logo",
     "saved": "Logo mis à jour.",
     "removed": "Logo retiré."
+  },
+  "orgAccent": {
+    "label": "Couleur d’accent",
+    "change": "Changer la couleur",
+    "useDefault": "Utiliser la couleur par défaut",
+    "suggested": "Couleurs suggérées",
+    "sampleMention": "@Agent",
+    "sampleLink": "Un lien",
+    "save": "Enregistrer la couleur",
+    "saved": "Couleur d’accent mise à jour.",
+    "reset": "Retour à la couleur par défaut."
   },
   "look": {
     "previous": "Précédent",
@@ -17103,8 +17158,37 @@
     },
     "system": "Système",
     "removed": "Retiré",
+    "operatorRead": {
+      "sentence": "{{who}} a lu {{what}}",
+      "who": {
+        "server": "La personne qui gère ce serveur",
+        "cloud": "Le support agentes.chat"
+      },
+      "what": {
+        "message": "un message",
+        "run_step": "une étape du travail d'un agent",
+        "agent": "les instructions d'un agent",
+        "routine": "une routine",
+        "task": "une tâche en arrière-plan",
+        "channel": "le nom d'un canal",
+        "connection": "les détails d'une connexion",
+        "support_request": "une demande d'assistance",
+        "direct": "un élément d'une conversation privée",
+        "other": "un élément de l'espace de travail"
+      },
+      "request": {
+        "plain": "à la demande de {{name}}",
+        "app": "à la demande de {{name}}, envoyée depuis l'app",
+        "email": "à la demande de {{name}}, envoyée par e-mail",
+        "operator": "à la demande de {{name}}, enregistrée par la personne qui gère ce serveur",
+        "support": "à la demande de {{name}}, enregistrée par le support"
+      },
+      "fault": "pour diagnostiquer une exécution en échec ou bloquée",
+      "ai": "avec un assistant IA"
+    },
     "change": {
       "mergedWithoutAsking": "A mergé dans {{repo}} sans demander",
+      "accentChanged": "A changé la couleur d’accent de l’espace de travail",
       "pattern": "{{verb}} {{area}}",
       "approval": {
         "approved": "A approuvé une demande",

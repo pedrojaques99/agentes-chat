@@ -3662,7 +3662,6 @@
       "aiAccount": "{{account}}で考えます",
       "aiModel": "API経由で考えます",
       "aiNone": "AIはまだありません。作成後に接続してください",
-      "reviewTitle": "{{name}}を確認",
       "lines": "{{name}}が受け取るもの",
       "aChannel": "チャンネル",
       "anApp": "アプリ",
@@ -6881,7 +6880,6 @@
     "adminsOnlyPersonal": "エージェントを作成できるよう、ここを管理している人に頼んでください。",
     "proposalClosed": "この提案はすでに決定済みか、期限が切れています。",
     "proposalNoAccess": "この提案を見られるのは、その会話にいる人だけです。",
-    "backToChat": "会話に戻る",
     "and": "と",
     "routine": "ルーティン",
     "routineKeep": "ルーティン{{name}}を作成",
@@ -7056,6 +7054,51 @@
     "otherSkill": "ほかのスキル",
     "namesLead": "たとえば",
     "namesRoll": "ほかの名前",
+    "proposal": {
+      "lead": "{{name}} の提案を調整します。あとで何でも変えられます。",
+      "leadNarrow": "{{name}} の提案：{{why}}",
+      "side": "提案",
+      "from": "{{name}} の提案",
+      "changed": "変更した内容",
+      "changedNone": "まだありません。カードで変えた内容がここに表示され、元に戻せます。",
+      "undo": "元に戻す",
+      "changes": {
+        "changed": "変更",
+        "added": "追加",
+        "removed": "削除",
+        "how": "仕事の進め方"
+      },
+      "firstTask": "最初のタスク",
+      "firstTaskPlaceholder": "最初に頼むこと（任意）",
+      "firstTaskHint": "{{name}} とのチャットに用意されます。送信するだけです。",
+      "firstTaskHintBlank": "このエージェントとのチャットに用意されます。送信するだけです。",
+      "firstTaskNone": "タスクがなければ、チャットは空で開きます。",
+      "after": "作成後",
+      "afterAi": "{{name}} が考えるための AI を接続",
+      "afterAiBlank": "考えるための AI を接続",
+      "afterApp": "{{app}} を接続",
+      "afterNone": "なし。{{name}} は作成されるとすぐに働き始めます。",
+      "afterNoneBlank": "なし。作成されるとすぐに働き始めます。",
+      "discard": "提案を破棄",
+      "otherChannel": "別のチャンネル",
+      "chooseChannels": "チャンネルを選ぶ",
+      "channelsNone": "あなたとのチャットのみ。",
+      "channel": {
+        "lead": "{{name}} が働く場所。",
+        "leadBlank": "働く場所。",
+        "does": "{{name}} は {{channel}} で呼ばれると答え、そこでのやり取りを読みます。",
+        "doesBlank": "{{channel}} で呼ばれると答え、そこでのやり取りを読みます。",
+        "remove": "{{channel}} から外す"
+      },
+      "routine": {
+        "label": "ルーティン",
+        "lead": "{{when}}、{{channel}} で。",
+        "leadDm": "{{when}}、あなたとのチャットで。",
+        "starts": "{{name}} が作成されると始まります。時間と内容は「ルーティン」で変更できます。",
+        "startsBlank": "作成されると始まります。時間と内容は「ルーティン」で変更できます。",
+        "remove": "ルーティンを外す"
+      }
+    },
     "skill": {
       "opens": "{{name}} はその話題が出たときにこの手順書を開きます。編集はスキルから。",
       "opensBlank": "その話題が出たときにこの手順書を開きます。編集はスキルから。",
@@ -10778,6 +10821,17 @@
     "remove": "ロゴを削除",
     "saved": "ロゴを更新しました。",
     "removed": "ロゴを削除しました。"
+  },
+  "orgAccent": {
+    "label": "アクセントカラー",
+    "change": "色を変更",
+    "useDefault": "デフォルトに戻す",
+    "suggested": "おすすめの色",
+    "sampleMention": "@エージェント",
+    "sampleLink": "リンク",
+    "save": "色を保存",
+    "saved": "アクセントカラーを更新しました。",
+    "reset": "デフォルトの色に戻しました。"
   },
   "look": {
     "previous": "前へ",
@@ -15983,8 +16037,37 @@
     },
     "system": "システム",
     "removed": "削除済み",
+    "operatorRead": {
+      "sentence": "{{who}}が{{what}}を閲覧",
+      "who": {
+        "server": "このサーバーの運用者",
+        "cloud": "agentes.chat サポート"
+      },
+      "what": {
+        "message": "メッセージ",
+        "run_step": "エージェントの作業の1ステップ",
+        "agent": "エージェントの指示",
+        "routine": "ルーティン",
+        "task": "バックグラウンドのタスク",
+        "channel": "チャンネルの名前",
+        "connection": "接続の情報",
+        "support_request": "サポートへの依頼",
+        "direct": "非公開の会話の内容",
+        "other": "ワークスペース内の内容"
+      },
+      "request": {
+        "plain": "{{name}}の依頼による",
+        "app": "{{name}}の依頼による（アプリから送信）",
+        "email": "{{name}}の依頼による（メールで送信）",
+        "operator": "{{name}}の依頼による（このサーバーの運用者が記録）",
+        "support": "{{name}}の依頼による（サポートが記録）"
+      },
+      "fault": "失敗または停止した実行の調査のため",
+      "ai": "AIアシスタントを使用"
+    },
     "change": {
       "mergedWithoutAsking": "{{repo}}で確認なしでマージしました",
+      "accentChanged": "ワークスペースのアクセントカラーを変更",
       "pattern": "{{verb}}: {{area}}",
       "approval": {
         "approved": "リクエストを承認",

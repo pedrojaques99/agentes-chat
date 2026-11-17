@@ -153,6 +153,29 @@ describe("loadConfig", () => {
     );
   });
 
+  test("the operator API's reveal token: optional, long, secret, only with the full token and equal to neither of the others", () => {
+    const full = "o".repeat(32);
+    const read = "r".repeat(32);
+    const reveal = "v".repeat(32);
+    const base = { ...valid, OPERATOR_API_TOKEN: full, OPERATOR_API_READ_TOKEN: read };
+    expect(loadConfig(base).OPERATOR_API_REVEAL_TOKEN).toBeUndefined();
+    const all = loadConfig({ ...base, OPERATOR_API_REVEAL_TOKEN: reveal });
+    expect(all.OPERATOR_API_REVEAL_TOKEN).toBe(reveal);
+    expect(redactConfig(all).OPERATOR_API_REVEAL_TOKEN).toBe("********");
+    expect(() => loadConfig({ ...base, OPERATOR_API_REVEAL_TOKEN: full })).toThrow(
+      /OPERATOR_API_REVEAL_TOKEN must differ from OPERATOR_API_TOKEN/,
+    );
+    expect(() => loadConfig({ ...base, OPERATOR_API_REVEAL_TOKEN: read })).toThrow(
+      /OPERATOR_API_REVEAL_TOKEN must differ from OPERATOR_API_READ_TOKEN/,
+    );
+    expect(() => loadConfig({ ...valid, OPERATOR_API_REVEAL_TOKEN: reveal })).toThrow(
+      /OPERATOR_API_REVEAL_TOKEN needs OPERATOR_API_TOKEN/,
+    );
+    expect(() => loadConfig({ ...base, OPERATOR_API_REVEAL_TOKEN: "short" })).toThrow(
+      /OPERATOR_API_REVEAL_TOKEN: must be at least 32 characters/,
+    );
+  });
+
   test("MCP_CALLER_IDENTITY: host=secret pairs, a bare lower-case host and a long secret, each host once, never shown", () => {
     const secret = "s".repeat(32);
     const padded = `${"p".repeat(30)}==`;

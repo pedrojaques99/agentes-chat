@@ -3961,7 +3961,6 @@
       "aiAccount": "Piensa con {{account}}",
       "aiModel": "Piensa a través de la API",
       "aiNone": "Todavía sin IA. Conecta una después de crearlo",
-      "reviewTitle": "Revisar a {{name}}",
       "lines": "Lo que recibe {{name}}",
       "aChannel": "un canal",
       "anApp": "una app",
@@ -7369,7 +7368,6 @@
     "adminsOnlyPersonal": "Pide a quien administra este espacio que te deje crear agentes.",
     "proposalClosed": "Esta propuesta ya se decidió o venció.",
     "proposalNoAccess": "Solo las personas de su conversación pueden ver esta propuesta.",
-    "backToChat": "Volver a la conversación",
     "and": " y",
     "routine": "Rutina",
     "routineKeep": "Crear la rutina {{name}}",
@@ -7546,6 +7544,53 @@
     "otherSkill": "Otra skill",
     "namesLead": "Qué tal",
     "namesRoll": "Otros nombres",
+    "proposal": {
+      "lead": "Ajusta lo que propuso {{name}}. Puedes cambiarlo todo después.",
+      "leadNarrow": "Propuesta de {{name}}: {{why}}",
+      "side": "La propuesta",
+      "from": "Propuesto por {{name}}",
+      "changed": "Lo que cambiaste",
+      "changedNone": "Nada todavía. Lo que cambies en la tarjeta aparece aquí, con Deshacer.",
+      "undo": "Deshacer",
+      "changes": {
+        "changed": "cambió",
+        "added": "entró",
+        "removed": "salió",
+        "how": "Cómo trabaja"
+      },
+      "firstTask": "Primera tarea",
+      "firstTaskPlaceholder": "Qué pedir primero (opcional)",
+      "firstTaskHint": "Queda lista en tu chat con {{name}}. Solo envíala.",
+      "firstTaskHintBlank": "Queda lista en tu chat con él. Solo envíala.",
+      "firstTaskNone": "Sin una tarea, el chat se abre vacío.",
+      "after": "Después de crearlo",
+      "afterAi": "Conectar una IA para que {{name}} piense",
+      "afterAiBlank": "Conectar una IA para que piense",
+      "afterApp": "Conectar {{app}}",
+      "afterNone": "Nada. {{name}} empieza a trabajar en cuanto se cree.",
+      "afterNoneBlank": "Nada. Empieza a trabajar en cuanto se cree.",
+      "discard": "Descartar propuesta",
+      "otherChannel": "Otro canal",
+      "chooseChannels": "Elegir canales",
+      "channelsNone": "Solo en su chat contigo.",
+      "channel": {
+        "lead": "Dónde va a trabajar {{name}}.",
+        "leadBlank": "Dónde va a trabajar.",
+        "does": "{{name}} responde cuando lo llaman en {{channel}} y lee lo que pasa allí.",
+        "does_female": "{{name}} responde cuando la llaman en {{channel}} y lee lo que pasa allí.",
+        "doesBlank": "Responde cuando lo llaman en {{channel}} y lee lo que pasa allí.",
+        "remove": "Quitar de {{channel}}"
+      },
+      "routine": {
+        "label": "Rutina",
+        "lead": "{{when}}, en {{channel}}.",
+        "leadDm": "{{when}}, en su chat contigo.",
+        "starts": "Empieza cuando {{name}} esté creado. La hora y el texto los cambias en Rutinas.",
+        "starts_female": "Empieza cuando {{name}} esté creada. La hora y el texto los cambias en Rutinas.",
+        "startsBlank": "Empieza cuando esté creado. La hora y el texto los cambias en Rutinas.",
+        "remove": "Quitar la rutina"
+      }
+    },
     "skill": {
       "opens": "{{name}} abre este manual cuando aparece el tema. Lo editas en Skills.",
       "opensBlank": "Abre este manual cuando aparece el tema. Lo editas en Skills.",
@@ -11586,6 +11631,17 @@
     "remove": "Quitar logo",
     "saved": "Logo actualizado.",
     "removed": "Logo quitado."
+  },
+  "orgAccent": {
+    "label": "Color de acento",
+    "change": "Cambiar color",
+    "useDefault": "Usar el predeterminado",
+    "suggested": "Colores sugeridos",
+    "sampleMention": "@Agente",
+    "sampleLink": "Un enlace",
+    "save": "Guardar color",
+    "saved": "Color de acento actualizado.",
+    "reset": "De vuelta al color predeterminado."
   },
   "look": {
     "previous": "Anterior",
@@ -17033,8 +17089,37 @@
     },
     "system": "Sistema",
     "removed": "Eliminado",
+    "operatorRead": {
+      "sentence": "{{who}} leyó {{what}}",
+      "who": {
+        "server": "Quien administra este servidor",
+        "cloud": "El soporte de agentes.chat"
+      },
+      "what": {
+        "message": "un mensaje",
+        "run_step": "un paso del trabajo de un agente",
+        "agent": "las instrucciones de un agente",
+        "routine": "una rutina",
+        "task": "una tarea en segundo plano",
+        "channel": "el nombre de un canal",
+        "connection": "los datos de una conexión",
+        "support_request": "una solicitud de soporte",
+        "direct": "algo en una conversación privada",
+        "other": "algo del espacio de trabajo"
+      },
+      "request": {
+        "plain": "a pedido de {{name}}",
+        "app": "a pedido de {{name}}, enviado desde la app",
+        "email": "a pedido de {{name}}, enviado por correo",
+        "operator": "a pedido de {{name}}, registrado por quien administra este servidor",
+        "support": "a pedido de {{name}}, registrado por soporte"
+      },
+      "fault": "para diagnosticar una ejecución que falló o se quedó detenida",
+      "ai": "con un asistente de IA"
+    },
     "change": {
       "mergedWithoutAsking": "Hizo merge en {{repo}} sin preguntar",
+      "accentChanged": "Cambió el color de acento del espacio de trabajo",
       "pattern": "{{verb}} {{area}}",
       "approval": {
         "approved": "Aprobó una solicitud",

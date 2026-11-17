@@ -240,6 +240,7 @@ export {
 export * from "./operator-lookups";
 export * from "./operator-machines";
 export * from "./operator-people";
+export * from "./operator-reveal";
 export * from "./operator-review";
 export * from "./operator-runs";
 export * from "./operator-workspace";
@@ -315,6 +316,7 @@ export * from "./storage";
 export * from "./streams";
 export * from "./stretch";
 export * from "./stuck";
+export * from "./support-requests";
 export * from "./talker";
 export * from "./task-access";
 export * from "./task-conversation";

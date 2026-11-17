@@ -65,6 +65,15 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (config.OPERATOR_API_READ_TOKEN && config.OPERATOR_API_READ_TOKEN === config.OPERATOR_API_TOKEN) {
     throw new ConfigError(["OPERATOR_API_READ_TOKEN must differ from OPERATOR_API_TOKEN"]);
   }
+  if (config.OPERATOR_API_REVEAL_TOKEN && !config.OPERATOR_API_TOKEN) {
+    throw new ConfigError(["OPERATOR_API_REVEAL_TOKEN needs OPERATOR_API_TOKEN"]);
+  }
+  // Equal to either, a token that should open one door would open the other's too.
+  for (const other of ["OPERATOR_API_TOKEN", "OPERATOR_API_READ_TOKEN"] as const) {
+    if (config.OPERATOR_API_REVEAL_TOKEN && config.OPERATOR_API_REVEAL_TOKEN === config[other]) {
+      throw new ConfigError([`OPERATOR_API_REVEAL_TOKEN must differ from ${other}`]);
+    }
+  }
   if (config.MACHINE_PROVISIONING === "external" && config.HOST_COMPUTER_TOKEN) {
     throw new ConfigError([
       "HOST_COMPUTER_TOKEN can't be set with MACHINE_PROVISIONING=external: every workspace gets its own computer, and no other computer joins it",

@@ -3660,7 +3660,6 @@
       "aiAccount": "{{account}}(으)로 생각해요",
       "aiModel": "API로 생각해요",
       "aiNone": "아직 AI가 없어요. 만든 다음 연결하세요",
-      "reviewTitle": "{{name}} 검토",
       "lines": "{{name}}이(가) 받는 것",
       "aChannel": "채널",
       "anApp": "앱",
@@ -6878,7 +6877,6 @@
     "adminsOnlyPersonal": "에이전트를 만들 수 있게 해 달라고 여기를 관리하는 사람에게 요청하세요.",
     "proposalClosed": "이 제안은 이미 결정됐거나 만료됐어요.",
     "proposalNoAccess": "이 제안은 해당 대화에 있는 사람만 볼 수 있어요.",
-    "backToChat": "대화로 돌아가기",
     "and": " 및 ",
     "routine": "루틴",
     "routineKeep": "{{name}} 루틴 만들기",
@@ -7053,6 +7051,51 @@
     "otherSkill": "다른 스킬",
     "namesLead": "이건 어때요",
     "namesRoll": "다른 이름",
+    "proposal": {
+      "lead": "{{name}}이(가) 제안한 내용을 조정하세요. 나중에 모두 바꿀 수 있어요.",
+      "leadNarrow": "{{name}}의 제안: {{why}}",
+      "side": "제안",
+      "from": "{{name}}의 제안",
+      "changed": "바꾼 내용",
+      "changedNone": "아직 없어요. 카드에서 바꾼 내용이 여기에 실행 취소와 함께 표시돼요.",
+      "undo": "실행 취소",
+      "changes": {
+        "changed": "변경됨",
+        "added": "추가됨",
+        "removed": "제거됨",
+        "how": "일하는 방식"
+      },
+      "firstTask": "첫 작업",
+      "firstTaskPlaceholder": "먼저 요청할 일 (선택)",
+      "firstTaskHint": "{{name}}와(과)의 채팅에 준비돼요. 보내기만 하면 돼요.",
+      "firstTaskHintBlank": "이 에이전트와의 채팅에 준비돼요. 보내기만 하면 돼요.",
+      "firstTaskNone": "작업이 없으면 채팅이 비어 있는 상태로 열려요.",
+      "after": "만든 후",
+      "afterAi": "{{name}}이(가) 생각할 AI 연결",
+      "afterAiBlank": "생각할 AI 연결",
+      "afterApp": "{{app}} 연결",
+      "afterNone": "없음. {{name}}은(는) 만들어지면 바로 일을 시작해요.",
+      "afterNoneBlank": "없음. 만들어지면 바로 일을 시작해요.",
+      "discard": "제안 버리기",
+      "otherChannel": "다른 채널",
+      "chooseChannels": "채널 선택",
+      "channelsNone": "나와의 채팅에서만.",
+      "channel": {
+        "lead": "{{name}}이(가) 일할 곳.",
+        "leadBlank": "일할 곳.",
+        "does": "{{name}}은(는) {{channel}}에서 부르면 답하고 그곳의 대화를 읽어요.",
+        "doesBlank": "{{channel}}에서 부르면 답하고 그곳의 대화를 읽어요.",
+        "remove": "{{channel}}에서 빼기"
+      },
+      "routine": {
+        "label": "루틴",
+        "lead": "{{when}}, {{channel}}에서.",
+        "leadDm": "{{when}}, 나와의 채팅에서.",
+        "starts": "{{name}}이(가) 만들어지면 시작해요. 시간과 내용은 루틴에서 바꿀 수 있어요.",
+        "startsBlank": "만들어지면 시작해요. 시간과 내용은 루틴에서 바꿀 수 있어요.",
+        "remove": "루틴 빼기"
+      }
+    },
     "skill": {
       "opens": "{{name}}은(는) 그 주제가 나오면 이 안내서를 펼쳐요. 수정은 스킬에서 해요.",
       "opensBlank": "그 주제가 나오면 이 안내서를 펼쳐요. 수정은 스킬에서 해요.",
@@ -10772,6 +10815,17 @@
     "remove": "로고 삭제",
     "saved": "로고를 업데이트했어요.",
     "removed": "로고를 삭제했어요."
+  },
+  "orgAccent": {
+    "label": "강조 색상",
+    "change": "색상 변경",
+    "useDefault": "기본값 사용",
+    "suggested": "추천 색상",
+    "sampleMention": "@에이전트",
+    "sampleLink": "링크",
+    "save": "색상 저장",
+    "saved": "강조 색상을 업데이트했어요.",
+    "reset": "기본 색상으로 되돌렸어요."
   },
   "look": {
     "previous": "이전",
@@ -15975,8 +16029,37 @@
     },
     "system": "시스템",
     "removed": "삭제됨",
+    "operatorRead": {
+      "sentence": "{{who}}이 {{what}} 읽었어요",
+      "who": {
+        "server": "이 서버를 운영하는 사람",
+        "cloud": "agentes.chat 지원팀"
+      },
+      "what": {
+        "message": "메시지 한 건을",
+        "run_step": "에이전트 작업의 한 단계를",
+        "agent": "에이전트의 지침을",
+        "routine": "루틴 하나를",
+        "task": "백그라운드 작업 하나를",
+        "channel": "채널 이름을",
+        "connection": "연결 정보를",
+        "support_request": "지원 요청 한 건을",
+        "direct": "비공개 대화의 내용을",
+        "other": "워크스페이스의 내용을"
+      },
+      "request": {
+        "plain": "{{name}}님의 요청",
+        "app": "{{name}}님의 요청, 앱에서 보냄",
+        "email": "{{name}}님의 요청, 이메일로 보냄",
+        "operator": "{{name}}님의 요청, 이 서버를 운영하는 사람이 기록",
+        "support": "{{name}}님의 요청, 지원팀이 기록"
+      },
+      "fault": "실패했거나 멈춘 실행을 진단하기 위해",
+      "ai": "AI 어시스턴트 사용"
+    },
     "change": {
       "mergedWithoutAsking": "{{repo}}에서 묻지 않고 병합했어요",
+      "accentChanged": "워크스페이스의 강조 색상을 변경했어요",
       "pattern": "{{area}} {{verb}}",
       "approval": {
         "approved": "요청을 승인했어요",

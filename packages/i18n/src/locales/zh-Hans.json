@@ -3665,7 +3665,6 @@
       "aiAccount": "使用 {{account}} 思考",
       "aiModel": "通过 API 思考",
       "aiNone": "还没有 AI。创建后再连接一个",
-      "reviewTitle": "查看 {{name}}",
       "lines": "{{name}} 将获得",
       "aChannel": "一个频道",
       "anApp": "一个应用",
@@ -6919,7 +6918,6 @@
     "adminsOnlyPersonal": "请管理这里的人允许你创建智能体。",
     "proposalClosed": "这个提议已经有了决定或已过期。",
     "proposalNoAccess": "只有所在对话中的人能看到这个提议。",
-    "backToChat": "返回对话",
     "and": "和",
     "routine": "例行工作",
     "routineKeep": "创建例行工作 {{name}}",
@@ -7094,6 +7092,51 @@
     "otherSkill": "其他技能",
     "namesLead": "试试",
     "namesRoll": "换一批名字",
+    "proposal": {
+      "lead": "调整 {{name}} 的提议。之后都可以修改。",
+      "leadNarrow": "{{name}} 的提议：{{why}}",
+      "side": "提议",
+      "from": "{{name}} 提议",
+      "changed": "你改了什么",
+      "changedNone": "还没有。你在卡片上的修改会显示在这里，可以撤销。",
+      "undo": "撤销",
+      "changes": {
+        "changed": "已修改",
+        "added": "已添加",
+        "removed": "已移除",
+        "how": "工作方式"
+      },
+      "firstTask": "第一个任务",
+      "firstTaskPlaceholder": "先让它做什么（可选）",
+      "firstTaskHint": "会在你和 {{name}} 的对话里备好，直接发送即可。",
+      "firstTaskHintBlank": "会在你和它的对话里备好，直接发送即可。",
+      "firstTaskNone": "没有任务时，对话打开是空的。",
+      "after": "创建之后",
+      "afterAi": "连接一个 AI，让 {{name}} 能思考",
+      "afterAiBlank": "连接一个 AI，让它能思考",
+      "afterApp": "连接 {{app}}",
+      "afterNone": "没有。{{name}} 创建后马上开始工作。",
+      "afterNoneBlank": "没有。创建后马上开始工作。",
+      "discard": "放弃提议",
+      "otherChannel": "其他频道",
+      "chooseChannels": "选择频道",
+      "channelsNone": "只在它和你的对话里。",
+      "channel": {
+        "lead": "{{name}} 工作的地方。",
+        "leadBlank": "它工作的地方。",
+        "does": "在 {{channel}} 里被叫到时，{{name}} 会回答，并阅读那里的内容。",
+        "doesBlank": "在 {{channel}} 里被叫到时，它会回答，并阅读那里的内容。",
+        "remove": "从 {{channel}} 移出"
+      },
+      "routine": {
+        "label": "例行任务",
+        "lead": "{{when}}，在 {{channel}}。",
+        "leadDm": "{{when}}，在它和你的对话里。",
+        "starts": "{{name}} 创建后开始。时间和内容可在“例行任务”里修改。",
+        "startsBlank": "创建后开始。时间和内容可在“例行任务”里修改。",
+        "remove": "移除例行任务"
+      }
+    },
     "skill": {
       "opens": "话题出现时，{{name}} 会打开这份指南。可在“技能”里编辑。",
       "opensBlank": "话题出现时，它会打开这份指南。可在“技能”里编辑。",
@@ -10844,6 +10887,17 @@
     "remove": "移除徽标",
     "saved": "徽标已更新。",
     "removed": "徽标已移除。"
+  },
+  "orgAccent": {
+    "label": "强调色",
+    "change": "更改颜色",
+    "useDefault": "使用默认颜色",
+    "suggested": "推荐颜色",
+    "sampleMention": "@智能体",
+    "sampleLink": "一个链接",
+    "save": "保存颜色",
+    "saved": "强调色已更新。",
+    "reset": "已恢复默认颜色。"
   },
   "look": {
     "previous": "上一个",
@@ -16046,8 +16100,37 @@
     },
     "system": "系统",
     "removed": "已移除",
+    "operatorRead": {
+      "sentence": "{{who}}查看了{{what}}",
+      "who": {
+        "server": "运行此服务器的人",
+        "cloud": "agentes.chat 支持团队"
+      },
+      "what": {
+        "message": "一条消息",
+        "run_step": "智能体工作中的一个步骤",
+        "agent": "一个智能体的指令",
+        "routine": "一项例行工作",
+        "task": "一个后台任务",
+        "channel": "一个频道的名称",
+        "connection": "一个连接的信息",
+        "support_request": "一条支持请求",
+        "direct": "私密对话中的内容",
+        "other": "工作区中的内容"
+      },
+      "request": {
+        "plain": "应 {{name}} 的请求",
+        "app": "应 {{name}} 的请求（从应用发送）",
+        "email": "应 {{name}} 的请求（通过邮件发送）",
+        "operator": "应 {{name}} 的请求（由运行此服务器的人记录）",
+        "support": "应 {{name}} 的请求（由支持团队记录）"
+      },
+      "fault": "为诊断一次失败或卡住的运行",
+      "ai": "使用了 AI 助手"
+    },
     "change": {
       "mergedWithoutAsking": "未经询问在 {{repo}} 中合并",
+      "accentChanged": "更改了工作区的强调色",
       "pattern": "{{verb}}{{area}}",
       "approval": {
         "approved": "批准了一个请求",

@@ -117,6 +117,8 @@ export interface Membership {
   roleIds: string[];
   /** The workspace logo URL, when one was uploaded (listMemberships). */
   orgLogo?: string | null;
+  /** The workspace's accent "#rrggbb" (listMemberships, ADR 0193); null = the default. */
+  orgAccent?: string | null;
   /** When the workspace was made (listMemberships): tells apart two with the same name. */
   orgCreatedAt?: Date;
   /** The workspace's standing (`standing.ts`). */
@@ -180,6 +182,7 @@ export async function listMemberships(db: Database, userId: string): Promise<Mem
       orgName: organizations.name,
       role: organizationMembers.role,
       orgLogo: organizations.logo,
+      orgAccent: organizations.accent,
       orgCreatedAt: organizations.createdAt,
       standing: STANDING_COLUMNS,
       startPage: organizationMembers.startPage,

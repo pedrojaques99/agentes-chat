@@ -3806,7 +3806,6 @@
       "aiAccount": "{{account}} ile düşünür",
       "aiModel": "API üzerinden düşünür",
       "aiNone": "Henüz yapay zeka yok. Oluşturduktan sonra bir tane bağlayın",
-      "reviewTitle": "{{name}} ajanını inceleyin",
       "lines": "{{name}} neler alacak",
       "aChannel": "bir kanal",
       "anApp": "bir uygulama",
@@ -7117,7 +7116,6 @@
     "adminsOnlyPersonal": "Ajan oluşturmanıza izin vermesini burayı yöneten birinden isteyin.",
     "proposalClosed": "Bu öneri hakkında zaten karar verildi ya da süresi doldu.",
     "proposalNoAccess": "Bu öneriyi yalnızca sohbetindeki kişiler görebilir.",
-    "backToChat": "Sohbete dön",
     "and": " ve ",
     "routine": "Rutin",
     "routineKeep": "{{name}} rutinini oluştur",
@@ -7292,6 +7290,51 @@
     "otherSkill": "Başka beceri",
     "namesLead": "Şuna ne dersin",
     "namesRoll": "Başka adlar",
+    "proposal": {
+      "lead": "{{name}} adlı ajanın önerdiklerini düzenle. Her şeyi sonra değiştirebilirsin.",
+      "leadNarrow": "{{name}} önerisi: {{why}}",
+      "side": "Öneri",
+      "from": "Öneren: {{name}}",
+      "changed": "Değiştirdiklerin",
+      "changedNone": "Henüz bir şey yok. Kartta değiştirdiklerin burada, Geri al ile görünür.",
+      "undo": "Geri al",
+      "changes": {
+        "changed": "değişti",
+        "added": "eklendi",
+        "removed": "çıkarıldı",
+        "how": "Nasıl çalışır"
+      },
+      "firstTask": "İlk görev",
+      "firstTaskPlaceholder": "Önce ne istenecek (isteğe bağlı)",
+      "firstTaskHint": "{{name}} ile sohbetinde hazır olur. Sadece gönder.",
+      "firstTaskHintBlank": "Onunla sohbetinde hazır olur. Sadece gönder.",
+      "firstTaskNone": "Görev yoksa sohbet boş açılır.",
+      "after": "Oluşturduktan sonra",
+      "afterAi": "{{name}} düşünsün diye bir yapay zekâ bağla",
+      "afterAiBlank": "Düşünmesi için bir yapay zekâ bağla",
+      "afterApp": "{{app}} bağla",
+      "afterNone": "Hiçbir şey. {{name}} oluşturulur oluşturulmaz çalışmaya başlar.",
+      "afterNoneBlank": "Hiçbir şey. Oluşturulur oluşturulmaz çalışmaya başlar.",
+      "discard": "Öneriyi at",
+      "otherChannel": "Başka kanal",
+      "chooseChannels": "Kanal seç",
+      "channelsNone": "Yalnızca seninle sohbetinde.",
+      "channel": {
+        "lead": "{{name}} nerede çalışacak.",
+        "leadBlank": "Nerede çalışacak.",
+        "does": "{{name}}, {{channel}} içinde çağrıldığında yanıt verir ve orada olanları okur.",
+        "doesBlank": "{{channel}} içinde çağrıldığında yanıt verir ve orada olanları okur.",
+        "remove": "{{channel}} kanalından çıkar"
+      },
+      "routine": {
+        "label": "Rutin",
+        "lead": "{{when}}, {{channel}} içinde.",
+        "leadDm": "{{when}}, seninle sohbetinde.",
+        "starts": "{{name}} oluşturulunca başlar. Saati ve metni Rutinler'de değiştirirsin.",
+        "startsBlank": "Oluşturulunca başlar. Saati ve metni Rutinler'de değiştirirsin.",
+        "remove": "Rutini çıkar"
+      }
+    },
     "skill": {
       "opens": "{{name}}, konu açıldığında bu kılavuzu açar. Beceriler'de düzenlersin.",
       "opensBlank": "Konu açıldığında bu kılavuzu açar. Beceriler'de düzenlersin.",
@@ -11164,6 +11207,17 @@
     "remove": "Logoyu kaldır",
     "saved": "Logo güncellendi.",
     "removed": "Logo kaldırıldı."
+  },
+  "orgAccent": {
+    "label": "Vurgu rengi",
+    "change": "Rengi değiştir",
+    "useDefault": "Varsayılanı kullan",
+    "suggested": "Önerilen renkler",
+    "sampleMention": "@Ajan",
+    "sampleLink": "Bir bağlantı",
+    "save": "Rengi kaydet",
+    "saved": "Vurgu rengi güncellendi.",
+    "reset": "Varsayılan renge dönüldü."
   },
   "look": {
     "previous": "Önceki",
@@ -16499,8 +16553,37 @@
     },
     "system": "Sistem",
     "removed": "Kaldırıldı",
+    "operatorRead": {
+      "sentence": "{{who}} {{what}} okudu",
+      "who": {
+        "server": "Bu sunucuyu yöneten kişi",
+        "cloud": "agentes.chat destek ekibi"
+      },
+      "what": {
+        "message": "bir mesajı",
+        "run_step": "bir ajanın çalışmasındaki bir adımı",
+        "agent": "bir ajanın talimatlarını",
+        "routine": "bir rutini",
+        "task": "arka plandaki bir görevi",
+        "channel": "bir kanalın adını",
+        "connection": "bir bağlantının bilgilerini",
+        "support_request": "bir destek talebini",
+        "direct": "özel bir sohbetteki bir içeriği",
+        "other": "çalışma alanındaki bir içeriği"
+      },
+      "request": {
+        "plain": "{{name}} adlı üyenin talebiyle",
+        "app": "{{name}} adlı üyenin uygulamadan gönderdiği taleple",
+        "email": "{{name}} adlı üyenin e-postayla gönderdiği taleple",
+        "operator": "{{name}} adlı üyenin, bu sunucuyu yöneten kişinin kaydettiği talebiyle",
+        "support": "{{name}} adlı üyenin, destek ekibinin kaydettiği talebiyle"
+      },
+      "fault": "başarısız olan veya takılan bir çalıştırmayı incelemek için",
+      "ai": "bir yapay zeka asistanıyla"
+    },
     "change": {
       "mergedWithoutAsking": "{{repo}} içinde sormadan birleştirdi",
+      "accentChanged": "Çalışma alanının vurgu rengini değiştirdi",
       "pattern": "{{verb}}: {{area}}",
       "approval": {
         "approved": "Bir isteği onayladı",

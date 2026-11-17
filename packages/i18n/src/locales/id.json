@@ -3672,7 +3672,6 @@
       "aiAccount": "Berpikir dengan {{account}}",
       "aiModel": "Berpikir lewat API",
       "aiNone": "Belum ada AI. Hubungkan setelah membuatnya",
-      "reviewTitle": "Tinjau {{name}}",
       "lines": "Yang didapat {{name}}",
       "aChannel": "sebuah kanal",
       "anApp": "sebuah aplikasi",
@@ -6909,7 +6908,6 @@
     "adminsOnlyPersonal": "Minta orang yang mengelola ruang ini untuk mengizinkanmu membuat agen.",
     "proposalClosed": "Usulan ini sudah diputuskan atau kedaluwarsa.",
     "proposalNoAccess": "Hanya orang di percakapannya yang bisa melihat usulan ini.",
-    "backToChat": "Kembali ke percakapan",
     "and": " dan ",
     "routine": "Rutinitas",
     "routineKeep": "Buat rutinitas {{name}}",
@@ -7084,6 +7082,51 @@
     "otherSkill": "Skill lain",
     "namesLead": "Bagaimana kalau",
     "namesRoll": "Nama lain",
+    "proposal": {
+      "lead": "Sesuaikan yang diusulkan {{name}}. Semua bisa diubah nanti.",
+      "leadNarrow": "Usulan {{name}}: {{why}}",
+      "side": "Usulan",
+      "from": "Diusulkan oleh {{name}}",
+      "changed": "Yang Anda ubah",
+      "changedNone": "Belum ada. Yang Anda ubah di kartu muncul di sini, dengan Urungkan.",
+      "undo": "Urungkan",
+      "changes": {
+        "changed": "diubah",
+        "added": "ditambahkan",
+        "removed": "dihapus",
+        "how": "Cara kerjanya"
+      },
+      "firstTask": "Tugas pertama",
+      "firstTaskPlaceholder": "Apa yang diminta dulu (opsional)",
+      "firstTaskHint": "Siap di chat Anda dengan {{name}}. Tinggal kirim.",
+      "firstTaskHintBlank": "Siap di chat Anda dengannya. Tinggal kirim.",
+      "firstTaskNone": "Tanpa tugas, chat terbuka kosong.",
+      "after": "Setelah dibuat",
+      "afterAi": "Hubungkan AI agar {{name}} bisa berpikir",
+      "afterAiBlank": "Hubungkan AI agar ia bisa berpikir",
+      "afterApp": "Hubungkan {{app}}",
+      "afterNone": "Tidak ada. {{name}} mulai bekerja begitu dibuat.",
+      "afterNoneBlank": "Tidak ada. Ia mulai bekerja begitu dibuat.",
+      "discard": "Buang usulan",
+      "otherChannel": "Saluran lain",
+      "chooseChannels": "Pilih saluran",
+      "channelsNone": "Hanya di chat-nya dengan Anda.",
+      "channel": {
+        "lead": "Tempat {{name}} akan bekerja.",
+        "leadBlank": "Tempat ia akan bekerja.",
+        "does": "{{name}} menjawab saat dipanggil di {{channel}} dan membaca apa yang terjadi di sana.",
+        "doesBlank": "Ia menjawab saat dipanggil di {{channel}} dan membaca apa yang terjadi di sana.",
+        "remove": "Keluarkan dari {{channel}}"
+      },
+      "routine": {
+        "label": "Rutinitas",
+        "lead": "{{when}}, di {{channel}}.",
+        "leadDm": "{{when}}, di chat-nya dengan Anda.",
+        "starts": "Mulai setelah {{name}} dibuat. Ubah waktu dan teksnya di Rutinitas.",
+        "startsBlank": "Mulai setelah dibuat. Ubah waktu dan teksnya di Rutinitas.",
+        "remove": "Hapus rutinitas"
+      }
+    },
     "skill": {
       "opens": "{{name}} membuka panduan ini saat topiknya muncul. Kamu mengeditnya di Skill.",
       "opensBlank": "Ia membuka panduan ini saat topiknya muncul. Kamu mengeditnya di Skill.",
@@ -10831,6 +10874,17 @@
     "remove": "Hapus logo",
     "saved": "Logo diperbarui.",
     "removed": "Logo dihapus."
+  },
+  "orgAccent": {
+    "label": "Warna aksen",
+    "change": "Ganti warna",
+    "useDefault": "Pakai bawaan",
+    "suggested": "Warna yang disarankan",
+    "sampleMention": "@Agen",
+    "sampleLink": "Sebuah tautan",
+    "save": "Simpan warna",
+    "saved": "Warna aksen diperbarui.",
+    "reset": "Kembali ke warna bawaan."
   },
   "look": {
     "previous": "Sebelumnya",
@@ -16037,8 +16091,37 @@
     },
     "system": "Sistem",
     "removed": "Dihapus",
+    "operatorRead": {
+      "sentence": "{{who}} membaca {{what}}",
+      "who": {
+        "server": "Pengelola server ini",
+        "cloud": "Tim dukungan agentes.chat"
+      },
+      "what": {
+        "message": "sebuah pesan",
+        "run_step": "satu langkah dari pekerjaan agen",
+        "agent": "instruksi sebuah agen",
+        "routine": "sebuah rutinitas",
+        "task": "sebuah tugas latar belakang",
+        "channel": "nama sebuah kanal",
+        "connection": "detail sebuah koneksi",
+        "support_request": "sebuah permintaan dukungan",
+        "direct": "sesuatu dalam percakapan pribadi",
+        "other": "sesuatu di ruang kerja"
+      },
+      "request": {
+        "plain": "atas permintaan {{name}}",
+        "app": "atas permintaan {{name}}, dikirim dari aplikasi",
+        "email": "atas permintaan {{name}}, dikirim lewat email",
+        "operator": "atas permintaan {{name}}, dicatat oleh pengelola server ini",
+        "support": "atas permintaan {{name}}, dicatat oleh tim dukungan"
+      },
+      "fault": "untuk mendiagnosis proses yang gagal atau macet",
+      "ai": "dengan asisten AI"
+    },
     "change": {
       "mergedWithoutAsking": "Merge di {{repo}} tanpa bertanya",
+      "accentChanged": "Mengubah warna aksen ruang kerja",
       "pattern": "{{verb}} {{area}}",
       "approval": {
         "approved": "Menyetujui permintaan",
