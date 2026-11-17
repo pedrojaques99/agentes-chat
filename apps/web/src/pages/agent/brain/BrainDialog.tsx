@@ -33,9 +33,11 @@ import {
   EffortPixels,
   Icon,
   type IconName,
+  InfoHint,
   ProviderLogo,
   planState,
   SettingNote,
+  Switch,
 } from "@agenteschat/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -173,7 +175,7 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
   const [adding, setAdding] = useState<{ row: BrainRow; again?: MachineAccount; also?: MachineAccount }>();
   const [arrived, setArrived] = useState<MachineAccount | null>(null);
   const [modelPick, setModelPick] = useState<string>();
-  const [more, setMore] = useState<Advanced | null>(null);
+  const [more, setMore] = useState<MoreDraft | null>(null);
   const [fold, setFold] = useState<"effort" | "speed" | "context" | null>(null);
   const [machinePick, setMachinePick] = useState<string>();
   const [copying, setCopying] = useState(false);
@@ -481,7 +483,7 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
   // ── how it thinks ──
   // "Só esta conta" where its account could move on, or where it is on: a right hand's own plan never moves.
   const pinShown = !view.scope && (s.moves || view.accountPinned === true);
-  const moreNow: Advanced = {
+  const moreNow: MoreDraft = {
     effort: s.effort,
     speed: s.speedOn ? view.speed : "standard",
     contextTokens: s.savedContext,
@@ -1006,12 +1008,21 @@ function BrainFlow({ view, onClose, at }: { view: AgentBrain; onClose: () => voi
             </div>
           )}
           {s.kind === "claude_code" && view.ownSignIn && (
-            <SwitchLine
-              label={t("agentPage.work.brain.personalMcpTitle")}
-              hint={t("agentPage.work.brain.personalMcpHint")}
-              checked={m.personalMcp}
-              onChange={(on) => setMore({ ...m, personalMcp: on })}
-            />
+            <div className="bd-row">
+              <div className="plan-replies">
+                <span className="ac-hintline">
+                  <label htmlFor="bd-personal-mcp">{t("agentPage.work.brain.personalMcpTitle")}</label>
+                  <InfoHint name={t("common.about", { label: t("agentPage.work.brain.personalMcpTitle") })}>
+                    {t("agentPage.work.brain.personalMcpHint")}
+                  </InfoHint>
+                </span>
+                <Switch
+                  id="bd-personal-mcp"
+                  checked={m.personalMcp}
+                  onCheckedChange={(on) => setMore({ ...m, personalMcp: on })}
+                />
+              </div>
+            </div>
           )}
           {s.runsOn.length > 1 && can("machine") && (
             <BrainLine
