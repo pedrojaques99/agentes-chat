@@ -18222,6 +18222,7 @@ export const ptBR = {
       addingAgent: "adicionando um agente a um canal",
       readingConversation: "lendo a conversa",
       usingTool: "usando uma ferramenta",
+      usingNamedTool: "usando {{tool}}",
     },
     tokens: "{{value}} tokens",
     sayHiAgent: "Diga oi para o {{name}}",

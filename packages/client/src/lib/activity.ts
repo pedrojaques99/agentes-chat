@@ -401,8 +401,9 @@ function activityOf(tool: string | null | undefined, connector?: string | null, 
   const prefix = name.split(/[_.:]/)[0] ?? "";
   if (isDrive(prefix) || name.startsWith("google_drive_")) return { kind: "readingDrive" };
   const known = CONNECTORS[prefix];
+  const toolName = name.replace(/[_.:]+/g, " ").trim();
   // Only a catalog connector's own prefix names an app: any other first word is a word of the tool's name.
-  return known ? { kind: "consulting", app: known } : { kind: "usingTool" };
+  return known ? { kind: "consulting", app: known } : { kind: "usingTool", ...(toolName ? { app: toolName } : {}) };
 }
 
 export interface ActivityEntry {
@@ -655,7 +656,10 @@ export function entriesOffScreen(
 }
 
 /** "trabalhando", "consultando o GitHub". */
-export const activityVerb = (t: TFunction, a: Activity) => t(`chat.activity.${a.kind}`, { app: appLabel(a) });
+export const activityVerb = (t: TFunction, a: Activity) =>
+  a.kind === "usingTool" && a.app
+    ? t("chat.activity.usingNamedTool", { tool: a.app })
+    : t(`chat.activity.${a.kind}`, { app: appLabel(a) });
 
 /**
  * The app as people read it: a connector's slug ("himetrica") starts with a capital ("Himetrica"); a name with

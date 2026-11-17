@@ -18334,6 +18334,7 @@ export const en = {
       addingAgent: "adding an agent to a channel",
       readingConversation: "reading the conversation",
       usingTool: "using a tool",
+      usingNamedTool: "using {{tool}}",
     },
     tokens: "{{value}} tokens",
     sayHiAgent: "Say hi to {{name}}",
