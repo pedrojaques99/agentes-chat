@@ -16,6 +16,7 @@
  * Exit 0: up to date or merged and checked. Exit 1: something needs a person; the reason is the last line printed.
  * Used by .github/workflows/visant-sync-upstream.yml twice a day, and by hand.
  */
+import { readFileSync, writeFileSync } from "node:fs";
 import { $ } from "bun";
 
 const UPSTREAM = "upstream";
@@ -56,11 +57,25 @@ const collisions = ours.filter((e) => !upTags.has(e.tag) && e.idx <= lastUp);
 const newUp = up.filter((e) => !ours.some((o) => o.tag === e.tag));
 if (newUp.length) console.log(`Upstream migrations coming: ${newUp.map((e) => e.tag).join(", ")}`);
 if (collisions.length) {
-  fail(
-    `our migration(s) ${collisions.map((e) => e.tag).join(", ")} sit at an index upstream now uses. ` +
-      "Drop ours from the fork (send the change upstream, regenerated after their latest), and on any database that " +
-      "ran it delete its row from drizzle.__drizzle_migrations after a backup.",
-  );
+  const onlyPersonalMcp = collisions.every((e) => e.tag.endsWith("_agent_personal_mcp"));
+  if (checkOnly || !onlyPersonalMcp) {
+    fail(
+      `our migration(s) ${collisions.map((e) => e.tag).join(", ")} sit at an index upstream now uses. ` +
+        "Drop ours from the fork (send the change upstream, regenerated after their latest), and on any database that " +
+        "ran it delete its row from drizzle.__drizzle_migrations after a backup.",
+    );
+  }
+  console.log(`Auto-dropping colliding fork migration(s): ${collisions.map((e) => e.tag).join(", ")}`);
+  const dropTags = new Set(collisions.map((e) => e.tag));
+  const journal = JSON.parse(readFileSync(JOURNAL, "utf8")) as { version: string; dialect: string; entries: Entry[] };
+  journal.entries = journal.entries.filter((e) => !dropTags.has(e.tag));
+  writeFileSync(JOURNAL, `${JSON.stringify(journal, null, 2)}\n`);
+  for (const c of collisions) {
+    const num = c.tag.split("_")[0];
+    await $`git rm -f packages/db/migrations/${c.tag}.sql packages/db/migrations/meta/${num}_snapshot.json`.quiet();
+  }
+  await $`git add ${JOURNAL}`.quiet();
+  await $`git commit -m "chore(db): drop colliding ${collisions.map((e) => e.tag).join(", ")} before upstream sync"`.quiet();
 }
 
 console.log("\nNew upstream commits:");
@@ -75,6 +90,21 @@ if (merged.exitCode !== 0) {
   const files = (await $`git diff --name-only --diff-filter=U`.quiet().text()).trim();
   await $`git merge --abort`.nothrow().quiet();
   fail(`merge conflicts in:\n${files}`);
+}
+
+// 2b. Re-generate idempotent fork migration if we dropped it for the merge.
+if (collisions.length) {
+  await $`bun run db:generate agent_personal_mcp`.quiet();
+  const gen = JSON.parse(readFileSync(JOURNAL, "utf8")) as { entries: Entry[] };
+  const added = gen.entries.at(-1);
+  if (added?.tag.endsWith("_agent_personal_mcp")) {
+    const sqlPath = `packages/db/migrations/${added.tag}.sql`;
+    const num = added.tag.split("_")[0];
+    const sqlText = readFileSync(sqlPath, "utf8").replaceAll("ADD COLUMN ", "ADD COLUMN IF NOT EXISTS ");
+    writeFileSync(sqlPath, sqlText);
+    await $`git add ${sqlPath} packages/db/migrations/meta/${num}_snapshot.json ${JOURNAL}`.quiet();
+    await $`git commit -m "chore(db): regenerate idempotent ${added.tag} after upstream sync"`.quiet();
+  }
 }
 
 // 3. After the merge.
