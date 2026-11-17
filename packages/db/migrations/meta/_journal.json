@@ -1968,13 +1968,6 @@
       "when": 1794859029901,
       "tag": "0285_query_sweep",
       "breakpoints": true
-    },
-    {
-      "idx": 283,
-      "version": "7",
-      "when": 1794864191816,
-      "tag": "0283_agent_personal_mcp",
-      "breakpoints": true
     }
   ]
 }
