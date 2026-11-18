@@ -344,8 +344,9 @@ describe("the members column", () => {
     const side = column() as HTMLElement;
     expect(side.textContent).not.toContain("Sem IA conectada");
     expect(row(side, "Ada")).toBeTruthy();
-    // Nor does its role take the caption's place: the row is the name alone.
+    // Nor does its role or its presence word take the caption's place (its group says the presence): the name alone.
     expect(side.querySelector(".members-side__line.ac-tag")).toBeNull();
+    expect(row(side, "Ada")?.querySelector(".members-side__line")).toBeNull();
   });
 
   test("a row opens the member's card", async () => {

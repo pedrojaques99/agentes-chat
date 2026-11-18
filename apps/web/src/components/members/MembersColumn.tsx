@@ -405,7 +405,7 @@ function AgentRow({
           ) : agent.role && !quiet ? (
             <span className="members-side__line ac-tag">{agent.role}</span>
           ) : (
-            word && <span className="members-side__line">{word}</span>
+            !quiet && word && <span className="members-side__line">{word}</span>
           )}
         </span>
       </span>
