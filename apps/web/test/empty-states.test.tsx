@@ -270,11 +270,12 @@ describe("the right words for the right empty", () => {
     expect(document.querySelector(".ac-empty")).toBeNull();
   });
 
-  test("nothing to filter: the calendar draws no Filtros (a control with nothing to act on)", async () => {
+  test("Filtros is always there, and a kind with nothing in it shows no 0", async () => {
     await go(fresh(), "calendar");
-    await click(screen().getByRole("radio", { name: "Agenda" }));
-    expect(title()).toBe("Agenda livre nos próximos 30 dias");
-    expect(screen().queryByRole("button", { name: "Filtros" })).toBeNull();
+    await click(screen().getByRole("button", { name: "Filtros" }));
+    const people = screen().getByRole("button", { name: /^Pessoas/ });
+    expect(people.querySelector(".ac-count, .ac-countchip, [class*='count']")).toBeNull();
+    expect(people.textContent?.trim()).toBe("Pessoas");
   });
 
   test("Arquivadas empty beside a memory that exists: a line, not a first use", async () => {

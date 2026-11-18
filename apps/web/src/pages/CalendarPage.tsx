@@ -323,10 +323,9 @@ export function CalendarPage({ today: todayProp, day }: { today?: Date; day?: st
     setFilters(ALL_SOURCES);
     setHidden(new Set());
   };
-  const ownerItems = sourced.filter((it) => days.some((d) => onDay(it, d)));
   const owners = (
     <Owners
-      items={ownerItems}
+      items={sourced.filter((it) => days.some((d) => onDay(it, d)))}
       hidden={hidden}
       onToggle={(key) =>
         setHidden((h) => {
@@ -340,18 +339,16 @@ export function CalendarPage({ today: todayProp, day }: { today?: Date; day?: st
   // The last range stays on screen while the next one loads: its items say nothing about these days.
   const agendaWaits = range.isLoading || range.isPlaceholderData;
   const agendaEmpty = view === "agenda" && range.isSuccess && !agendaWaits && inGrid.length === 0 && !filtersOff;
-  // A kind with nothing in it filters nothing: no chip (foundations §12), unless it is switched off and needs its way
-  // back. With no chip and nobody to filter by, there is no Filtros at all: a control with nothing to act on is not drawn.
-  const shownSources = SOURCES.filter(({ source }) => (counts[source] ?? 0) > 0 || !filters[source]);
-  const anyFilter = shownSources.length > 0 || ownerItems.length > 0;
+  // Every kind keeps its chip, so Filtros is always the same control in the same place. A kind with nothing in it
+  // shows no count: a zero says nothing (foundations §12).
   const filterChips = (
     <Toolbar size="sm" label={t("calendar.filters")}>
-      {shownSources.map(({ source, icon }) => (
+      {SOURCES.map(({ source, icon }) => (
         <FilterToggle
           key={source}
           icon={icon}
           pressed={filters[source]}
-          count={counts[source] ?? 0}
+          count={counts[source] || undefined}
           onPressedChange={() => setFilters((f) => ({ ...f, [source]: !f[source] }))}
         >
           {t(`calendar.filter.${source}`)}
@@ -423,7 +420,7 @@ export function CalendarPage({ today: todayProp, day }: { today?: Date; day?: st
             </FilterToggle>
           )}
         </div>
-        {!panel && anyFilter && (
+        {!panel && (
           <Popover
             label={t("calendar.filters")}
             side="bottom"
@@ -543,12 +540,10 @@ export function CalendarPage({ today: todayProp, day }: { today?: Date; day?: st
                 </ol>
               )}
             </section>
-            {shownSources.length > 0 && (
-              <section className="cal-side__section" aria-label={t("calendar.filters")}>
-                <h2 className="cal-side__title">{t("calendar.filters")}</h2>
-                {filterChips}
-              </section>
-            )}
+            <section className="cal-side__section" aria-label={t("calendar.filters")}>
+              <h2 className="cal-side__title">{t("calendar.filters")}</h2>
+              {filterChips}
+            </section>
             <section className="cal-side__section" aria-label={t("calendar.viewZone")}>
               <h2 className="cal-side__title">{t("calendar.viewZone")}</h2>
               <ZoneSelect value={viewZone} onChange={setViewZone} aria-label={t("calendar.viewZone")} />
