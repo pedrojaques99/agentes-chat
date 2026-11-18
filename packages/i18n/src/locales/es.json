@@ -2270,7 +2270,9 @@
       "order": "Orden de las secciones",
       "orderHint": "Arrastra o usa las flechas. Agentes primero, por ejemplo.",
       "moveSection": "Arrastra para mover la sección {{name}} o haz clic para ver opciones",
-      "moveTool": "Arrastra para mover {{name}}"
+      "moveTool": "Arrastra para mover {{name}}",
+      "hiddenAgents": "Ocultos",
+      "showAgent": "Mostrar"
     },
     "inviteHint": "Por correo o enlace",
     "profileHint": "Nombre, foto y @",
@@ -2436,6 +2438,8 @@
       "working": "Trabajando primero"
     },
     "showAll": "Mostrar agentes que no hablan conmigo",
+    "hide": "Ocultar de la barra lateral",
+    "hiddenToast": "{{name}} salió de la barra lateral. Vuelve en Personalizar.",
     "collapseAll": "Contraer todos",
     "expandAll": "Expandir todos",
     "organize": "Organizar departamentos en Equipo",
@@ -17790,9 +17794,9 @@
       "hidden": "En un canal privado con {{agent}}",
       "routine": "Rutina {{name}}",
       "created": "Agentes que creó",
-      "createdAt": "creado el {{date}}",
       "audit": "Ver las acciones de los agentes en Auditoría",
-      "noUse": "Ningún uso en este período."
+      "noUse": "Ningún uso en este período.",
+      "createdAt": "creado el {{date}}"
     },
     "limits": {
       "title": "Límite de uso por persona",

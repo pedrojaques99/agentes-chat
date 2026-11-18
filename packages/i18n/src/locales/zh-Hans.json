@@ -2127,7 +2127,9 @@
       "order": "分区顺序",
       "orderHint": "拖动或使用箭头调整。比如把智能体放在最前面。",
       "moveSection": "拖动以移动“{{name}}”分区，或点击查看选项",
-      "moveTool": "拖动以移动“{{name}}”"
+      "moveTool": "拖动以移动“{{name}}”",
+      "hiddenAgents": "已隐藏",
+      "showAgent": "显示"
     },
     "inviteHint": "通过邮件或链接",
     "profileHint": "名称、照片和 @",
@@ -2277,6 +2279,8 @@
       "working": "工作中优先"
     },
     "showAll": "显示不与我对话的智能体",
+    "hide": "从侧边栏隐藏",
+    "hiddenToast": "{{name}}已从侧边栏移除。可在自定义中恢复。",
     "collapseAll": "全部收起",
     "expandAll": "全部展开",
     "organize": "在团队中整理部门",
@@ -16781,9 +16785,9 @@
       "hidden": "在私密频道与 {{agent}}",
       "routine": "例行任务 {{name}}",
       "created": "创建的智能体",
-      "createdAt": "创建于 {{date}}",
       "audit": "在审计中查看智能体的操作",
-      "noUse": "此期间没有用量。"
+      "noUse": "此期间没有用量。",
+      "createdAt": "创建于 {{date}}"
     },
     "limits": {
       "title": "每人使用额度",

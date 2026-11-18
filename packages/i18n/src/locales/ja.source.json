@@ -5411,6 +5411,12 @@
   "shell.sidebarSetup.moveTool": {
     "value": "Drag to move {{name}}"
   },
+  "shell.sidebarSetup.hiddenAgents": {
+    "value": "Hidden"
+  },
+  "shell.sidebarSetup.showAgent": {
+    "value": "Show"
+  },
   "shell.inviteHint": {
     "value": "By email or link"
   },
@@ -5854,6 +5860,12 @@
   },
   "sidebarAgents.showAll": {
     "value": "Show agents that don't talk to me"
+  },
+  "sidebarAgents.hide": {
+    "value": "Hide from sidebar"
+  },
+  "sidebarAgents.hiddenToast": {
+    "value": "{{name}} left the sidebar. Bring it back in Customize."
   },
   "sidebarAgents.collapseAll": {
     "value": "Collapse all"
@@ -42620,14 +42632,14 @@
   "peopleUsage.drawer.created": {
     "value": "Agents they created"
   },
-  "peopleUsage.drawer.createdAt": {
-    "value": "created on {{date}}"
-  },
   "peopleUsage.drawer.audit": {
     "value": "See the agents' actions in Audit"
   },
   "peopleUsage.drawer.noUse": {
     "value": "No use in this period."
+  },
+  "peopleUsage.drawer.createdAt": {
+    "value": "created on {{date}}"
   },
   "peopleUsage.limits.title": {
     "value": "Usage limit per person"

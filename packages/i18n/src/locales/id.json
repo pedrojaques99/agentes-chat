@@ -2127,7 +2127,9 @@
       "order": "Urutan bagian",
       "orderHint": "Seret atau pakai tanda panah. Misalnya, Agen di urutan pertama.",
       "moveSection": "Seret untuk memindahkan bagian {{name}}, atau klik untuk melihat opsi",
-      "moveTool": "Seret untuk memindahkan {{name}}"
+      "moveTool": "Seret untuk memindahkan {{name}}",
+      "hiddenAgents": "Disembunyikan",
+      "showAgent": "Tampilkan"
     },
     "inviteHint": "Lewat email atau tautan",
     "profileHint": "Nama, foto, dan @",
@@ -2277,6 +2279,8 @@
       "working": "Yang bekerja dulu"
     },
     "showAll": "Tampilkan agen yang tidak berbicara dengan saya",
+    "hide": "Sembunyikan dari bilah samping",
+    "hiddenToast": "{{name}} keluar dari bilah samping. Kembali lewat Sesuaikan.",
     "collapseAll": "Ciutkan semua",
     "expandAll": "Bentangkan semua",
     "organize": "Tata departemen di Tim",
@@ -16772,9 +16776,9 @@
       "hidden": "Di kanal pribadi dengan {{agent}}",
       "routine": "Rutinitas {{name}}",
       "created": "Agen yang dibuat",
-      "createdAt": "dibuat pada {{date}}",
       "audit": "Lihat tindakan agen di Audit",
-      "noUse": "Tidak ada pemakaian di periode ini."
+      "noUse": "Tidak ada pemakaian di periode ini.",
+      "createdAt": "dibuat pada {{date}}"
     },
     "limits": {
       "title": "Batas pemakaian per orang",

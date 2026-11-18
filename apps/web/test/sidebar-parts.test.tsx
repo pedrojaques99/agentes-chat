@@ -45,8 +45,11 @@ const go = async (state: State = seedState(), path = `c/${GENERAL_ID}`) => {
 };
 const nav = () => screen().getByRole("navigation", { name: "Navegação do workspace" });
 const scroll = () => nav().querySelector(".sidebar__scroll") as HTMLElement;
+// By its title: a part with nothing to fold (no direct messages yet) has no toggle button, only its title.
 const head = (name: string) =>
-  within(nav()).getByRole("button", { name }).closest(".sidebar__section-head") as HTMLElement;
+  [...nav().querySelectorAll<HTMLElement>(".sidebar__section-head")].find(
+    (h) => h.querySelector(".sidebar__label")?.textContent === name,
+  ) as HTMLElement;
 const labels = (menu: HTMLElement) =>
   within(menu)
     .getAllByRole("menuitem")

@@ -12622,6 +12622,10 @@ html:not([data-pointer]) .sidebar__section-toggle:focus-visible {
 .sidebar__section[data-open="true"] .sidebar__section-toggle {
   color: var(--ink);
 }
+/* A part's title with nothing to fold (no chevron, no toggle): the same row, not a button. */
+.sidebar__section-title {
+  cursor: default;
+}
 .sidebar__section-head .sidebar__label {
   padding: 0;
   font-size: 13px;
@@ -13380,9 +13384,14 @@ html:not([data-pointer]) .sidebar__grip:focus-visible {
   align-items: center;
   justify-content: center;
   width: var(--control-h-md);
+  padding: 0;
+  border: 0;
   border-radius: 10px;
+  background: transparent;
+  font: inherit;
   color: var(--ink-muted);
   text-decoration: none;
+  cursor: pointer;
   transition:
     background-color 0.15s,
     color 0.15s;
@@ -13560,6 +13569,10 @@ html:not([data-pointer]) .sidebar__bell:focus-visible {
   display: flex;
   gap: var(--space-2);
 }
+/* A hidden agent's "Mostrar" ends its line, in the arrows' column. */
+.sidebar-setup__row > .ac-btn:last-child {
+  grid-column: 4;
+}
 /* No room beside the name on a phone: the arrows stay on its line, the choices go under it. */
 @media (max-width: 680px) {
   .sidebar-setup {
@@ -13569,6 +13582,9 @@ html:not([data-pointer]) .sidebar__bell:focus-visible {
   .sidebar-setup__row > .ac-seg {
     grid-row: 2;
     grid-column: 2 / -1;
+  }
+  .sidebar-setup__row > .ac-btn:last-child {
+    grid-column: 3;
   }
 }
 /* Phones and touch screens keep the taller rows a finger hits, and the Go to… field and its toggle at 40px. */

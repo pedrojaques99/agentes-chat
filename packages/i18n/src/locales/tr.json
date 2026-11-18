@@ -2198,7 +2198,9 @@
       "order": "Bölüm sırası",
       "orderHint": "Sürükleyin ya da okları kullanın. Örneğin önce ajanlar.",
       "moveSection": "{{name}} bölümünü taşımak için sürükleyin veya seçenekler için tıklayın",
-      "moveTool": "{{name}} öğesini taşımak için sürükleyin"
+      "moveTool": "{{name}} öğesini taşımak için sürükleyin",
+      "hiddenAgents": "Gizlenenler",
+      "showAgent": "Göster"
     },
     "inviteHint": "E-posta veya bağlantıyla",
     "profileHint": "Ad, fotoğraf ve @",
@@ -2356,6 +2358,8 @@
       "working": "Önce çalışanlar"
     },
     "showAll": "Benimle konuşmayan ajanları göster",
+    "hide": "Kenar çubuğundan gizle",
+    "hiddenToast": "{{name}} kenar çubuğundan çıktı. Özelleştir'den geri gelir.",
     "collapseAll": "Tümünü daralt",
     "expandAll": "Tümünü genişlet",
     "organize": "Departmanları Ekip'te düzenle",
@@ -17244,9 +17248,9 @@
       "hidden": "Özel bir kanalda {{agent}} ile",
       "routine": "Rutin {{name}}",
       "created": "Oluşturduğu ajanlar",
-      "createdAt": "{{date}} tarihinde oluşturuldu",
       "audit": "Ajanların eylemlerini Denetim'de gör",
-      "noUse": "Bu dönemde kullanım yok."
+      "noUse": "Bu dönemde kullanım yok.",
+      "createdAt": "{{date}} tarihinde oluşturuldu"
     },
     "limits": {
       "title": "Kişi başına kullanım limiti",

@@ -68,8 +68,9 @@ describe("the bell", () => {
         notifications: [notification({ id: "n1", kind: "mention" }), notification({ id: "n2", kind: "dm" })],
       }),
     );
-    const bell = within(nav()).getByRole("link", { name: "2 notificações não lidas" });
-    expect(bell.getAttribute("href")).toBe(`/org/${ORG_ID}/notifications`);
+    // A button that opens its dock beside it; the inbox page is the dock's "Ver tudo".
+    const bell = within(nav()).getByRole("button", { name: "2 notificações não lidas" });
+    expect(bell.getAttribute("aria-haspopup")).toBe("dialog");
     expect(bell.closest(".sidebar__me")).toBeTruthy();
     expect(bell.textContent).toBe("2");
     // Unread calls on me: red like a mention's count, not a neutral count of things.
@@ -81,12 +82,12 @@ describe("the bell", () => {
     await go(
       seedState({ notifications: Array.from({ length: 120 }, (_, i) => notification({ id: `n${i}`, kind: "dm" })) }),
     );
-    expect(within(nav()).getByRole("link", { name: "120 notificações não lidas" }).textContent).toBe("99+");
+    expect(within(nav()).getByRole("button", { name: "120 notificações não lidas" }).textContent).toBe("99+");
   });
 
   test("nothing unread: the bell alone, named Notificações", async () => {
     await go();
-    const bell = within(nav()).getByRole("link", { name: "Notificações" });
+    const bell = within(nav()).getByRole("button", { name: "Notificações" });
     expect(bell.textContent).toBe("");
   });
 });
@@ -453,8 +454,11 @@ describe("the sidebar's parts", () => {
     state.channelCategories = [{ id: "00000000-0000-4000-8000-0000000000f1", name: "Engenharia", position: 0 }];
     for (const c of state.channels) if (c.id === ENG_ID) c.categoryId = "00000000-0000-4000-8000-0000000000f1";
     await go(state);
+    // By its title: a part with nothing to fold (no direct messages yet) has no toggle button.
     const section = (name: string) =>
-      within(nav()).getByRole("button", { name }).closest(".sidebar__section") as HTMLElement;
+      [...nav().querySelectorAll<HTMLElement>(".sidebar__section")].find(
+        (s) => s.querySelector(".sidebar__label")?.textContent === name,
+      ) as HTMLElement;
     expect(nav().querySelectorAll(".sidebar__divider")).toHaveLength(0);
     for (const part of ["Canais", "Mensagens diretas"]) {
       expect(section(part).closest(".sidebar__block")?.previousElementSibling?.className).toBe("sidebar__block");

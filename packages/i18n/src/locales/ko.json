@@ -2127,7 +2127,9 @@
       "order": "섹션 순서",
       "orderHint": "드래그하거나 화살표를 사용하세요. 예를 들어 에이전트를 맨 위로 올릴 수 있어요.",
       "moveSection": "드래그하여 {{name}} 섹션을 옮기거나 클릭하여 옵션 보기",
-      "moveTool": "드래그하여 {{name}} 옮기기"
+      "moveTool": "드래그하여 {{name}} 옮기기",
+      "hiddenAgents": "숨김",
+      "showAgent": "표시"
     },
     "inviteHint": "이메일 또는 링크로",
     "profileHint": "이름, 사진, @",
@@ -2277,6 +2279,8 @@
       "working": "작업 중 먼저"
     },
     "showAll": "나와 대화하지 않는 에이전트 표시",
+    "hide": "사이드바에서 숨기기",
+    "hiddenToast": "{{name}}을(를) 사이드바에서 숨겼습니다. 사용자 지정에서 다시 표시할 수 있습니다.",
     "collapseAll": "모두 접기",
     "expandAll": "모두 펼치기",
     "organize": "팀에서 부서 정리",
@@ -16710,9 +16714,9 @@
       "hidden": "비공개 채널에서 {{agent}}와",
       "routine": "루틴 {{name}}",
       "created": "만든 에이전트",
-      "createdAt": "{{date}}에 만듦",
       "audit": "감사에서 에이전트의 작업 보기",
-      "noUse": "이 기간에는 사용량이 없어요."
+      "noUse": "이 기간에는 사용량이 없어요.",
+      "createdAt": "{{date}}에 만듦"
     },
     "limits": {
       "title": "사람별 사용 한도",

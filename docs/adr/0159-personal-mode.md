@@ -136,3 +136,12 @@ language, and then goes through the onboarding's rail (ADR 0162, amended 2026-11
 business step: its agents (bringing them from another app, or "Seguir sem agentes"), the plan where the workspace waits
 for its first one, and connecting an AI, then the right hand's DM. On a billing hold the card's first row is "Ligue os
 seus agentes.", before the four rows above.
+
+## Addendum (2026-11-18): the tools in sight learn what the person opens
+
+For a tool the person never placed, the sidebar list is lean: the counted tools that have something now, plus the three
+the person opens most in this browser (a score per workspace that halves every 7 days, kept on the device only). With
+nothing learned yet the defaults above apply. A place the person chose always wins, and what is learned decides only
+which tools are in sight, never their order. Because a menu that moves hurts spatial memory, the set is worked out once
+when the workspace loads, and a newcomer replaces a shown tool only with 1.5 times its score. Proposals, a tab of
+Approvals, never get a row from use alone.

@@ -75,6 +75,13 @@ export const STORAGE_KEYS = {
   sidebarCollapsed: "agentes.sidebar.collapsed",
   /** Prefix (`.<user id>.<org id>`): the sidebar categories that person closed in that workspace (JSON array of ids). */
   sidebarSections: "agentes.sidebar.sections",
+  /**
+   * Prefix (`.<user id>.<org id>`): which sidebar tools that person opened there, with a score that fades (JSON,
+   * `@agenteschat/client/lib/sidebar-usage`): the list keeps the ones they use most (ADR 0159 addendum).
+   */
+  sidebarUsage: "agentes.sidebar.usage",
+  /** Prefix (`.<user id>.<org id>`): the agents that person hid from the sidebar's AGENTES there (JSON array of ids). */
+  sidebarHiddenAgents: "agentes.sidebar.hiddenAgents",
   /** Prefix (`.<user id>.<org id>`): "1" or "0", the person opened or closed a channel's members column there. */
   membersColumn: "agentes.members.column",
   /** Prefix (`.<user id>.<org id>`): "1" or "0", the person opened or closed the sidebar of a DM with an agent there. */

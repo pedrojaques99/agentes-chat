@@ -65,7 +65,8 @@ import {
 import { recentDms } from "@agenteschat/client/lib/recent";
 import { isRightHand, rightHandSeenKey } from "@agenteschat/client/lib/right-hand";
 import { SERVER_PLACE_ICON } from "@agenteschat/client/lib/server";
-import { inSidebarList, sidebarItemOrder, sidebarPlace } from "@agenteschat/client/lib/sidebar-items";
+import { sidebarItemOrder } from "@agenteschat/client/lib/sidebar-items";
+import { listedTools } from "@agenteschat/client/lib/sidebar-usage";
 import { AGENT_SORTS, sortAgents, splitPinned } from "@agenteschat/client/lib/sidebar-view";
 import { badgeCount, looksUnread } from "@agenteschat/client/lib/unread";
 import { isPersonal, modeKey } from "@agenteschat/client/lib/workspace-mode";
@@ -122,9 +123,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { useApi } from "@/api/context";
 import { useDirectory } from "@/hooks/useDirectory";
+import { useHiddenSidebarAgents } from "@/hooks/useHiddenSidebarAgents";
 import { agentLine, availabilityOf, personLine, useAgentPresence, usePersonPresence } from "@/hooks/usePresence";
 import { useServerPlace } from "@/hooks/useServerPlace";
 import { useSidebarPins } from "@/hooks/useSidebarPins";
+import { useSidebarUsage } from "@/hooks/useSidebarUsage";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useUnreadTitle } from "@/hooks/useUnreadTitle";
 import { useWorkspaceGroups } from "@/hooks/useWorkspaceGroups";
@@ -170,6 +173,7 @@ import { useInviteDialog } from "./invite/InviteDialog";
 import { useNow } from "./missions/MissionBits";
 import { COMPACT_QUERY, useMediaQuery, useNavDrawer } from "./NavDrawer";
 import { NewChannelDialog } from "./NewChannelDialog";
+import { NotificationDock } from "./NotificationDock";
 import { useNewAgent } from "./new-agent/NewAgentDialog";
 import { OpenOnPhoneDialog } from "./OpenOnPhone";
 import { useOrg } from "./org-context";
@@ -293,6 +297,8 @@ export function Sidebar() {
   const [customizing, setCustomizing] = useState(false);
   const navigate = useNavigate();
   const onProposals = useRouterState({ select: (r) => r.location.pathname.endsWith("/proposals") });
+  const onInbox = useRouterState({ select: (r) => r.location.pathname.endsWith("/notifications") });
+  const [dockOpen, setDockOpen] = useState(false);
   useEffect(() => {
     const open = () => setCreatingChannel(true);
     window.addEventListener(NEW_CHANNEL_EVENT, open);
@@ -322,7 +328,12 @@ export function Sidebar() {
   // An unread reply counts as "something" for a Threads set to show "when there's something": it comes into the list
   // lit, and leaves once read, as Approvals does once nothing waits.
   // Proposals are a tab of Aprovações and count there, unless the person gave them a row of their own.
-  const proposalsRow = inSidebarList(sidebarPlace(sidebarItems, "proposals", personal), proposalsWaiting);
+  // The list is lean by default and learns what this person opens most (ADR 0159 addendum); a place they chose wins.
+  const toolOrder = sidebarItemOrder(personal);
+  const learned = useSidebarUsage(me.user.id, orgId, toolOrder);
+  const listTools = (counts: Partial<Record<SidebarItem, number>>) =>
+    listedTools({ order: toolOrder, items: sidebarItems, counts, learned, personal });
+  const proposalsRow = listTools({ proposals: proposalsWaiting }).includes("proposals");
   const pending = (overview.data?.approvalsWaitingForMe ?? 0) + (proposalsRow ? 0 : proposalsWaiting);
   const counts: Partial<Record<SidebarItem, number>> = {
     waiting: waitingOnMe,
@@ -331,8 +342,7 @@ export function Sidebar() {
     threads: missionsWaiting + unreadThreads,
   };
   // The mode's defaults and order (ADR 0159): in a personal workspace, Routines and Drive in sight, the rest in More.
-  const toolOrder = sidebarItemOrder(personal);
-  const listed = toolOrder.filter((id) => inSidebarList(sidebarPlace(sidebarItems, id, personal), counts[id] ?? 0));
+  const listed = listTools(counts);
   const inMore = toolOrder.filter((id) => !listed.includes(id));
   const countOf = (id: SidebarItem) =>
     id === "waiting" && waitingOnMe > 0 ? (
@@ -402,6 +412,9 @@ export function Sidebar() {
   const sections = useSidebarSections(me.user.id, orgId);
   // "Fixar no topo": pinned rows sit on top of their own section, above a thin line.
   const { view, setView, pins } = useSidebarPins();
+  // "Esconder da sidebar": agents this person took off the list (still answering, still in Ctrl K).
+  const sidebarHidden = useHiddenSidebarAgents();
+  const hideToast = useToast();
   // "Mensagens diretas": the people I talked to or just opened a DM with, latest first (an agent's row in AGENTES is its DM), pinned ones on top.
   const pinnedPeople = pins.people.flatMap((id) => {
     const m = id === me.user.id ? undefined : dir.memberById.get(id);
@@ -445,7 +458,8 @@ export function Sidebar() {
   // no group, then each group of agents, each with my pinned ones on top and the rest in my order.
   const manages = can(org, "manage_agents");
   const team = dir.agents.filter((a) => !isRightHand(a));
-  const shownAgents = team.filter((a) => (manages && view.showAllAgents) || canTalk(a));
+  const listable = team.filter((a) => (manages && view.showAllAgents) || canTalk(a));
+  const shownAgents = listable.filter((a) => !sidebarHidden.ids.has(a.id));
   const groups = useAgentGroups(orgId).data ?? [];
   const byGroup = agentSections(shownAgents, groups, (a) => a.id);
   const ordered = (items: Agent[]) => {
@@ -471,7 +485,10 @@ export function Sidebar() {
     onRename: () => setGroupDialog({ mode: "rename", group }),
     onDelete: () => setDeletingGroup(group),
   });
-  const agentsUnread = shownAgents.reduce((n, a) => n + (dmOf.get(a.id)?.unread ?? 0), 0);
+  // A hidden agent's unread still counts here, so a message it sent is never lost with its row.
+  const agentsUnread =
+    listable.reduce((n, a) => n + (dmOf.get(a.id)?.unread ?? 0), 0) +
+    (rightHand && sidebarHidden.ids.has(rightHand.id) ? (rightHandDm?.unread ?? 0) : 0);
   const workingAgents = shownAgents.filter((a) => busy.has(a.id)).length;
   // "Mudar de grupo" in an agent's right click: the keyboard's way to what dragging does.
   const groupEntries = (a: Agent): MenuEntry[] => {
@@ -500,6 +517,23 @@ export function Sidebar() {
       },
     ];
   };
+  // "Esconder da sidebar": the row leaves AGENTES, the agent keeps working; Personalizar brings it back.
+  const hideEntry = (a: Agent): MenuEntry[] => [
+    {
+      kind: "item",
+      id: "hide",
+      label: t("sidebarAgents.hide"),
+      icon: "eyeOff",
+      run: () => {
+        sidebarHidden.hide(a.id);
+        // Reversible at once: Desfazer at the end of its sentence (ui-polish rule 18), besides Personalizar.
+        hideToast.show(t("sidebarAgents.hiddenToast", { name: a.name }), "info", {
+          label: t("channelCategories.undo"),
+          run: () => sidebarHidden.show(a.id),
+        });
+      },
+    },
+  ];
   const agentRow = (a: Agent) => {
     const dm = dmOf.get(a.id);
     const unread = dm?.unread ?? 0;
@@ -523,7 +557,7 @@ export function Sidebar() {
           onPrefetch={() => dm && prefetch(dm.channelId)}
           onOpen={() => markOpen(dm?.channelId ?? a.id)}
           drag={organize ? drag.row(a.id) : undefined}
-          menuExtra={manages ? groupEntries(a) : undefined}
+          menuExtra={[...hideEntry(a), ...(manages ? groupEntries(a) : [])]}
         />
       </ErrorBoundary>
     );
@@ -636,9 +670,10 @@ export function Sidebar() {
   // The agents' rows, under the Agentes header in a team's workspace and with none in a personal one (ADR 0159).
   const agentRows = (
     <>
-      {rightHand && (
+      {rightHand && !sidebarHidden.ids.has(rightHand.id) && (
         <RightHandRow
           agent={rightHand}
+          menuExtra={hideEntry(rightHand)}
           unread={rightHandDm?.unread ?? 0}
           onPrefetch={() => rightHandDm && prefetch(rightHandDm.channelId)}
           onOpen={() => rightHandDm && markOpen(rightHandDm.channelId)}
@@ -842,6 +877,8 @@ export function Sidebar() {
         id="people"
         label={t("shell.directMessages")}
         sections={sections}
+        // No conversations yet: nothing to fold, so the title has no chevron.
+        collapsible={pinnedPeople.length > 0 || directs.length > 0}
         className="sidebar__section--part"
         headProps={sectionMenu("people")}
         summary={directsUnread > 0 && <UnreadCount count={directsUnread} />}
@@ -896,26 +933,34 @@ export function Sidebar() {
     ),
   };
 
-  // The inbox: at the end of my row in the foot, or beside me on top in a personal workspace.
+  // The inbox: at the end of my row in the foot, or beside me on top in a personal workspace. A click opens its dock
+  // beside it (the latest, compact); the inbox page is the dock's "Ver tudo".
   const bell = (
-    <Link
-      to="/org/$orgId/notifications"
-      params={{ orgId }}
-      className="sidebar__bell"
-      title={t("shell.notifications")}
-      aria-label={
-        unreadNotifications > 0
-          ? t("shell.unreadNotifications", { count: unreadNotifications })
-          : t("shell.notifications")
+    <NotificationDock
+      open={dockOpen}
+      onOpenChange={setDockOpen}
+      align={personal ? "start" : "end"}
+      trigger={
+        <button
+          type="button"
+          className="sidebar__bell"
+          data-status={onInbox || dockOpen ? "active" : undefined}
+          title={t("shell.notifications")}
+          aria-label={
+            unreadNotifications > 0
+              ? t("shell.unreadNotifications", { count: unreadNotifications })
+              : t("shell.notifications")
+          }
+        >
+          <Icon name="bell" />
+          {unreadNotifications > 0 && (
+            <CountBadge key={bumps} className={cx("sidebar__unread", bumps > 0 && "sidebar__bump")}>
+              {badgeCount(unreadNotifications)}
+            </CountBadge>
+          )}
+        </button>
       }
-    >
-      <Icon name="bell" />
-      {unreadNotifications > 0 && (
-        <CountBadge key={bumps} className={cx("sidebar__unread", bumps > 0 && "sidebar__bump")}>
-          {badgeCount(unreadNotifications)}
-        </CountBadge>
-      )}
-    </Link>
+    />
   );
   // The sidebar's toggle, in one place at every width: beside ⌘K (beside the bell in a personal workspace), under them
   // in the rail. In a phone's drawer it closes the drawer.
@@ -1122,12 +1167,15 @@ function SidebarSection({
   className,
   headProps,
   mark,
+  collapsible = true,
   children,
 }: {
   id: SectionId;
   label: string;
   /** Before the label: a setor's color and icon. */
   mark?: ReactNode;
+  /** False: a plain title, no chevron and always open (nothing to hide yet, e.g. no direct messages). */
+  collapsible?: boolean;
   sections: ReturnType<typeof useSidebarSections>;
   /** Open until the person closes it (a long team's groups start closed). */
   defaultOpen?: boolean;
@@ -1142,22 +1190,29 @@ function SidebarSection({
   headProps?: HTMLAttributes<HTMLDivElement>;
   children: ReactNode;
 }) {
-  const open = sections.isOpen(id, defaultOpen);
+  const open = !collapsible || sections.isOpen(id, defaultOpen);
   const bodyId = `sidebar-section-${id.replace(":", "-")}`;
   return (
     <div className={cx("sidebar__group sidebar__section", className)} data-open={open} {...drop}>
       <div className="sidebar__section-head" {...headProps}>
-        <button
-          type="button"
-          className="sidebar__section-toggle"
-          aria-expanded={open}
-          aria-controls={bodyId}
-          onClick={() => sections.toggle(id, defaultOpen)}
-        >
-          <Icon name="chevronDown" size={14} className="sidebar__section-chevron" />
-          {mark}
-          <span className="sidebar__label">{label}</span>
-        </button>
+        {collapsible ? (
+          <button
+            type="button"
+            className="sidebar__section-toggle"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            onClick={() => sections.toggle(id, defaultOpen)}
+          >
+            <Icon name="chevronDown" size={14} className="sidebar__section-chevron" />
+            {mark}
+            <span className="sidebar__label">{label}</span>
+          </button>
+        ) : (
+          <div className="sidebar__section-toggle sidebar__section-title">
+            {mark}
+            <span className="sidebar__label">{label}</span>
+          </div>
+        )}
         {status}
         {!open && summary}
         {action}
@@ -1993,26 +2048,31 @@ function AgentRow({
  * The team's right hand (ADR 0137), always the first row of Agents, a plain row like any agent's: its face, its name
  * over its label as a tag ("your right hand"), a one-time "New" until its DM first opens (in this browser), and its
  * DM's unread count. It opens the
- * person's DM with it. Never sorted, pinned, dragged or hidden; a closed AGENTES still shows it.
+ * person's DM with it. Never sorted, pinned or dragged; a closed AGENTES still shows it. Only "Esconder da sidebar" takes
+ * it off the list.
  */
 function RightHandRow({
   agent: a,
   unread,
   onPrefetch,
   onOpen,
+  menuExtra,
 }: {
   agent: Agent;
   unread: number;
   onPrefetch: () => void;
   onOpen: () => void;
+  menuExtra?: MenuEntry[];
 }) {
   const { t } = useTranslation();
   const { org, me } = useOrg();
+  const agentEntries = useAgentMenu();
   const fresh = rightHandSeen.useFresh(rightHandSeenKey(me.user.id, org.id));
   const shown = useAgentPresence(a.id);
   const label = t("rightHand.label");
   return (
     <Link
+      {...entityMenu(() => agentEntries(a, menuExtra))}
       to="/org/$orgId/dm/agent/$agentId"
       params={{ orgId: org.id, agentId: a.id }}
       className="sidebar__item"
@@ -2538,36 +2598,54 @@ function WorkspaceMenu({ summary }: { summary: string | null }) {
   const { org } = useOrg();
   const dir = useDirectory(org.id);
   const place = useServerPlace();
+  const { me } = useOrg();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
+  // With more than one workspace (every account and server the big menu lists) the header opens a quick switcher
+  // first; the big menu is its "Configurações do workspace" item. With one, the header opens the big menu directly.
+  const groups = useWorkspaceGroups({ orgs: me.organizations, currentOrgId: org.id });
+  const several = (groups ? groups.reduce((n, g) => n + g.rows.length, 0) : me.organizations.length) > 1;
+  const header = (
+    <button
+      ref={trigger}
+      type="button"
+      className="sidebar__org-button"
+      aria-haspopup={several ? "menu" : "dialog"}
+      aria-label={t("shell.workspaceMenuOf", { name: org.name })}
+      onClick={several ? undefined : () => setOpen(true)}
+    >
+      <OrgMark logo={org.logo} className="sidebar__org-mark" />
+      <span className="sidebar__org-text">
+        <span className="sidebar__org-name">{org.name}</span>
+        {(place || summary) && (
+          <span className="sidebar__org-line">
+            {/* Where it lives, before its counts: the Cloud, this computer or one's own server. */}
+            {place && (
+              <span className="sidebar__org-where">
+                <Icon name={SERVER_PLACE_ICON[place]} size={14} />
+                {t(`hosting.badge.${place}`)}
+              </span>
+            )}
+            {summary && <span className="sidebar__org-meta">{summary}</span>}
+          </span>
+        )}
+      </span>
+      <Icon name="chevronDown" size={16} />
+    </button>
+  );
   return (
     <>
-      <button
-        ref={trigger}
-        type="button"
-        className="sidebar__org-button"
-        aria-haspopup="dialog"
-        aria-label={t("shell.workspaceMenuOf", { name: org.name })}
-        onClick={() => setOpen(true)}
-      >
-        <OrgMark logo={org.logo} className="sidebar__org-mark" />
-        <span className="sidebar__org-text">
-          <span className="sidebar__org-name">{org.name}</span>
-          {(place || summary) && (
-            <span className="sidebar__org-line">
-              {/* Where it lives, before its counts: the Cloud, this computer or one's own server. */}
-              {place && (
-                <span className="sidebar__org-where">
-                  <Icon name={SERVER_PLACE_ICON[place]} size={14} />
-                  {t(`hosting.badge.${place}`)}
-                </span>
-              )}
-              {summary && <span className="sidebar__org-meta">{summary}</span>}
-            </span>
-          )}
-        </span>
-        <Icon name="chevronDown" size={16} />
-      </button>
+      {several ? (
+        <Menu label={t("shell.yourWorkspaces")} trigger={header}>
+          <MenuWorkspaces />
+          <MenuSeparator />
+          <MenuItem icon="settings" onSelect={() => setOpen(true)}>
+            {t("shell.workspaceSettings")}
+          </MenuItem>
+        </Menu>
+      ) : (
+        header
+      )}
       <MenuOverlay
         open={open}
         onOpenChange={setOpen}
