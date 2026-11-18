@@ -59,7 +59,9 @@ describe("Issues (board and list)", () => {
   test("board by status with counts, summary, PR, priority and due date", async () => {
     await go("issues");
     expect(screen().getByRole("heading", { level: 1, name: "Tarefas" })).toBeTruthy();
-    expect(screen().getByText("5 em aberto · 3 com agentes")).toBeTruthy();
+    // One fact in the header: who works on what is a filter of the page, not a second count beside it.
+    expect(screen().getByText("5 em aberto")).toBeTruthy();
+    expect(screen().queryByText(/com agentes/)).toBeNull();
     expect(cardTitles(column("A fazer"))).toEqual([
       "Tabela de concorrentes atualizada",
       "Confirmação do agendamento por WhatsApp",
@@ -119,8 +121,11 @@ describe("Issues (board and list)", () => {
     expect(screen().queryByRole("region", { name: "Agentes trabalhando agora" })).toBeNull();
     const line = screen().getByRole("region", { name: "Tarefas paradas" });
     expect(line.querySelector(".issues-stalled")).toBeTruthy();
-    expect(line.textContent).toContain("Juno");
-    expect(line.textContent).not.toContain("Bento");
+    // The faces and the count say who; the names live in the faces' tip and label, not in the line.
+    const who = line.querySelector(".issues-stalled__who");
+    expect(who?.getAttribute("aria-label")).toContain("Juno");
+    expect(who?.getAttribute("aria-label")).not.toContain("Bento");
+    expect(line.textContent).not.toContain("Juno");
     // Nothing comes after the board's split, up to the work area: when what is above squeezes it, it keeps a window's
     // height and the page scrolls down to it (over-pages.css), with nothing for its columns to run over.
     let el: Element | null = document.querySelector(".issues-boardframe.page-split");
@@ -932,7 +937,10 @@ describe("Rotinas", () => {
     await settle(5);
     const card = screen().getByRole("article", { name: "PRs parados" });
     expect(card.textContent).toContain("De segunda a sexta, às 08:30");
-    expect(card.textContent).toContain("Ainda não rodou");
+    // No run yet: only the next one is told, no "never ran" and no empty dotted track.
+    expect(card.textContent).not.toContain("Ainda não rodou");
+    expect(card.querySelector(".routine-run-strip, .ac-runstrip")).toBeNull();
+    expect(card.querySelector(".routine-row__runs")?.children.length).toBe(0);
   });
 
   test("Nova rotina: a template from one search fills the form, and all of it stays editable", async () => {

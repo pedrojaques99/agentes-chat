@@ -53,8 +53,25 @@ const ORDERS: WidgetSpec = { kind: "bars", labels: ["Novos", "Enviados", "Atrasa
 const BUILDS: WidgetSpec = { kind: "line", labels: ["1", "2", "3"], values: [6.1, 4.9, 3.9] };
 
 /** My Home with its two tiles and three widgets of Ada's: sales (S), orders (S), builds (M, failed). */
-function setup(state: FakeState = seedState()) {
+/** Ada at work, so the "Trabalhando agora" tile is on the board (with nobody working it is not drawn at all). */
+const adaAtWork = () => [
+  {
+    runId: "r-ada",
+    agentId: ADA_ID,
+    status: "running" as const,
+    channelId: ENG_ID,
+    channelKind: "channel" as const,
+    channelName: "eng",
+    threadId: null,
+    startedAt: new Date(Date.now() - 3 * 60_000).toISOString(),
+    createdAt: new Date(Date.now() - 3 * 60_000).toISOString(),
+    label: "Corrige o login",
+  },
+];
+
+function setup(state: FakeState = seedState(), working = true) {
   const api = createFakeApi(state);
+  if (working) api.working = { list: async () => structuredClone(adaAtWork()) };
   const fake = fakeDashboardsOf.get(api) as FakeDashboards;
   const home = fake.addBoard({
     kind: "home",
@@ -136,6 +153,12 @@ const savedWidgets = (state: FakeState) =>
     .widgets;
 
 describe("My Home as a mural (ADR 0135)", () => {
+  test("nobody at work: no Trabalhando agora tile, one quiet line instead", async () => {
+    await open(`/org/${ORG_ID}/home`, setup(seedState(), false));
+    expect(order()).not.toContain("working");
+    expect(document.querySelector(".home-quiet")?.textContent).toContain("Nenhum agente trabalhando agora.");
+  });
+
   test("Waiting on you and Working now are fixed tiles among my widgets, in the board's order", async () => {
     const { sales, orders, builds } = await open(`/org/${ORG_ID}/home`);
     expect(order()).toEqual(["waiting", sales.id, orders.id, "working", builds.id]);
@@ -222,6 +245,22 @@ describe("My Home as a mural (ADR 0135)", () => {
     await click(within(again).getByRole("button", { name: "Resolver" }));
     await settle(3);
     expect(last(slow.state, "dashboards.refreshWidget")).toEqual([ORG_ID, slow.builds.id]);
+  });
+
+  test('a card names its refresh mode only when it is not the default ("quando pedem"), which stays in its title', async () => {
+    const s = setup();
+    s.fake.addWidget(s.home.id, {
+      agentId: ADA_ID,
+      title: "Visitas",
+      spec: { kind: "kpi", value: 12 },
+      schedule: "manual",
+      layout: { position: 5, w: 1, h: 1 },
+    });
+    await open(`/org/${ORG_ID}/home`, s);
+    const manual = widget("Visitas").querySelector(".wg__foot");
+    expect(manual?.textContent).not.toContain("quando pedem");
+    expect(manual?.querySelector(".wg__when")?.getAttribute("title")).toBe("Só quando você pedir");
+    expect(widget("Vendas hoje").querySelector(".wg__foot")?.textContent).toContain("a cada hora");
   });
 
   test("a widget whose agent has no AI says why with Conectar (or who can), and builds with no click once it has one", async () => {

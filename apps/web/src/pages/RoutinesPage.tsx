@@ -959,10 +959,15 @@ function RoutineRow({
           <small className={cx(running && "is-live")}>{nextText(r, now)}</small>
         </span>
       </div>
-      <div className="routine-row__runs" role="img" aria-label={words.label(r)}>
-        <RunStrip runs={runPixels(r.recentRuns)} color={look.color} slots={RUN_SLOTS} running={running} />
-        <small>{words.caption(r, now)}</small>
-      </div>
+      {/* No run yet: only the next one is told (above). The empty track and "never ran" come back with the first run. */}
+      {running || runPixels(r.recentRuns.length > 0 ? r.recentRuns : r.lastRun ? [r.lastRun] : []).length > 0 ? (
+        <div className="routine-row__runs" role="img" aria-label={words.label(r)}>
+          <RunStrip runs={runPixels(r.recentRuns)} color={look.color} slots={RUN_SLOTS} running={running} />
+          <small>{words.caption(r, now)}</small>
+        </div>
+      ) : (
+        <div className="routine-row__runs" aria-hidden="true" />
+      )}
       <div className="routine-row__actions">
         {fired || !r.canManage ? (
           <span className="routine-row__ph routine-row__ph--switch" aria-hidden="true" />
@@ -1178,8 +1183,10 @@ function RoutineHorizon({
               onClick={() => pick(a.agentId)}
             >
               <AgentFace agentId={a.agentId} />
-              <b>{name}</b>
-              <small>{t("routines.horizon.agentRoutines", { count: a.mine.length })}</small>
+              <span className="routines-horizon__who">
+                <b>{name}</b>
+                <small>{t("routines.horizon.agentRoutines", { count: a.mine.length })}</small>
+              </span>
             </button>
             <div
               className="routines-horizon__track"

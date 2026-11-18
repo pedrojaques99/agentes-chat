@@ -3,7 +3,7 @@ import { cx } from "../cx";
 import { reduced, token, useCanvas } from "./RunPixels";
 
 /** The closed set of tool pictures an empty place can show in place of the waving agent. */
-export const EMPTY_SCENES = ["files", "team", "approval", "routine", "board"] as const;
+export const EMPTY_SCENES = ["files", "team", "approval", "routine", "board", "tasks"] as const;
 export type EmptyScene = (typeof EMPTY_SCENES)[number];
 
 /** Every picture is a 16×16 grid of cells, drawn in whole device pixels like the agent's dither. */
@@ -167,12 +167,32 @@ const sceneBoard = (paint: Paint, p: Palette, t: number) => {
   });
 };
 
+const sceneTasks = (paint: Paint, p: Palette, t: number) => {
+  // A task list: the first is done, the second ticks itself now and then, the third waits.
+  const second = t % 3 > 1.5 ? "o" : "m";
+  const row = (box: string, line: string) => [`KW${box}${box}W${line}WK`, `KW${box}${box}WWWWWWK`];
+  const rows = [
+    "KKKKKKKKKKKK",
+    "KWWWWWWWWWWK",
+    ...row("o", "mmmmm"),
+    "KWWWWWWWWWWK",
+    ...row(second, "mmmmm"),
+    "KWWWWWWWWWWK",
+    ...row("m", "mmmWW"),
+    "KWWWWWWWWWWK",
+    "KWWWWWWWWWWK",
+    "KKKKKKKKKKKK",
+  ];
+  sprite(paint, p, rows, [0, 1]);
+};
+
 const SCENES: Record<EmptyScene, (paint: Paint, p: Palette, t: number) => void> = {
   files: sceneFiles,
   team: sceneTeam,
   approval: sceneApproval,
   routine: sceneRoutine,
   board: sceneBoard,
+  tasks: sceneTasks,
 };
 
 /**
@@ -181,7 +201,7 @@ const SCENES: Record<EmptyScene, (paint: Paint, p: Palette, t: number) => void> 
  */
 const LODI = ["..XXX..", ".XXXXX.", "KXoXoXK", "KXXXXXK", "..XXXX."];
 const LODI_AT = [9, 11] as const;
-const WITH_LODI = new Set<EmptyScene>(["files", "routine", "board"]);
+const WITH_LODI = new Set<EmptyScene>(["files", "routine", "board", "tasks"]);
 
 function drawLodi(paint: Paint, p: Palette, t: number) {
   const tones = bodyTones("teal");

@@ -9300,8 +9300,9 @@ html:not([data-pointer]) .onb__step:focus-visible {
   .onb__steps {
     flex-direction: row;
     gap: 4px;
-    /* The current step's ring sits 1px outside its box: room for it inside the scroller, which would cut it. */
-    padding: 2px;
+    /* The current step's ring sits 1px outside its box: room for it above and below, where the scroller would cut
+       it. Not on the sides, so the steps stay on their page's edge. */
+    padding-block: 2px;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;

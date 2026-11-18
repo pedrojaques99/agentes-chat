@@ -327,6 +327,24 @@ describe("the members column", () => {
     expect(line("Atlas")).toBe("Sem limite agora · responde quando renovar");
   });
 
+  test('no row repeats "Sem IA conectada" when every listed agent lacks an AI: the composer\'s strip says it once', async () => {
+    widthIs(DESKTOP_QUERY);
+    const state = seedState({
+      aiStatus: {
+        any: false,
+        agents: [
+          { agentId: ADA_ID, state: "no_ai" },
+          { agentId: ATLAS_ID, state: "no_ai" },
+        ],
+      },
+    });
+    await open(state);
+    await settle(4);
+    const side = column() as HTMLElement;
+    expect(side.textContent).not.toContain("Sem IA conectada");
+    expect(row(side, "Ada")).toBeTruthy();
+  });
+
   test("a row opens the member's card", async () => {
     widthIs(DESKTOP_QUERY);
     await open();

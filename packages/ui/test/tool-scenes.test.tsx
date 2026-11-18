@@ -59,6 +59,12 @@ describe("ToolScene", () => {
   });
 });
 
+describe("tasks scene", () => {
+  test("is part of the closed set", () => {
+    expect(EMPTY_SCENES).toContain("tasks");
+  });
+});
+
 describe("EmptyState scene", () => {
   test("the default keeps today's waving agent", () => {
     const plain = render(<EmptyState size="page" agent title="Aqui" />);

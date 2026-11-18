@@ -1063,19 +1063,14 @@ textarea.ac-input:not(:hover, :focus-visible) {
   height: 100%;
   border-radius: inherit;
 }
-/* The initials' box trimmed to their capitals, so the tile centres the letters the eye sees, not the line around them
-   (a line's room above and below the capitals differs, and its baseline lands on a whole pixel). Without text-box the
-   capitals' middle sits --cap-mid above the line's. */
+/* The initials sit in a line taller than the type (1.3 em: the font's own ascent and descent fit in it, so no box of the
+   tile ever cuts a letter) and the tile centres that box. The half-leading around a line is the same above and below, so
+   the line's height moves no letter: the capitals' middle is the line's own, --cap-mid above it, which the translate
+   gives back. No text-box trim and no padding: a trimmed box overflowed its own content box by the trim (a clip the
+   build's CSS order made visible), and the trim is not in every engine. */
 .ac-avatar__initials {
-  text-box: trim-both cap alphabetic;
-  /* The trim leaves a box as tall as the capitals, shorter than the type: its own padding gives back the em the
-     letters are set in (the same above and below, so the capitals stay centred) and nothing reads as cut. */
-  padding-block: calc((1em - 1cap) / 2);
-}
-@supports not (text-box: trim-both cap alphabetic) {
-  .ac-avatar__initials {
-    translate: 0 var(--cap-mid);
-  }
+  line-height: 1.3;
+  translate: 0 var(--cap-mid);
 }
 .ac-avatar--agent {
   background: var(--agent);

@@ -1,6 +1,7 @@
 import type { AgentGroup, Team, TeamAgent } from "@agenteschat/client";
-import { useApprovals, useRoles } from "@agenteschat/client";
+import { useAiStatus, useApprovals, useRoles } from "@agenteschat/client";
 import { agentSections } from "@agenteschat/client/lib/agent-groups";
+import { aiStateOf } from "@agenteschat/client/lib/no-ai";
 import { can } from "@agenteschat/client/lib/permissions";
 import { filterTeam, sortTeam, type TeamFilter, type TeamSort } from "@agenteschat/client/lib/team-views";
 import {
@@ -21,6 +22,7 @@ import { Fragment, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AgentAvatar, PersonAvatar } from "@/components/AgentAvatar";
 import { AgentGroupMenu, type GroupDialogFor, GroupNameDialog } from "@/components/AgentGroups";
+import { useConnectAi } from "@/components/ConnectAi";
 import { useOrg } from "@/components/org-context";
 import { ReportsToMenu } from "./ReportsTo";
 import { AgentNow, ChannelName, SectorMark, useTeamLookups } from "./shared";
@@ -64,6 +66,10 @@ function AgentsTable({ agents, groups }: { agents: TeamAgent[]; groups: AgentGro
   const manages = can(org, "manage_agents");
   const approvals = useApprovals(org.id).data ?? [];
   const waiting = new Set(approvals.filter((a) => a.status === "pending" && a.canDecide).map((a) => a.agentId));
+  const aiStatus = useAiStatus(org.id).data;
+  const connect = useConnectAi();
+  // A badge on every row tells nothing: when no listed agent has an AI, it is said once above the table.
+  const noneHaveAi = agents.length > 0 && agents.every((a) => aiStateOf(aiStatus, a.id) === "no_ai");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<TeamFilter>("all");
   // Until the person picks, by setor once there are any (the setores may arrive after the team).
@@ -143,7 +149,7 @@ function AgentsTable({ agents, groups }: { agents: TeamAgent[]; groups: AgentGro
             )}
           </td>
         )}
-        <td>
+        <td className="team-table__owner">
           {a.ownerUserId ? (
             <span className="team-who">
               <PersonAvatar id={a.ownerUserId} name={look.personName(a.ownerUserId)} size="xs" />
@@ -189,7 +195,7 @@ function AgentsTable({ agents, groups }: { agents: TeamAgent[]; groups: AgentGro
               {t("team.list.filter.waiting")}
             </span>
           ) : (
-            <AgentNow agent={a} />
+            <AgentNow agent={a} quietNoAi={noneHaveAi} />
           )}
         </td>
         {manages && (
@@ -217,7 +223,6 @@ function AgentsTable({ agents, groups }: { agents: TeamAgent[]; groups: AgentGro
             group.id,
             (count) => (
               <span className="team-sector">
-                <span className="team-eyebrow">{t("agentGroups.group")}</span>
                 <SectorMark group={group} size={14} />
                 <span>
                   <b>{group.name}</b>
@@ -297,12 +302,22 @@ function AgentsTable({ agents, groups }: { agents: TeamAgent[]; groups: AgentGro
             key={f}
             pressed={filter === f}
             onPressedChange={(on) => setFilter(on ? f : "all")}
-            count={counts[f]}
+            count={counts[f] > 0 ? counts[f] : undefined}
           >
             {t(`team.list.filter.${f}`)}
           </FilterToggle>
         ))}
       </Toolbar>
+      {noneHaveAi && (
+        <div className="team-noai ac-actline" role="status">
+          <span className="muted">{t("noAi.banner.org")}</span>
+          {connect && (
+            <Button size="sm" onClick={() => connect.open({})}>
+              {t("noAi.banner.orgAction")}
+            </Button>
+          )}
+        </div>
+      )}
       <Card className="pu-table-card team-table-card">
         <table className="pu-table team-table">
           <thead>
