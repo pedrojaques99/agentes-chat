@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   ACCOUNTS_PROTOCOL,
+  ANTIGRAVITY_MAC_PROTOCOL,
   BRAIN_PROTOCOL,
   CODEX_WINDOWS_PROTOCOL,
   CONTEXT_LIMIT_PROTOCOL,
@@ -62,8 +63,10 @@ describe("brain settings", () => {
   test("a coding plan's models: any of them by id, its aliases named after what they run there", () => {
     expect(brainModelOptions("claude_code").map((o) => o.label)).toEqual(["Opus 5.5", "Sonnet 5.5", "Haiku 5.5"]);
     expect(brainModelOptions("codex").every((o) => o.modelId?.startsWith("gpt"))).toBe(true);
-    // Codex offers the catalog's OpenAI rows, GPT-6.1 Terra and GPT-6 Astra among them; GPT-6.1 Sol stays its default.
+    // Codex offers the catalog's OpenAI rows, the Astras among them; the newest Sol is its default.
     expect(brainModelOptions("codex").map((o) => o.label)).toEqual([
+      "GPT-6.2 Astra",
+      "GPT-6.2 Sol",
       "GPT-6 Astra",
       "GPT-6.1 Sol",
       "GPT-6.1 Terra",
@@ -71,8 +74,8 @@ describe("brain settings", () => {
       "GPT-6 Luna",
     ]);
     expect(brainModelOptions("codex")[0]).toMatchObject({
-      value: "gpt-6-astra",
-      modelId: "gpt-6-astra",
+      value: "gpt-6.2-astra",
+      modelId: "gpt-6.2-astra",
       contextWindow: 1_050_000,
     });
     expect(normalizeBrainModel("codex", "gpt-6-astra")).toBe("gpt-6-astra");
@@ -117,7 +120,7 @@ describe("brain settings", () => {
     expect(() => normalizeBrainModel("codex", "rm -rf /")).toThrow();
     expect(() => normalizeBrainModel("model", "opus")).toThrow();
     expect(defaultBrainModel("claude_code")).toBe("sonnet");
-    expect(defaultBrainModel("codex")).toBe("gpt-6.1-sol");
+    expect(defaultBrainModel("codex")).toBe("gpt-6.2-sol");
     expect(defaultBrainModel("model")).toBeNull();
     expect(brainModelId("claude_code", "opus")).toBe("claude-opus-5-5");
     expect(brainModelId("claude_code", null)).toBe("claude-sonnet-5-5");
@@ -162,7 +165,7 @@ describe("brain settings", () => {
           .map((o) => [o.kind, o.reason ?? null]),
       );
     // An older Windows runner refuses every OpenCode turn; Cursor and Grok Build don't run on Windows; the Antigravity
-    // CLI runs on Linux and Windows (not macOS).
+    // CLI runs everywhere, but a Mac runner before `ANTIGRAVITY_MAC_PROTOCOL` refuses Gemini.
     expect(reasons(mac({ os: "windows", protocol: OPENCODE_ACP_PROTOCOL - 1, executors }))).toEqual({
       cursor: "system",
       opencode: "runner_old",
@@ -174,8 +177,9 @@ describe("brain settings", () => {
       cursor: null,
       opencode: null,
       grok: null,
-      antigravity: "system",
+      antigravity: "runner_old",
     });
+    expect(reasons(mac({ os: "darwin", protocol: ANTIGRAVITY_MAC_PROTOCOL, executors })).antigravity).toBeNull();
     expect(reasons(mac({ os: "linux", protocol: OPENCODE_ACP_PROTOCOL, executors }))).toEqual({
       cursor: null,
       opencode: null,

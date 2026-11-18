@@ -5,6 +5,7 @@ import {
   type AccountKind,
   type AccountLoginFailure,
   type AccountLoginState,
+  ANTIGRAVITY_MAC_PROTOCOL,
   ANTIGRAVITY_PROTOCOL,
   type AuthMethod,
   accountCodeAad,
@@ -65,14 +66,14 @@ import {
   SHARED_SIGN_INS,
   sharedSignIn,
 } from "@agenteschat/providers/plans";
-import { PLAN_PAUSE, planCheckedAt, planFull, planState } from "@agenteschat/ui/plan-state";
+import { PLAN_PAUSE, planCheckedAt, planFull, planState, resetSinceRead } from "@agenteschat/ui/plan-state";
 import { recordAudit } from "./audit";
 import { liveModelLimits } from "./brains/select";
 import { BRAIN_PLAN_NAMES } from "./brains/types";
 import { caches } from "./cache";
 import { claudeAuthMethodFor, claudeAuthPolicy } from "./claude-auth-policy";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "./errors";
-import { type MachineCaller, MachineRequestError } from "./machine-hub";
+import { awakeForPerson, type MachineCaller, MachineRequestError } from "./machine-hub";
 import {
   getMachine,
   MACHINE_CONTROL_TOPIC,
@@ -164,6 +165,12 @@ export interface MachineAccountView {
   /** Its place in the order of use of its computer's accounts of its kind (ADR 0041 §6); null: after the placed ones, oldest first. */
   useOrder: number | null;
   /**
+   * The id of the oldest login of the same account on its computer (`sameAccountWhere`), itself where it is the
+   * oldest or nothing tells it apart: the same for every login of one account, so anyone can group them, the email
+   * and key staying its owner's.
+   */
+  sameAs: string;
+  /**
    * A run at another account's limit may go on with it (`nextAccountPlan`): Claude Code's or Codex's own sign-in (never
    * a key), shared between agents and signed in. Only these have a place in the order of use.
    */
@@ -198,7 +205,7 @@ export interface MachineAccountDeps {
 }
 
 export interface MachineAccountHubDeps extends MachineAccountDeps {
-  hub: Pick<MachineCaller, "call" | "status">;
+  hub: Pick<MachineCaller, "call" | "status" | "wake">;
   /** A sign-in that failed on the computer is logged here (an error line is reported, ADR 0104). */
   log?: {
     error(message: string, data?: Record<string, unknown>): void;
@@ -261,6 +268,7 @@ function accountView(
   using: { id: string; name: string }[],
   viewerId: string | null,
   ownerName: string | null,
+  sameAs = row.id,
 ): MachineAccountView {
   const mine = viewerId !== null && row.createdBy === viewerId;
   return {
@@ -284,6 +292,7 @@ function accountView(
     providerOrgId: mine ? row.providerOrgId : null,
     serves: servesOf(row.serves),
     useOrder: row.useOrder,
+    sameAs,
     movable: runMayMoveTo(row),
   };
 }
@@ -348,11 +357,14 @@ export async function listMachineAccounts(
   ]);
   return rows.map(({ account, ownerName }) => {
     const on = [...using, ...people].filter((a) => a.accountId === account.id);
+    // Oldest first, as `sameLogins` orders them.
+    const first = rows.find((r) => sameAccountRow(r.account, account))?.account.id;
     return accountView(
       account,
       on.filter((a, i) => on.findIndex((b) => b.id === a.id) === i),
       viewerId,
       ownerName,
+      first,
     );
   });
 }
@@ -420,7 +432,9 @@ export async function listAccountOrder(
 
 /**
  * `PUT …/ai-accounts/{id}/order`: the account takes place `index` (0 first) among its computer's accounts of its kind
- * that have a place (`movableRow`), the others keeping theirs in order. Its owner or an admin (`account.order_forbidden`). Audited as `account.order`.
+ * that have a place (`movableRow`), the others keeping theirs in order. An account signed in once per agent is one
+ * place: its logins with a place (`sameAccountWhere`) move together, and `index` counts accounts, not logins. Its owner
+ * or an admin (`account.order_forbidden`). Audited as `account.order`.
  */
 export async function moveAccountInOrder(
   deps: MachineAccountDeps,
@@ -446,7 +460,7 @@ export async function moveAccountInOrder(
   }
   await deps.db.transaction(async (tx) => {
     const group = await tx
-      .select({ id: machineAccounts.id, useOrder: machineAccounts.useOrder })
+      .select()
       .from(machineAccounts)
       .where(
         and(
@@ -458,8 +472,15 @@ export async function moveAccountInOrder(
       )
       .orderBy(...orderOfUse)
       .for("update");
-    const ids = group.filter((g) => g.id !== row.id).map((g) => g.id);
-    ids.splice(Math.min(index, ids.length), 0, row.id);
+    const accounts: MachineAccountRow[][] = [];
+    for (const g of group) {
+      const account = accounts.find((a) => a[0] && sameAccountRow(g, a[0]));
+      if (account) account.push(g);
+      else accounts.push([g]);
+    }
+    const others = accounts.filter((a) => !a.some((g) => g.id === row.id));
+    others.splice(Math.min(index, others.length), 0, accounts.find((a) => a.some((g) => g.id === row.id)) ?? [row]);
+    const ids = others.flat().map((g) => g.id);
     for (const [place, id] of ids.entries()) {
       if (group.find((g) => g.id === id)?.useOrder === place) continue;
       await tx.update(machineAccounts).set({ useOrder: place }).where(eq(machineAccounts.id, id));
@@ -622,6 +643,26 @@ function sameAccountWhere(row: AccountKey, same: AccountIdentity) {
     row.provider ? eq(machineAccounts.provider, row.provider) : isNull(machineAccounts.provider),
     inArray(machineAccounts.status, LISTED_ACCOUNT_STATUSES),
     match,
+  );
+}
+
+/** `sameAccountWhere` between two listed rows of one computer, in memory: `row` is a login of the same account as `same`. */
+function sameAccountRow(row: MachineAccountRow, same: MachineAccountRow) {
+  if (row.id === same.id) return true;
+  if (
+    row.orgId !== same.orgId ||
+    row.machineId !== same.machineId ||
+    row.kind !== same.kind ||
+    row.createdBy !== same.createdBy ||
+    row.provider !== same.provider
+  ) {
+    return false;
+  }
+  if (row.provider) return Boolean(same.keyHint) && row.keyHint === same.keyHint;
+  return (
+    Boolean(same.email) &&
+    row.email?.toLowerCase() === same.email?.toLowerCase() &&
+    (!same.providerOrgId || !row.providerOrgId || row.providerOrgId === same.providerOrgId)
   );
 }
 
@@ -1055,7 +1096,8 @@ export async function refreshAiAccounts(deps: MachineAccountHubDeps, userId: str
 /**
  * The sweep (every minute) that notices a plan freed before its stored reset (Claude's "reset for free", extra usage
  * bought, a new week): every account whose last reading is at its limit, or at the long-work pause line (`PLAN_PAUSE`)
- * with work waiting on it, is read again on its computer. A CLI login or a key gets the free probe every
+ * with work waiting on it, is read again on its computer, and so, once, is one whose window reset since its reading
+ * (`resetSinceRead`), so the meter doesn't keep a day-old reading. A CLI login or a key gets the free probe every
  * `PLAN_RECHECK_MS`; a Claude setup token, which can't read its usage without a model call, a one-shot check on the
  * cheapest model every `TOKEN_RECHECK_MS` (`list.recheck`, protocol 62), refused while still full. A computer's own
  * sign-ins (`executors.ownUsage`, asked as `OWN_USAGE_ID`s) get the free probe too. A reading with room goes on from
@@ -1079,7 +1121,9 @@ export async function recheckStuckPlans(deps: Pick<MachineAccountHubDeps, "db" |
         isNotNull(machineAccounts.usage),
         sql`(${machineAccounts.usage}->>'limited' = 'true' or exists (
           select 1 from jsonb_array_elements(coalesce(${machineAccounts.usage}->'windows', '[]'::jsonb)) w
-          where (w->>'usedPercent')::numeric >= ${PLAN_PAUSE}))`,
+          where (w->>'usedPercent')::numeric >= ${PLAN_PAUSE}
+            or (w->>'resetsAt' <= ${new Date(now).toISOString()}
+              and w->>'resetsAt' > greatest(${machineAccounts.usage}->>'at', ${machineAccounts.usage}->>'checkedAt'))))`,
       ),
     );
   const owned = (
@@ -1120,7 +1164,7 @@ export async function recheckStuckPlans(deps: Pick<MachineAccountHubDeps, "db" |
   ) => {
     const { state, used } = planState(usage, now);
     const key = usageWaitKey({ code: "plan_limit", machineId, kind, accountId });
-    if (state !== "limited" && !(used >= PLAN_PAUSE && waiting.has(key))) return;
+    if (state !== "limited" && !(used >= PLAN_PAUSE && waiting.has(key)) && !resetSinceRead(usage, now)) return;
     const last = Date.parse(planCheckedAt(usage) ?? "") || 0;
     if (now - last < (token ? TOKEN_RECHECK_MS : PLAN_RECHECK_MS)) return;
     const m = byMachine.get(machineId) ?? { fresh: [], tokens: [], own: [] };
@@ -1299,11 +1343,14 @@ const runnerOld = (machine: Pick<MachineRow, "name" | "kind" | "executors">) =>
     { name: machine.name },
   );
 
-/** On a runner that knows accounts (`protocol`: and what is asked of it), and online now: the protocol it speaks. */
+/**
+ * On a runner that knows accounts (`protocol`: and what is asked of it), and online now (one in standby woken for it):
+ * the protocol it speaks.
+ */
 async function requireLive(deps: MachineAccountHubDeps, machine: MachineRow, protocol = ACCOUNTS_PROTOCOL) {
   if (machine.protocol < protocol) throw runnerOld(machine);
   const status = await deps.hub.status(machine.id);
-  if (!status?.online) throw new MachineOfflineError(machine.name, machine.kind);
+  if (!status || !(await awakeForPerson(deps.hub, status))) throw new MachineOfflineError(machine.name, machine.kind);
   if (status.protocol < protocol) throw runnerOld(machine);
   return status.protocol;
 }
@@ -1444,7 +1491,9 @@ export async function beginAccountLogin(
     kind === "cursor"
       ? CURSOR_PROTOCOL
       : kind === "antigravity"
-        ? ANTIGRAVITY_PROTOCOL
+        ? machine.os === "darwin"
+          ? ANTIGRAVITY_MAC_PROTOCOL
+          : ANTIGRAVITY_PROTOCOL
         : kind === "grok"
           ? GROK_PROTOCOL
           : kind === "opencode"

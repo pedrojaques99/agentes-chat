@@ -36,7 +36,8 @@ import {
   type UpdateSkillsCard,
 } from "@agenteschat/client/lib/action-cards";
 import { delegateUndoLine } from "@agenteschat/client/lib/approval-words";
-import { connectedItems, itemName } from "@agenteschat/client/lib/connected";
+import { createsRoutinesFor } from "@agenteschat/client/lib/audience";
+import { connectedItems, itemName, personalAllowed } from "@agenteschat/client/lib/connected";
 import { setDraftFor } from "@agenteschat/client/lib/drafts";
 import { errorText } from "@agenteschat/client/lib/errors";
 import { joinNames, whenAt } from "@agenteschat/client/lib/format";
@@ -197,8 +198,9 @@ export function ActionCard({ message }: { message: Message }) {
 /**
  * "Connect Linear" / "Add MCP" (`offer_connect_app`) as a waiting pill: "Connect" opens the same connect dialog as
  * Settings, at the catalog entry or at connecting by address with the address filled in; the person signs in or types
- * the key there. Its why and address go under it, and who may not connect reads who does there. Done once the
- * workspace has it.
+ * the key there. Its why and address go under it. Every member connects it, as their own when they may not add the
+ * team's ("Para quem" there); GitHub connects for the team only, so who may not reads who does. Done once the viewer
+ * has it, theirs or the team's.
  */
 function ConnectAppCardView({ card }: { card: ConnectAppCard }) {
   const { t } = useTranslation();
@@ -218,7 +220,8 @@ function ConnectAppCardView({ card }: { card: ConnectAppCard }) {
       </RequestDone>
     );
   }
-  const may = can(org, "manage_connectors");
+  const admin = can(org, "manage_connectors");
+  const may = admin || personalAllowed(card.connector);
   return (
     <>
       <RequestOpen
@@ -229,7 +232,11 @@ function ConnectAppCardView({ card }: { card: ConnectAppCard }) {
           may ? (
             <EventPillAction
               primary
-              onClick={() => setFlow(def ? { step: 0, def } : { step: 0, def: null, url: card.url })}
+              onClick={() =>
+                setFlow(
+                  def ? { step: 0, def, personal: !admin } : { step: 0, def: null, url: card.url, personal: !admin },
+                )
+              }
             >
               {t("actionCard.connect")}
             </EventPillAction>
@@ -557,7 +564,7 @@ export function AgentProposalCardView({
             ? delegateUndoLine(t, i18n.language, delegate, draft.name)
             : undefined,
         time: at ? whenAt(t, i18n.language, at) : undefined,
-        action: byRightHand ? <DelegateUndo d={delegate} /> : undefined,
+        action: byRightHand ? <DelegateUndo d={delegate} agentId={card.agentId} /> : undefined,
       };
   const after = status === "created" && (card.agentId || routineLeft(card)) && (
     <div className="ac-acts">
@@ -573,17 +580,20 @@ export function AgentProposalCardView({
           </Link>
         </Button>
       )}
-      {routineLeft(card) && (card.decidedByUserId === me.user.id || can(org, "manage_routines")) && (
-        // Not made with it (the agent wasn't where it reports yet): made from here once it is.
-        <Button
-          size="sm"
-          variant="ghost"
-          loading={makeRoutine.isPending}
-          onClick={() => makeRoutine.mutate(messageId, { onError: failed })}
-        >
-          {t("newAgent.routineKeep", { name: draft.routine?.name })}
-        </Button>
-      )}
+      {routineLeft(card) &&
+        // Who created it, or who may make a routine for it (`createsRoutinesFor`: the server's `createRoutine`, ADR 0085
+        // addendum of 2026-11-17).
+        (card.decidedByUserId === me.user.id || createsRoutinesFor(dir.agentById.get(card.agentId ?? ""))) && (
+          // Not made with it (the agent wasn't where it reports yet): made from here once it is.
+          <Button
+            size="sm"
+            variant="ghost"
+            loading={makeRoutine.isPending}
+            onClick={() => makeRoutine.mutate(messageId, { onError: failed })}
+          >
+            {t("newAgent.routineKeep", { name: draft.routine?.name })}
+          </Button>
+        )}
     </div>
   );
   const end = Date.parse(card.expiresAt);

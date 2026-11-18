@@ -316,35 +316,18 @@ export function RightHandMineRow({ agent }: { agent: Agent }) {
  */
 function RightHandComputerRow({ agent }: { agent: Agent }) {
   const { t } = useTranslation();
-  const { org } = useOrg();
   const view = useAgentComputer(agent);
   const openComputer = useOpenComputer();
-  const auth = useAuthConfig();
+  const none = useRightHandNoComputer(view.desktop?.reason);
   if (!view.ready || view.forbidden || !view.facts) return null;
-  const none = rightHandNoComputer(view.desktop?.reason, selfHosted(auth.data));
   if (none)
     return (
       <PrefRow
         id="rh-computer"
         icon="computer"
         label={t("agentComputer.button")}
-        status={
-          none === "rightHand.computerNoHomeServer" ? (
-            <Trans i18nKey={none} components={{ guide: <HelpLink slug="install-on-a-server" section="computers" /> }} />
-          ) : (
-            t(none)
-          )
-        }
-        control={
-          none === "rightHand.computerNoHome" &&
-          can(org, "pair_computers") && (
-            <Button asChild size="sm" icon="plus">
-              <Link to="/org/$orgId/settings/$section" params={{ orgId: org.id, section: "devices" }} search={{}}>
-                {t("rightHand.addComputer")}
-              </Link>
-            </Button>
-          )
-        }
+        status={none.line}
+        control={none.action}
       />
     );
   return (
@@ -356,6 +339,33 @@ function RightHandComputerRow({ agent }: { agent: Agent }) {
       onOpen={() => openComputer(agent.id)}
     />
   );
+}
+
+/**
+ * Why the right hand has no computer for anyone (the workspace has none of its own, or one that can't keep people
+ * apart), as a line and the way out: its row on its page and its DM's sidebar alike. Null while it has one.
+ */
+export function useRightHandNoComputer(reason: string | null | undefined) {
+  const { t } = useTranslation();
+  const { org } = useOrg();
+  const auth = useAuthConfig();
+  const none = rightHandNoComputer(reason, selfHosted(auth.data));
+  if (!none) return null;
+  return {
+    line:
+      none === "rightHand.computerNoHomeServer" ? (
+        <Trans i18nKey={none} components={{ guide: <HelpLink slug="install-on-a-server" section="computers" /> }} />
+      ) : (
+        t(none)
+      ),
+    action: none === "rightHand.computerNoHome" && can(org, "pair_computers") && (
+      <Button asChild size="sm" icon="plus">
+        <Link to="/org/$orgId/settings/$section" params={{ orgId: org.id, section: "devices" }} search={{}}>
+          {t("rightHand.addComputer")}
+        </Link>
+      </Button>
+    ),
+  };
 }
 
 /** "Poderes do workspace": one row that opens what only the right hand does, in words (`RIGHT_HAND_POWERS`). */
@@ -505,8 +515,8 @@ function RightHandForm({ agent }: { agent: Agent }) {
   });
   const current = kind ? (planItems.find((i) => i.id === view?.account) ?? null) : keyItem;
   // Plans it can't think with now, dimmed under the others with why: it stands in on what can meanwhile.
-  const cant = rightHandUnusable(aiAccounts).filter((u) => u.id !== current?.id);
-  const away = new Set(cant.map((u) => u.id));
+  const cant = rightHandUnusable(aiAccounts, current?.id);
+  const away = new Set(cant.flatMap((u) => u.ids));
   const others = [...planItems.filter((i) => i.id !== current?.id && !away.has(i.id)), ...(kind ? [keyItem] : [])];
   // Connecting one is self-host's way out: Cloud's own computer is always on, and its way out is the plan.
   const pairs = can(org, "pair_computers") && edition !== "cloud";

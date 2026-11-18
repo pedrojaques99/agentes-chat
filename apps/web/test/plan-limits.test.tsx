@@ -185,7 +185,7 @@ describe("IA e uso › Contas with many accounts and long names", () => {
     usage: i === 11 ? null : used(5 * i, i < 2 ? 96 - 10 * i : 7 * i),
   }));
 
-  test("each is one row: whole name, plan, owner's first name and one meter; only those near a limit start open", async () => {
+  test("each is one row: whole name, plan, owner's first name and one meter; every one starts closed, the limit's line on those near it", async () => {
     await go("settings/usage", onPlans(), MANY);
     const plans = screen().getByRole("region", { name: "Contas" });
     // The seeded computer's own sign-in comes first.
@@ -199,14 +199,14 @@ describe("IA e uso › Contas with many accounts and long names", () => {
     // One meter each, none while nothing is known: never 0%.
     expect(heads.map((h) => within(h).queryAllByRole("meter").length)).toEqual([...Array(11).fill(1), 0]);
     expect(heads[0]?.querySelector(".ac-planmeter__line")?.textContent).toBe("semana 96%");
-    expect(heads.map((h) => h.getAttribute("aria-expanded"))).toEqual(["true", "true", ...Array(10).fill("false")]);
+    expect(heads.map((h) => h.getAttribute("aria-expanded"))).toEqual(Array(12).fill("false"));
     expect(heads.map((h) => Boolean(h.querySelector(".plan-row__alert")))).toEqual([
       true,
       true,
       ...Array(10).fill(false),
     ]);
     // A closed row holds nothing: twelve accounts stay twelve lines.
-    expect(rows.slice(2).map((r) => r.querySelector(".plan-row__body")?.textContent)).toEqual(Array(10).fill(""));
+    expect(rows.map((r) => r.querySelector(".plan-row__body")?.textContent)).toEqual(Array(12).fill(""));
     // The keyboard opens one: its head is a button that says whether it is open.
     const third = heads[2] as HTMLElement;
     expect(third.tagName).toBe("BUTTON");
@@ -535,6 +535,58 @@ describe("IA e uso › Contas: the order of use at a limit (ADR 0041 §6)", () =
     ).toBeTruthy();
     expect(places().map(([n]) => n)).toEqual(Array.from({ length: 12 }, (_, i) => String(i + 1)));
     expect(places().at(-1)?.[1]).toBe("Assinatura corporativa compartilhada da equipe de produto");
+  });
+
+  test("an account signed in once per agent is one row with one place; moving it moves all its logins", async () => {
+    const state = onPlans();
+    // Trabalho signed in three times for all agents (a run may move to each), with Pessoal placed between two of them.
+    const team = (id: string, useOrder: number) =>
+      claude(id, "Trabalho", { email: "trabalho@example.com", sameAs: "acct_t1", useOrder, shared: true });
+    await go("settings/usage", state, [
+      team("acct_t1", 0),
+      claude("acct_p", "Pessoal", { useOrder: 1, sameAs: "acct_p" }),
+      team("acct_t2", 2),
+      team("acct_t3", 3),
+    ]);
+    expect(places()).toEqual([
+      ["1", "Trabalho"],
+      ["2", "Pessoal"],
+    ]);
+    await moveDown("Mover Trabalho, número 1 na ordem");
+    expect(state.calls.filter((c) => c.method === "machines.moveAccountInOrder").map((c) => c.args.slice(1))).toEqual([
+      ["acct_t1", 1],
+    ]);
+    expect(places()).toEqual([
+      ["1", "Pessoal"],
+      ["2", "Trabalho"],
+    ]);
+  });
+
+  test("a row that goes by a login with no place moves its account by one of its logins that has one", async () => {
+    const state = onPlans();
+    // Trabalho's first login thinks for one agent alone (no place); its second serves everyone and has one.
+    await go("settings/usage", state, [
+      claude("acct_t1", "Trabalho", { email: "trabalho@example.com", sameAs: "acct_t1", shared: false }),
+      claude("acct_t2", "Trabalho", { email: "trabalho@example.com", sameAs: "acct_t1", useOrder: 1 }),
+      claude("acct_p", "Pessoal", { useOrder: 0, sameAs: "acct_p" }),
+    ]);
+    expect(places()).toEqual([
+      ["1", "Pessoal"],
+      ["2", "Trabalho"],
+    ]);
+    const grip = within(order() as HTMLElement).getByRole("button", { name: "Mover Trabalho, número 2 na ordem" });
+    expect(grip.getAttribute("data-order-grip")).toBe("acct_t1");
+    await click(grip);
+    const menu = screen().getByRole("menu", { name: "Ações" });
+    await act(async () => fireEvent.click(within(menu).getByRole("menuitem", { name: "Mover para cima" })));
+    await settle(6);
+    expect(state.calls.filter((c) => c.method === "machines.moveAccountInOrder").map((c) => c.args.slice(1))).toEqual([
+      ["acct_t2", 0],
+    ]);
+    expect(places()).toEqual([
+      ["1", "Trabalho"],
+      ["2", "Pessoal"],
+    ]);
   });
 
   test("a drop before another row moves the account there", async () => {

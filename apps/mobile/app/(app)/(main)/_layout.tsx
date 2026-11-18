@@ -1,5 +1,6 @@
 import { type ErrorBoundaryProps, type NativeStackNavigationOptions, Stack } from "expo-router";
 import { useMemo } from "react";
+import { slideListeners } from "@/agent/live";
 import { isStill } from "@/features/links/landing";
 import { ScreenError } from "@/features/shared/ScreenError";
 import { coverBarOptions, usePushedOptions, useScrollUnderPushedOptions, useTheme } from "@/ui";
@@ -76,6 +77,7 @@ export default function MainStack() {
       link: { ...solid, animation: "none" },
       // Connect an AI: one pushed screen per question, on the grouped gray (its bar counts the steps).
       "connect-ai/index": connectAi,
+      "connect-ai/have": connectAi,
       "connect-ai/plans": connectAi,
       "connect-ai/plan": connectAi,
       "connect-ai/key": connectAi,
@@ -90,6 +92,24 @@ export default function MainStack() {
       },
       // A file: pushed with its bar opaque over the file itself (a web view lays out below it, as a block does).
       "file/[id]": solid,
+      // A live spreadsheet (ADR 0196): the grid, its bars and the keyboard's cell bar lay out below an opaque bar.
+      "spreadsheet/[id]": solid,
+      // A live presentation and a live canvas (ADR 0196): their slides, their plane and their tools lay out below an
+      // opaque bar, as the words of a text box do over the keyboard.
+      "slides/[id]": solid,
+      "canvas/[id]": solid,
+      // A live document (ADR 0200): its page and the format bar over the keyboard lay out below an opaque bar.
+      "document/[id]": solid,
+      "slide-text/[id]": solid,
+      "slide-layout/[id]": solid,
+      // Presenting: no bar, black around the slides, faded in; the edge swipe is the pager's (× leaves). Never a
+      // modal, as the computer's screen below (the app's toasts present over it).
+      "slides-show/[id]": {
+        ...base,
+        animation: "fade",
+        gestureEnabled: false,
+        contentStyle: { backgroundColor: "#000000" },
+      },
       // An agent's computer and a shared browser profile's live view: pushed with the opaque bar, their picture laid
       // out below it. Never a modal: the app's sheets, pickers and toasts they open present over them, where under a
       // modal they opened hidden and the screen stopped answering.
@@ -102,7 +122,7 @@ export default function MainStack() {
     };
   }, [colors, pushed, scrollUnder]);
   return (
-    <Stack screenOptions={screenOptions}>
+    <Stack screenOptions={screenOptions} screenListeners={slideListeners}>
       <Stack.Screen name="(tabs)" />
     </Stack>
   );

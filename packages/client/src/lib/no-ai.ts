@@ -14,8 +14,8 @@ import type {
   MachineAccountKind,
   OrgStanding,
 } from "../api/types";
-import { type OwnSignInRow, ownSignInReady, ownSignIns, planWordOf } from "./ai-accounts";
-import { answersOthers, audienceOf } from "./audience";
+import { groupPlans, type OwnSignInRow, ownSignInReady, ownSignIns, planWordOf } from "./ai-accounts";
+import { answersOthers, audienceOf, managesAgent } from "./audience";
 import { type BillingHold, billingHoldOf } from "./billing";
 import { type SetupView, setupPending } from "./computer";
 import { firstName } from "./format";
@@ -223,17 +223,18 @@ export const noAiLineKey = (card: Pick<NoAiCard, "own" | "signedOut" | "missing"
           ? "noAi.noComputer"
           : "noAi.agent";
 
-type ConnectingAgent = { ownerUserId?: string | null; builtin?: "right_hand" | null };
+type ConnectingAgent = { ownerUserId?: string | null; builtin?: "right_hand" | null; canManage?: boolean };
 
 /**
- * Who can set an agent's own AI: its owner (a plan), who manages agents (a workspace key) or keys. On the right hand
- * that is the workspace's AI, the one its background work (a widget's build) thinks with.
+ * Who can set an agent's own AI: its owner (a plan), who manages it (`managesAgent`: a workspace key, ADR 0085 addendum
+ * of 2026-11-17) or keys. On the right hand that is the workspace's AI, the one its background work (a widget's
+ * build) thinks with.
  */
 export const maySetAgentAi = (
   agent: ConnectingAgent | null | undefined,
   meId: string | null | undefined,
   org: Parameters<typeof can>[0],
-) => (!!meId && agent?.ownerUserId === meId) || can(org, "manage_agents") || can(org, "manage_credentials");
+) => (!!meId && agent?.ownerUserId === meId) || managesAgent(agent) || can(org, "manage_credentials");
 
 /** Who connects an agent's AI, for a person who may not: its owner (`owner`, by first name) or an admin. */
 export const noAiLockedLine = (t: TFunction, name: string, owner: string | null | undefined) =>
@@ -908,19 +909,26 @@ export const teamThinks = (agentIds: readonly string[], status: AiStatus | undef
 /**
  * Plans the right hand can't think with now, for the dialog that picks its AI (dimmed, each with why): a computer's own
  * sign-in, which names no account (it thinks only with a plan signed in as one), and an account whose computer is
- * away. Nothing to press there: it stands in on what can think meanwhile (ADR 0137 §7, amended 2026-11-15).
+ * away. Nothing to press there: it stands in on what can think meanwhile (ADR 0137 §7, amended 2026-11-15). One
+ * entry per account (`groupPlans`), `ids` its logins, none for the one holding `inUse`.
  */
-export type UnusablePlan =
-  | { id: string; why: "computerOnly"; own: OwnSignInRow }
-  | { id: string; why: "away"; account: AiAccounts["accounts"][number] };
+export type UnusablePlan = { id: string; ids: string[] } & (
+  | { why: "computerOnly"; own: OwnSignInRow }
+  | { why: "away"; account: AiAccounts["accounts"][number] }
+);
 
-export function rightHandUnusable(view: AiAccounts | null | undefined): UnusablePlan[] {
+export function rightHandUnusable(view: AiAccounts | null | undefined, inUse?: string | null): UnusablePlan[] {
   if (!view) return [];
   const away = new Set(view.computers.filter((c) => !c.online).map((c) => c.machineId));
   return [
-    ...ownSignIns(view).map((own): UnusablePlan => ({ id: own.key, why: "computerOnly", own })),
-    ...view.accounts
-      .filter((a) => a.status === "active" && away.has(a.machineId))
-      .map((account): UnusablePlan => ({ id: account.id, why: "away", account })),
+    ...ownSignIns(view)
+      .filter((own) => own.key !== inUse)
+      .map((own): UnusablePlan => ({ id: own.key, ids: [own.key], why: "computerOnly", own })),
+    ...groupPlans(view.accounts.filter((a) => a.status === "active" && away.has(a.machineId)))
+      .filter((p) => !p.logins.some((l) => l.id === inUse))
+      .flatMap(({ logins }): UnusablePlan[] => {
+        const account = logins[0];
+        return account ? [{ id: account.id, ids: logins.map((l) => l.id), why: "away", account }] : [];
+      }),
   ];
 }

@@ -82,8 +82,8 @@ function paintSky(color: string | null) {
 /**
  * Paints the workspace's accent (ADR 0193) for the current theme, on <html> so dialogs and menus portaled out of the
  * shell carry it too, and makes it the engine's `sky`, the color of every agent with none of its own and of the sky
- * art. Called by the workspace shell alone: leaving it takes the colors away, and no accent sets nothing, so the
- * design system's own blue shows.
+ * art. Called by the workspace shell, and by the pages before sign-in with a registered host's accent (ADR 0194), never
+ * both at once: leaving either takes the colors away, and no accent sets nothing, so the design system's own blue shows.
  */
 export function useWorkspaceAccent(accent: string | null | undefined) {
   const { resolved } = useTheme();

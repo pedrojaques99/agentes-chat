@@ -944,10 +944,13 @@ describe("a card says the real cause, not that the agent has no AI", () => {
   });
   const card = (reason: string, extra?: Record<string, unknown>) => noAiCardOf(meta(reason, extra));
 
-  test("Connect is for who can: the agent's owner, who manages agents or keys, nobody else", () => {
+  test("Connect is for who can: the agent's owner, who manages it or keys, nobody else", () => {
     const agent = { ownerUserId: "u1" };
     expect(mayConnectAi(agent, "u1", { permissions: [] })).toBe(true);
-    expect(mayConnectAi(agent, "u2", { permissions: ["manage_agents"] })).toBe(true);
+    // Who manages it, as the server sends the agent to them (`canManage`, ADR 0085 addendum of 2026-11-17).
+    expect(mayConnectAi({ ...agent, canManage: true }, "u2", { permissions: ["manage_agents"] })).toBe(true);
+    // "Edit agents" alone doesn't reach someone's private agent.
+    expect(mayConnectAi({ ...agent, canManage: false }, "u2", { permissions: ["manage_agents"] })).toBe(false);
     expect(mayConnectAi(agent, "u2", { permissions: ["manage_credentials"] })).toBe(true);
     expect(mayConnectAi(agent, "u2", { permissions: ["post"] })).toBe(false);
     expect(mayConnectAi(null, null, { permissions: [] })).toBe(false);
@@ -957,7 +960,9 @@ describe("a card says the real cause, not that the agent has no AI", () => {
     expect(mayConnectAi(lodi, null, { permissions: [] })).toBe(false);
     expect(planLineFix("plan_not_shared", lodi, "u1", { permissions: [] })).toBe("connectMine");
     expect(planLineFix("plan_limit", lodi, "u1", { permissions: [] })).toBe("useKey");
-    expect(planLineFix("plan_limit", lodi, "u2", { permissions: ["manage_agents"] })).toBe("useKey");
+    expect(planLineFix("plan_limit", { ...lodi, canManage: true }, "u2", { permissions: ["manage_agents"] })).toBe(
+      "useKey",
+    );
     expect(planLineFix("plan_limit", lodi, "u2", { permissions: [] })).toBe("connectMine");
     expect(planLineFix("plan_limit", null, "u2", { permissions: [] })).toBeNull();
   });
@@ -1038,7 +1043,10 @@ describe("a card says the real cause, not that the agent has no AI", () => {
     );
     const rightHand = { ownerUserId: "u1", builtin: "right_hand" as const };
     expect(planLineFix("plan_unattended", rightHand, "u1", { permissions: [] })).toBe("useKey");
-    expect(planLineFix("plan_unattended", rightHand, "u2", { permissions: ["manage_agents"] })).toBe("useKey");
+    // Who manages it (the server's `canManage` on the right hand).
+    expect(
+      planLineFix("plan_unattended", { ...rightHand, canManage: true }, "u2", { permissions: ["manage_agents"] }),
+    ).toBe("useKey");
     // A member's own plan never answers it: no Connect for them.
     expect(planLineFix("plan_unattended", rightHand, "u2", { permissions: [] })).toBeNull();
   });
@@ -1130,5 +1138,14 @@ describe("the right hand's stand-in line (ADR 0137 §7, amended 2026-11-15)", ()
       ["on-lap", "away"],
     ]);
     expect(rightHandUnusable(undefined)).toEqual([]);
+  });
+
+  test("an account signed in once per agent is one row, and none while one of its logins is the one in use", () => {
+    const laptop = { machineId: "lap", name: "Laptop", online: false };
+    const login = (id: string) =>
+      ({ id, machineId: "lap", computer: "Laptop", status: "active", kind: "claude_code", sameAs: "a1" }) as never;
+    const view = { computers: [laptop] as AiComputer[], accounts: [login("a1"), login("a2"), login("a3")] };
+    expect(rightHandUnusable(view).map((u) => [u.id, u.ids])).toEqual([["a1", ["a1", "a2", "a3"]]]);
+    expect(rightHandUnusable(view, "a2")).toEqual([]);
   });
 });

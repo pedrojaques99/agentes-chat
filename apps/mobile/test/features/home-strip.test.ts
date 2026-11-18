@@ -74,6 +74,20 @@ describe("the pinned strip", () => {
     expect(keys(pinnedRows(rows, starters, pins))).toEqual(["d:d-dev"]);
     expect(pinnedRows(rows, starters, { agents: [], channels: [], people: [] })).toEqual([]);
   });
+
+  test("an agent whose DM wouldn't open is never one to start, though the Agents tab lists it", () => {
+    // Who it answers or who manages it opens its DM (the server's `openDm`, ADR 0085 addendum of 2026-11-17): an agent I
+    // only edit, or someone's private agent under a mere "Edit agents", would open a refused one.
+    const edited = { id: "iris", name: "Iris", handle: "iris", canTalk: false, canEdit: true, canManage: false };
+    const locked = { id: "ivo", name: "Ivo", handle: "ivo", canTalk: false, canManage: false };
+    const managed = { id: "lia", name: "Lia", handle: "lia", canTalk: false, canManage: true };
+    const pins = { agents: ["iris", "ivo", "lia", "ada"], channels: [], people: [] };
+    // The one I manage opens its DM (its composer offers to let me in); the others hold no place on the strip.
+    expect(keys(pinnedRows(rows, agentStarters([...team, edited, locked, managed]), pins))).toEqual([
+      "a:lia",
+      "d:d-ada",
+    ]);
+  });
 });
 
 describe("Recentes", () => {
@@ -116,11 +130,9 @@ describe("Conversas with the strip and one list", () => {
   const home = src("chats/ChatsScreen.tsx");
   const strip = src("chats/PinnedStrip.tsx");
 
-  test("the strip stands under Início's widgets and the first-run line, above Recentes", () => {
+  test("the strip stands under Início's widgets, above Recentes", () => {
     const loaded = home.slice(home.indexOf("<HomeWidgets"));
-    const order = ["<HomeWidgets", "<FirstRunLine />", "<PinnedStrip", 'title={t("mobile.chats.recent")}'].map((p) =>
-      loaded.indexOf(p),
-    );
+    const order = ["<HomeWidgets", "<PinnedStrip", 'title={t("mobile.chats.recent")}'].map((p) => loaded.indexOf(p));
     expect(order.every((pos, i) => pos >= 0 && (i === 0 || pos > (order[i - 1] ?? 0)))).toBe(true);
     expect(home).toContain("pinnedRows(pinned.rows, starters, pins.pins)");
     expect(home).toContain('holdLabel={t("sidebarPins.unpin")}');
@@ -143,6 +155,14 @@ describe("Conversas with the strip and one list", () => {
     expect(home).toContain('place="chats"');
   });
 
+  test("the invitation to make the first agent waits for an empty Agents tab, agents I only edit counted", () => {
+    // Those are never ones to start (`agentStarters`), nor are their DMs listed, yet the team isn't empty; the
+    // greeting's count of who works matches the Agents tab too.
+    expect(home).toContain("const teamListed = dir.agents.some((a) => !isRightHand(a) && listsAgent(org, a));");
+    expect(home).toContain("const empty = !list.loading && !failed && pinned.rows.length === 0 && !teamListed;");
+    expect(home).toContain("return a !== undefined && listsAgent(org, a) && !offline.has(id);");
+  });
+
   test("every part collapses and is remembered, with the home's own keys", () => {
     expect([...HOME_SECTIONS]).toEqual(["widgets", "pinned", "recent", "otherChannels"]);
     expect(home).toContain("const { collapsed, toggle } = useCollapsedSections();");
@@ -156,7 +176,7 @@ describe("Conversas with the strip and one list", () => {
     expect(row).toContain("<OpensConversation");
     expect(strip).toContain("<OpensConversation");
     expect(strip).toContain('onStart={r.kind === "dm" && !r.channelId ? onStart : undefined}');
-    expect(strip).toContain("onPressIn={warm}");
+    expect(strip).toContain("onTouchStart={warm}");
     expect(strip).toContain("{...hold}");
   });
 

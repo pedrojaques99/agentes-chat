@@ -1,5 +1,5 @@
 import type { Artifact, ArtifactFilters, ArtifactKind } from "@agenteschat/client";
-import { useArtifacts, useChannels } from "@agenteschat/client";
+import { isLiveFileKind, keys as queryKeys, useApi, useArtifacts, useChannels } from "@agenteschat/client";
 import { ARTIFACT_KINDS, KIND_ICON } from "@agenteschat/client/lib/artifacts";
 import {
   DRIVE_GROUPS,
@@ -10,6 +10,8 @@ import {
   type DriveView,
   type DriveWho,
   driveSections,
+  folderChildren,
+  folderTrail,
   isDriveView,
   onlyItsConversation,
   PRIVATE_SECTION,
@@ -37,6 +39,8 @@ import {
   Toolbar,
   useMatchMedia,
 } from "@agenteschat/ui";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActorAvatar } from "@/components/AgentAvatar";
@@ -44,11 +48,15 @@ import { useArtifactDownload, useDeleteArtifact } from "@/components/artifacts/A
 import { artifactLink, useArtifactViewer, useAuthorName } from "@/components/artifacts/ArtifactViewer";
 import { useFileShare } from "@/components/artifacts/ShareDialog";
 import { UploadButton, useDriveUpload } from "@/components/artifacts/Upload";
+import { DriveCrumbs, FolderCard, FolderRow, useFolderActions } from "@/components/drive/DriveFolders";
 import { DriveCard, DriveRow, type ItemProps } from "@/components/drive/DriveItems";
 import { DriveTrash } from "@/components/drive/DriveTrash";
 import { DropOverlay, UploadProgress, useFileDrop } from "@/components/drive/DriveUploads";
 import { useActorFilterOptions } from "@/components/filters";
 import { ErrorState, LoadingList } from "@/components/Loading";
+import { LivePresenceScope } from "@/components/live/LiveCover";
+import { NewFileMenu } from "@/components/live/NewFile";
+import { cachedKind, openLivePage } from "@/components/live/open";
 import { COMPACT_QUERY } from "@/components/NavDrawer";
 import { useOrg } from "@/components/org-context";
 import { SelectionBar } from "@/components/SelectionBar";
@@ -67,9 +75,18 @@ const layerOpen = () => Boolean(document.querySelector('[role="menu"], [role="li
 /**
  * Drive: everything the viewer can see, as a
  * grid of real previews (or a list), with quick filters, grouping, a details
- * panel, multi-select with a floating bar, drop to upload and the trash.
+ * panel, multi-select with a floating bar, drop to upload and the trash. Folders: the one shown (`folder`, null =
+ * the top level) lists its folders and files; a search or a filter looks through the whole Drive.
  */
-export function DrivePage({ open }: { open?: { id: string; version?: number } }) {
+export function DrivePage({
+  open,
+  folder = null,
+  onFolder = () => undefined,
+}: {
+  open?: { id: string; version?: number };
+  folder?: string | null;
+  onFolder?: (id: string | null) => void;
+}) {
   const { t } = useTranslation();
   const { org } = useOrg();
   const look = useRightHandLook();
@@ -82,6 +99,9 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
   const share = useFileShare();
   const searchRef = useRef<HTMLInputElement>(null);
   const phone = useMatchMedia(COMPACT_QUERY);
+  const qc = useQueryClient();
+  const api = useApi();
+  const navigate = useNavigate();
 
   const [q, setQ] = useState("");
   const [trashOpen, setTrashOpen] = useState(false);
@@ -104,9 +124,13 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
   const [uploadsHidden, setUploadsHidden] = useState(false);
 
   const search = useDeferredValue(q.trim());
+  const filtered = Boolean(search) || kinds.length > 0 || channelIds.length > 0 || authors.length > 0 || who !== "all";
+  const arrange = useFolderActions();
   // Every filter and the order go to the server, so each looks at all the files, not the pages loaded.
   const filters = useMemo<ArtifactFilters>(() => {
     const f: ArtifactFilters = {};
+    // Browsing shows one folder; a search or a filter looks through the whole Drive, as Google Drive's does.
+    if (!filtered) f.folderId = folder;
     if (search) f.q = search;
     if (kinds.length > 0) f.kinds = kinds;
     if (channelIds.length > 0) f.channelIds = channelIds;
@@ -118,7 +142,7 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     if (who !== "all") f.who = who;
     if (sort !== "recent") f.sort = sort;
     return f;
-  }, [search, kinds, channelIds, authors, who, sort]);
+  }, [search, kinds, channelIds, authors, who, sort, filtered, folder]);
   const list = useArtifacts(org.id, filters);
 
   const remover = useDeleteArtifact((ids) => {
@@ -132,14 +156,58 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
   );
   const upload = (files: File[]) => {
     setUploadsHidden(false);
-    void uploader.upload(files);
+    void uploader.upload(files, { folderId: folder });
   };
+
+  // A folder that's gone (deleted, or a stale link): back to the top level.
+  const trail = folderTrail(arrange.folders, folder);
+  useEffect(() => {
+    if (folder && arrange.loaded && trail.length === 0) onFolder(null);
+  }, [folder, arrange.loaded, trail.length, onFolder]);
+  const here = trail.at(-1) ?? null;
+  const needle = search.toLocaleLowerCase();
+  const subfolders = filtered
+    ? needle && kinds.length === 0 && channelIds.length === 0 && authors.length === 0 && who === "all"
+      ? arrange.folders.filter((f) => f.name.toLocaleLowerCase().includes(needle))
+      : []
+    : (folderChildren(arrange.folders).get(folder ?? "") ?? []);
+  const openFolder = (id: string | null) => {
+    setSelected(new Set());
+    onFolder(id);
+  };
+  const dropInto = (drag: { files: string[]; folders: string[] }, target: string | null) =>
+    void arrange.move(drag, target);
+  /** A file dragged while selected takes the whole selection along. */
+  const dragging = (a: Artifact) => (selected.has(a.id) ? [...selected] : [a.id]);
   const drop = useFileDrop(upload, !trashOpen);
 
-  // A shared link (`/drive?artifact=…&v=…`) opens the viewer.
+  // A shared link (`/drive?artifact=…&v=…`) opens the viewer, or a live file's own page in its place (ADR 0196 §9):
+  // its kind first, from what this app already loaded or from the server, so the viewer never flashes on the way.
+  const openId = open?.id;
+  const openVersion = open?.version;
   useEffect(() => {
-    if (open?.id) viewer.open(open.id, open.version);
-  }, [open?.id, open?.version, viewer]);
+    if (!openId) return;
+    let gone = false;
+    const go = (kind: ArtifactKind | null) => {
+      if (gone) return;
+      if (isLiveFileKind(kind)) openLivePage(navigate, org.id, openId, { version: openVersion, replace: true });
+      else viewer.open(openId, openVersion);
+    };
+    const known = cachedKind(qc, org.id, openId);
+    if (known) go(known);
+    else
+      qc.fetchQuery({
+        queryKey: queryKeys.artifact(org.id, openId, openVersion),
+        queryFn: () => api.artifacts.get(org.id, openId, openVersion),
+      }).then(
+        (a) => go(a.kind),
+        // Not found or no access: the viewer says so.
+        () => go(null),
+      );
+    return () => {
+      gone = true;
+    };
+  }, [openId, openVersion, viewer, qc, api, navigate, org.id]);
 
   const channelLabel = (a: Artifact) =>
     a.audience.kind === "channel"
@@ -153,6 +221,9 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
         : t("artifacts.noChannel");
 
   const rows = list.artifacts ?? [];
+  // Nothing in the drive at all (not a search that found nothing, not an empty folder inside it): its tools have
+  // nothing to work on yet.
+  const bare = list.isSuccess && rows.length === 0 && subfolders.length === 0 && !filtered && !folder;
   const sections = driveSections(rows, group);
   const shown = sections.flatMap((s) => s.items);
   const counts = new Map(Object.entries(list.counts ?? {}) as [ArtifactKind, number][]);
@@ -161,9 +232,6 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     ? [...counts].reduce((n, [k, c]) => (kinds.length === 0 || kinds.includes(k) ? n + c : n), 0)
     : rows.length;
 
-  const filtered = Boolean(search) || kinds.length > 0 || channelIds.length > 0 || authors.length > 0 || who !== "all";
-  // Nothing in the drive at all (not a search that found nothing): its tools have nothing to work on yet.
-  const bare = list.isSuccess && rows.length === 0 && !filtered;
   const clearFilters = () => {
     setKinds([]);
     setChannelIds([]);
@@ -171,6 +239,8 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     setWho("all");
   };
   const picked = shown.filter((a) => selected.has(a.id));
+  // Who is in the live files shown, asked once for the page (their cards show the faces).
+  const liveIds = shown.filter((a) => isLiveFileKind(a.kind)).map((a) => a.id);
   const selectAll = () => setSelected(new Set(shown.map((a) => a.id)));
 
   const toggle = (a: Artifact) => {
@@ -199,9 +269,13 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     }
     anchor.current = a.id;
     // Straight to the file: the viewer has its preview, who made it, where it is, its versions and its actions.
-    viewer.open(a.id);
+    openViewer(a);
   };
-  const openViewer = (a: Artifact) => viewer.open(a.id);
+  // A spreadsheet, a presentation or a canvas opens on its own page (ADR 0196 §9).
+  const openViewer = (a: Artifact) => {
+    if (isLiveFileKind(a.kind)) openLivePage(navigate, org.id, a.id);
+    else viewer.open(a.id);
+  };
 
   // "/" searches, ⌘A selects what's shown, Esc clears the selection.
   const keys = useRef({ shown, selected, trashOpen, selectAll });
@@ -231,7 +305,8 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
   }, []);
 
   const downloadPicked = async () => {
-    for (const a of picked) await downloads.save(a, undefined, a.version);
+    // A live file as it is now: its versions are checkpoints behind it (ADR 0196 §7).
+    for (const a of picked) await downloads.save(a, undefined, isLiveFileKind(a.kind) ? undefined : a.version);
   };
   const copyLinks = async () => {
     await navigator.clipboard?.writeText(
@@ -260,7 +335,19 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
     onPick: pick,
     onToggle: toggle,
     onOpen: openViewer,
+    ...(uploads
+      ? {
+          onRename: arrange.renameFile,
+          onMove: (x: Artifact) =>
+            arrange.askMove(
+              selected.has(x.id) ? { files: [...selected], folders: [] } : { files: [x.id], folders: [] },
+              x.folderId ?? null,
+            ),
+          dragging,
+        }
+      : {}),
   });
+  const folderProps = { actions: arrange, may: uploads, onOpen: openFolder, onDrop: dropInto };
 
   const sectionTitle = (s: DriveSection) => {
     if (s.key === PRIVATE_SECTION) return t("drive.private");
@@ -329,10 +416,10 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
       {drop.over && <DropOverlay />}
       <div className="drive__main">
         <PageHeader
-          title={trashOpen ? t("artifacts.trashTitle") : t("drive.title")}
-          meta={trashOpen ? t("artifacts.trashHint") : t("drive.subtitle")}
+          title={trashOpen ? t("artifacts.trashTitle") : (here?.name ?? t("drive.title"))}
+          meta={trashOpen ? t("artifacts.trashHint") : here ? undefined : t("drive.subtitle")}
           lead={
-            trashOpen && (
+            trashOpen ? (
               <Button
                 variant="ghost"
                 iconOnly
@@ -341,6 +428,17 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
                 title={t("artifacts.backToDrive")}
                 onClick={() => setTrashOpen(false)}
               />
+            ) : (
+              here && (
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  icon="chevronLeft"
+                  aria-label={t("drive.up")}
+                  title={t("drive.up")}
+                  onClick={() => openFolder(here.parentId)}
+                />
+              )
             )
           }
           actions={
@@ -356,24 +454,36 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
                 >
                   {t("artifacts.trash")}
                 </Button>
-                {uploads && !bare && (
-                  <UploadButton
-                    size="md"
-                    label={t("files.upload")}
-                    busy={uploader.busy}
-                    multiple
-                    onFiles={upload}
-                    variant="primary"
-                  />
+                {uploads && (
+                  <Button variant="ghost" icon="plus" onClick={() => arrange.newFolder(folder)}>
+                    {t("drive.newFolder")}
+                  </Button>
+                )}
+                {uploads && !(list.isSuccess && rows.length === 0 && subfolders.length === 0 && !filtered) && (
+                  <>
+                    {/* A spreadsheet, a presentation or a canvas (ADR 0196 §9); Upload stays the one primary. */}
+                    <NewFileMenu iconOnly={phone} />
+                    <UploadButton
+                      size="md"
+                      label={t("files.upload")}
+                      busy={uploader.busy}
+                      multiple
+                      onFiles={upload}
+                      variant="primary"
+                    />
+                  </>
                 )}
               </>
             )
           }
-        />
+        >
+          {!trashOpen && here && <DriveCrumbs trail={trail} onOpen={openFolder} onDrop={dropInto} />}
+        </PageHeader>
 
         {trashOpen && <DriveTrash />}
         {remover.dialog}
         {share.dialog}
+        {arrange.dialogs}
 
         {!trashOpen && (
           <>
@@ -576,7 +686,20 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
 
             {list.isLoading && <LoadingList count={5} trailing />}
             {list.isError && !list.data && <ErrorState error={list.error} onRetry={() => void list.refetch()} />}
-            {list.isSuccess && rows.length === 0 && !filtered && (
+            {list.isSuccess && rows.length === 0 && subfolders.length === 0 && !filtered && folder && (
+              <EmptyState
+                size="panel"
+                title={t("drive.folderEmptyTitle")}
+                actions={
+                  uploads && (
+                    <UploadButton size="md" label={t("files.upload")} busy={uploader.busy} multiple onFiles={upload} />
+                  )
+                }
+              >
+                {t(uploads ? "drive.folderEmptyText" : "drive.folderEmptyViewer")}
+              </EmptyState>
+            )}
+            {list.isSuccess && rows.length === 0 && subfolders.length === 0 && !filtered && !folder && (
               <EmptyState
                 size="page"
                 agent={look}
@@ -584,21 +707,24 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
                 title={t("drive.emptyTitle")}
                 actions={
                   uploads && (
-                    <UploadButton
-                      size="md"
-                      label={t("files.upload")}
-                      busy={uploader.busy}
-                      multiple
-                      onFiles={upload}
-                      variant="primary"
-                    />
+                    <>
+                      <UploadButton
+                        size="md"
+                        label={t("files.upload")}
+                        busy={uploader.busy}
+                        multiple
+                        onFiles={upload}
+                        variant="primary"
+                      />
+                      <NewFileMenu align="start" />
+                    </>
                   )
                 }
               >
                 {t(uploads ? "drive.emptyText" : "drive.emptyViewer")}
               </EmptyState>
             )}
-            {list.isSuccess && rows.length === 0 && filtered && (
+            {list.isSuccess && rows.length === 0 && subfolders.length === 0 && filtered && (
               <EmptyState
                 size="panel"
                 title={t("drive.noResults")}
@@ -617,49 +743,74 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
               </EmptyState>
             )}
 
-            {rows.length > 0 && view === "grid" && (
-              <div className={cx("ac-groups", selected.size > 0 && "drive--selecting")}>
-                {sections.map((s) => (
-                  <section key={s.key || "all"} className="drive-group">
-                    {sectionHead(s)}
-                    <div className="drive-grid">
-                      {s.items.map((a) => (
-                        <DriveCard key={a.id} {...itemProps(a)} onDelete={(x) => remover.ask(x)} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            )}
-            {rows.length > 0 && view === "list" && (
-              <div className={cx("drive-table", selected.size > 0 && "drive--selecting")}>
-                <div className="drive-table__head">
-                  <Checkbox
-                    className="drive-check"
-                    checked={picked.length === shown.length ? true : picked.length > 0 ? "indeterminate" : false}
-                    onCheckedChange={(on) => (on ? selectAll() : setSelected(new Set()))}
-                    aria-label={t("drive.selectAll", { count: shown.length })}
-                  />
-                  <span aria-hidden="true">{t("drive.name")}</span>
-                  <span aria-hidden="true">{t("drive.by")}</span>
-                  <span className="drive-row__where" aria-hidden="true">
-                    {t("drive.where")}
-                  </span>
-                  <span aria-hidden="true">{t("drive.when")}</span>
-                  <span />
+            {subfolders.length > 0 && view === "grid" && (
+              <section className="drive-group" aria-label={t("drive.folders")}>
+                <GroupHeading className="drive-group__head" title={t("drive.folders")} count={subfolders.length} />
+                <div className="drive-folders">
+                  {subfolders.map((f) => (
+                    <FolderCard key={f.id} folder={f} {...folderProps} />
+                  ))}
                 </div>
-                {sections.map((s) => (
-                  <section key={s.key || "all"} className="drive-group">
-                    {sectionHead(s)}
-                    <ul className="drive-list">
-                      {s.items.map((a) => (
-                        <DriveRow key={a.id} {...itemProps(a)} onDelete={(x) => remover.ask(x)} />
+              </section>
+            )}
+            <LivePresenceScope ids={liveIds}>
+              {rows.length > 0 && view === "grid" && (
+                <div className={cx("ac-groups", selected.size > 0 && "drive--selecting")}>
+                  {sections.map((s) => (
+                    <section key={s.key || "all"} className="drive-group">
+                      {sectionHead(s)}
+                      <div className="drive-grid">
+                        {s.items.map((a) => (
+                          <DriveCard key={a.id} {...itemProps(a)} onDelete={(x) => remover.ask(x)} />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+              {(rows.length > 0 || subfolders.length > 0) && view === "list" && (
+                <div className={cx("drive-table", selected.size > 0 && "drive--selecting")}>
+                  <div className="drive-table__head">
+                    <Checkbox
+                      className="drive-check"
+                      checked={
+                        shown.length > 0 && picked.length === shown.length
+                          ? true
+                          : picked.length > 0
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(on) => (on ? selectAll() : setSelected(new Set()))}
+                      aria-label={t("drive.selectAll", { count: shown.length })}
+                    />
+                    <span aria-hidden="true">{t("drive.name")}</span>
+                    <span aria-hidden="true">{t("drive.by")}</span>
+                    <span className="drive-row__where" aria-hidden="true">
+                      {t("drive.where")}
+                    </span>
+                    <span aria-hidden="true">{t("drive.when")}</span>
+                    <span />
+                  </div>
+                  {subfolders.length > 0 && (
+                    <ul className="drive-list" aria-label={t("drive.folders")}>
+                      {subfolders.map((f) => (
+                        <FolderRow key={f.id} folder={f} {...folderProps} />
                       ))}
                     </ul>
-                  </section>
-                ))}
-              </div>
-            )}
+                  )}
+                  {sections.map((s) => (
+                    <section key={s.key || "all"} className="drive-group">
+                      {sectionHead(s)}
+                      <ul className="drive-list">
+                        {s.items.map((a) => (
+                          <DriveRow key={a.id} {...itemProps(a)} onDelete={(x) => remover.ask(x)} />
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </LivePresenceScope>
 
             {list.hasNextPage && rows.length > 0 && (
               <div className="drive-more">
@@ -683,6 +834,22 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
                 <Button size="sm" variant="ghost" icon="link" onClick={() => void copyLinks()}>
                   <span className="drive-selbar__label">{t("drive.copyLinks")}</span>
                 </Button>
+                {uploads && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon="move"
+                    onClick={() => {
+                      const at = new Set(picked.map((a) => a.folderId ?? null));
+                      arrange.askMove(
+                        { files: picked.map((a) => a.id), folders: [] },
+                        at.size === 1 ? [...at][0] : undefined,
+                      );
+                    }}
+                  >
+                    <span className="drive-selbar__label">{t("drive.move")}</span>
+                  </Button>
+                )}
                 {deletable.length > 0 && (
                   <Button
                     size="sm"

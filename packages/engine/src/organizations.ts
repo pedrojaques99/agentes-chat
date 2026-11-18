@@ -9,6 +9,7 @@ import {
   eq,
   gt,
   inArray,
+  isNotNull,
   isNull,
   ne,
   not,
@@ -1126,12 +1127,14 @@ async function removableMember(db: Database, actorId: string, orgId: string, tar
 }
 
 /**
- * Who answers for the agents of someone leaving: whoever removes them when they may manage agents, else (or when they
- * leave themselves) the workspace's longest-standing other owner, one who can still sign in first (the last owner
- * can't leave, so one is there). Removing someone never hands their agents to a remover who couldn't take them.
+ * Who answers for the agents of someone leaving: whoever removes them when they reach every agent (an owner or an
+ * administrator: "Editar qualquer agente" alone doesn't reach someone's private agents, ADR 0085 addendum of
+ * 2026-11-17), else (or when they leave themselves) the workspace's longest-standing other owner, one who can still
+ * sign in first (the last owner can't leave, so one is there). Removing someone never hands their agents to a remover
+ * who couldn't take them.
  */
 async function heirOf(db: Executor, actorId: string, orgId: string, targetUserId: string) {
-  if (actorId !== targetUserId && can(await getMembership(db, actorId, orgId), "manage_agents")) return actorId;
+  if (actorId !== targetUserId && can(await getMembership(db, actorId, orgId), "administrator")) return actorId;
   const [owner] = await db
     .select({ userId: organizationMembers.userId })
     .from(organizationMembers)
@@ -1299,6 +1302,7 @@ async function takeOut(
   const { wakeAgentsBrainWaits } = await import("./usage-pause");
   const { cancelMailboxApprovals, publishApproval } = await import("./approvals");
   const { dropMailOfOwner } = await import("./tools/scopes");
+  const { dropPersonalConnections, forgetConnectionCaches } = await import("./connectors/connections");
   const { removeSeat } = await import("./right-hand-seats");
   const { dropMemberDashboards } = await import("./dashboards/service");
   const { released, removed, handed, changed, heir, secrets, mailActions, toApi, tasks } = await db.transaction(
@@ -1350,11 +1354,19 @@ async function takeOut(
             sql`${targetUserId} = any(${schema.wikiFolderAudiences.audienceUserIds} || ${schema.wikiFolderAudiences.editorUserIds})`,
           ),
         );
-      // And the agents' "only some people" lists, for the same reason.
+      // And the agents' "only some people" and "Quem pode editar" lists, for the same reason.
       const unlisted = await tx
         .update(schema.agents)
-        .set({ audienceUserIds: sql`array_remove(${schema.agents.audienceUserIds}, ${targetUserId})` })
-        .where(and(eq(schema.agents.orgId, orgId), sql`${targetUserId} = any(${schema.agents.audienceUserIds})`))
+        .set({
+          audienceUserIds: sql`array_remove(${schema.agents.audienceUserIds}, ${targetUserId})`,
+          editorUserIds: sql`array_remove(${schema.agents.editorUserIds}, ${targetUserId})`,
+        })
+        .where(
+          and(
+            eq(schema.agents.orgId, orgId),
+            sql`${targetUserId} = any(${schema.agents.audienceUserIds} || ${schema.agents.editorUserIds})`,
+          ),
+        )
         .returning({ id: schema.agents.id });
       for (const a of unlisted) caches.agents.delete(`${orgId}:${a.id}`);
       if (unlisted.length > 0) caches.agents.delete(`${orgId}:team`);
@@ -1395,7 +1407,12 @@ async function takeOut(
       const handed = heir
         ? await tx
             .update(agents)
-            .set({ ownerUserId: heir, updatedAt: new Date() })
+            // The heir now always edits them: off their "Quem pode editar" (ADR 0085 addendum of 2026-11-17).
+            .set({
+              ownerUserId: heir,
+              editorUserIds: sql`array_remove(${schema.agents.editorUserIds}, ${heir}::text)`,
+              updatedAt: new Date(),
+            })
             .where(and(eq(agents.orgId, orgId), eq(agents.ownerUserId, targetUserId)))
             .returning()
         : [];
@@ -1417,6 +1434,8 @@ async function takeOut(
       }
       // No agent goes on reading or sending in their name: their mailboxes leave every agent, and what waits to run there doesn't.
       await dropMailOfOwner(tx, orgId, targetUserId, actorId);
+      // Their personal connections go with them (ADR 0099 addendum).
+      await dropPersonalConnections(tx, orgId, targetUserId, actorId);
       // Their place on the workspace's computer for the right hand goes too (ADR 0175): coming back starts a new one.
       await removeSeat(tx, orgId, targetUserId);
       const mailActions = await cancelMailboxApprovals(tx, orgId, targetUserId, actorId);
@@ -1434,6 +1453,7 @@ async function takeOut(
       return { released, removed, handed, changed, heir, secrets, mailActions, toApi, tasks };
     },
   );
+  forgetConnectionCaches(orgId);
   if (tasks.length > 0) {
     const { unassignGone } = await import("./issues");
     await unassignGone({ db, pubsub: options.pubsub }, orgId, { type: "person", id: targetUserId }, tasks).catch(
@@ -1526,6 +1546,7 @@ export async function deleteAccount(
     await import("./workspace-deletion");
   const { cancelMailboxApprovals, publishApproval } = await import("./approvals");
   const { dropMailOfOwner } = await import("./tools/scopes");
+  const { dropPersonalConnections, forgetConnectionCaches } = await import("./connectors/connections");
   const { removeSeat } = await import("./right-hand-seats");
   const { wakeAgentsBrainWaits } = await import("./usage-pause");
   const done = await db.transaction(async (tx) => {
@@ -1563,6 +1584,8 @@ export async function deleteAccount(
       // They leave every task they were on, as someone removed from a workspace does (ADR 0188).
       await dropAssignee(tx, m.orgId, { type: "person", id: userId });
       await dropMailOfOwner(tx, m.orgId, userId, userId);
+      // Before the user row: the foreign key would delete their connections with no audit and no adapter forget.
+      await dropPersonalConnections(tx, m.orgId, userId, userId);
       await removeSeat(tx, m.orgId, userId);
       mailActions.push(...(await cancelMailboxApprovals(tx, m.orgId, userId, userId)));
     }
@@ -1575,6 +1598,21 @@ export async function deleteAccount(
       });
       if (outsideOf) await recordOperatorEvent(tx, { type: "outside_access.ended", orgId: org.id, data: { userId } });
     }
+    // Their outside requests not yet told as over go with the account (the rows cascade): the operator hears it once.
+    const outsideAsks = await tx
+      .select({ orgId: organizationJoinRequests.orgId })
+      .from(organizationJoinRequests)
+      .where(
+        and(
+          eq(organizationJoinRequests.userId, userId),
+          eq(organizationJoinRequests.status, "pending"),
+          isNotNull(organizationJoinRequests.outsideOf),
+        ),
+      );
+    await recordOperatorEvent(
+      tx,
+      ...outsideAsks.map((r) => ({ type: "outside_access.ended" as const, orgId: r.orgId, data: { userId } })),
+    );
     const removed = [];
     for (const computer of plan.computers) {
       const freed = await detachMachine(tx, { ...computer, kind: "connected" });
@@ -1627,6 +1665,7 @@ export async function deleteAccount(
   });
   if (!done) return false;
   const { plan, closed, released, removed, mailActions, ownerless } = done;
+  for (const org of [...plan.leaves, ...plan.closes]) forgetConnectionCaches(org.id);
   for (const row of mailActions) await publishApproval({ db, pubsub: options.pubsub }, row, "approval.decided");
   await announceReleasedAccounts({ db, pubsub: options.pubsub }, released);
   for (const { computer, freed } of removed) {

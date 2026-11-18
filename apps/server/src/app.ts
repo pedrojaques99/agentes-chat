@@ -1,4 +1,4 @@
-import { MisconfiguredError, requestLocale } from "@agenteschat/engine";
+import { hostLook, MisconfiguredError, requestLocale } from "@agenteschat/engine";
 import { helpDocsUrl } from "@agenteschat/i18n/help";
 import { appLocale } from "@agenteschat/i18n/locale";
 import type { AgentesModule, Edition, ModuleContext } from "@agenteschat/modules";
@@ -41,10 +41,12 @@ import { dmRoutes } from "./routes/app/dms";
 import { feedbackRoutes, registerFeedbackFiles, registerFeedbackInbox } from "./routes/app/feedback";
 import { gifKeyRoutes } from "./routes/app/gif-key";
 import { gifRoutes } from "./routes/app/gifs";
+import { imageRoutes } from "./routes/app/images";
 import { inviteRoutes } from "./routes/app/invites";
 import { issueRoutes } from "./routes/app/issues";
 import { jevRoutes } from "./routes/app/jev";
 import { knowledgeRoutes } from "./routes/app/knowledge";
+import { liveRoutes } from "./routes/app/live";
 import { machineAccountRoutes } from "./routes/app/machine-accounts";
 import { mailRoutes } from "./routes/app/mail";
 import { managementRoutes } from "./routes/app/management";
@@ -62,6 +64,7 @@ import { sandboxRoutes } from "./routes/app/sandboxes";
 import { secretRoutes } from "./routes/app/secrets";
 import { skillRoutes } from "./routes/app/skills";
 import { storageRoutes } from "./routes/app/storage";
+import { surfaceRoutes } from "./routes/app/surfaces";
 import { teamWeekRoutes } from "./routes/app/team-week";
 import { telemetryRoutes } from "./routes/app/telemetry";
 import { threadRoutes } from "./routes/app/threads";
@@ -130,6 +133,7 @@ export interface AppOptions {
  * - `/api/push-relay/v1/*` other installations' phone pushes, server to server (only with PUSH_RELAY_SERVE, ADR 0152)
  * - `/mcp`                AI apps' MCP endpoint, bearer tokens only (ADR 0119); `/.well-known/oauth-*` its discovery
  * - `/api/ws`             WebSocket (real-time)
+ * - `/api/live`           WebSocket: one live file, a spreadsheet, presentation or canvas (ADR 0196)
  * - `/api/openapi.json`   OpenAPI 3.1 document; `/api/reference` interactive docs
  * - `/install`            the self-host installer, `install.sh` (`curl -fsSL <server>/install | sh`)
  * - `/i/<code>`           a new computer's installer with a connect link baked in (`/i/<code>/ps` for Windows)
@@ -212,6 +216,9 @@ export function createApp(options: AppOptions) {
     api.route("/app", billingRoutes(deps));
     api.route("/app", referralRoutes(deps));
     api.route("/app", artifactRoutes(deps));
+    api.route("/app", liveRoutes(deps));
+    // Pictures on canvases (ADR 0197): the image models, requests and Try again.
+    api.route("/app", imageRoutes(deps));
     api.route("/app", issueRoutes(deps));
     api.route("/app", threadRoutes(deps));
     api.route("/app", missionRoutes(deps));
@@ -235,6 +242,7 @@ export function createApp(options: AppOptions) {
     api.route("/app", gifKeyRoutes(deps));
     api.route("/app", speechKeyRoutes(deps));
     api.route("/app", voiceRoutes(deps));
+    api.route("/app", surfaceRoutes(deps));
     api.route("/app", webhookAdminRoutes(deps));
     api.route("/app", githubAppRoutes(deps));
     api.route("/app", visantUpstreamRoutes(deps));
@@ -412,10 +420,18 @@ export function createApp(options: AppOptions) {
     // index.html is always revalidated, so a new deploy shows on the next open.
     // No page of the app belongs in a search engine's index, whatever its status: sign-in pages and made-up
     // addresses all answer with the same page. A header, never a robots.txt: a crawler kept out can't read it.
+    // On a registered host (ADR 0194) the page says so on its <html> before the app knows the host, so index.html's
+    // boot rules hide the product's mark. Every page from WEB_DIR passes here, the SPA fallback included.
+    const db = options.services?.db;
     app.use("/*", async (c, next) => {
       await next();
       if (isApi(c.req.path)) return;
       const html = c.res.headers.get("content-type")?.startsWith("text/html");
+      if (html && db && c.res.ok && c.req.method === "GET" && (await hostLook(db, c.req.header("host")))) {
+        const page = (await c.res.text()).replace("<html", "<html data-host");
+        c.res.headers.delete("content-length");
+        c.res = new Response(page, { status: c.res.status, headers: c.res.headers });
+      }
       if (html) c.res.headers.set("x-robots-tag", "noindex");
       if (!c.res.ok || c.res.headers.has("cache-control")) return;
       if (html) c.res.headers.set("cache-control", "no-cache");

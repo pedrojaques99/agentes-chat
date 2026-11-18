@@ -1,7 +1,7 @@
 import type { Agent, AgentSetupStep } from "@agenteschat/client";
 import { useAgentAccess, useAgentDetail, useAiStatus, useMe } from "@agenteschat/client";
 import { levelOf, resourcesOf } from "@agenteschat/client/lib/access-levels";
-import { audienceOf } from "@agenteschat/client/lib/audience";
+import { audienceOf, editsAgent, managesAgent } from "@agenteschat/client/lib/audience";
 import { firstName, joinNames } from "@agenteschat/client/lib/format";
 import { agentGrammar } from "@agenteschat/client/lib/grammar";
 import { aiStateOf, planHoldPhoneLine } from "@agenteschat/client/lib/no-ai";
@@ -25,7 +25,18 @@ import { AccessibilityInfo, StyleSheet, View } from "react-native";
 import Animated, { Easing, FadeIn } from "react-native-reanimated";
 import { paysHere } from "@/lib/store";
 import { useOrg } from "@/providers/org";
-import { CARD_PAD, Card, GROUPED_ROW, GroupedRow, Icon, type IconName, PressScale, Text, useReducedMotion } from "@/ui";
+import {
+  CARD_PAD,
+  Card,
+  Disclosure,
+  GROUPED_ROW,
+  GroupedRow,
+  Icon,
+  type IconName,
+  PressScale,
+  Text,
+  useReducedMotion,
+} from "@/ui";
 import { openConnectAi } from "../../ai/NoAiCard";
 import { usePlanHold } from "../../ai/parts";
 import { requestComposerText } from "../../chat/composer-request";
@@ -41,8 +52,8 @@ import { useAgentChannels } from "./useAgentChannels";
  * A new agent's setup checklist on the phone (ADR 0155 §2), as on the web: the top of its DM, drawn by the app and
  * never stored, in its voice. Five steps (think, apps, channels, who talks to it, how it works); each button opens a
  * screen of its own with the suggestion marked (managing is a pushed screen), think opens Connect AI. Only who may set
- * the agent up sees it: who manages agents all the steps, its owner the ones they may change. It lives in the DM only:
- * on the agent's page it read as a to-do list about the page's subject, between its head and what it is on. Alone in a
+ * the agent up sees it (`setupSteps`): who manages it all the steps, its owner the ones they may change. DM only: on
+ * the agent's page it read as a to-do list about the page's subject, between its head and what it is on. Alone in a
  * personal workspace (ADR 0159), "who talks to it" isn't asked while it holds its default (`setupStepsInSight`), and
  * the rows read the workspace's own words.
  */
@@ -60,12 +71,12 @@ const ARRIVED = new Set<string>();
 
 /** The steps this person sees for this agent (none: the checklist isn't theirs, or the agent has none). */
 export function useSetupSteps(agent: Agent | undefined): AgentSetupStep[] {
-  const { org } = useOrg();
   const meId = useMeId();
   const { solo } = usePersonalView();
-  return agent && meId
-    ? setupStepsInSight(setupSteps(agent, { meId, admin: can(org, "manage_agents") }), audienceOf(agent), solo)
-    : [];
+  if (!agent || !meId) return [];
+  // Who manages it (the server's `canManage`) sees every step; its owner, theirs, how it works as who edits it.
+  const steps = setupSteps(agent, { meId, admin: managesAgent(agent), edits: editsAgent(agent) });
+  return setupStepsInSight(steps, audienceOf(agent), solo);
 }
 
 /**
@@ -75,7 +86,7 @@ export function useSetupSteps(agent: Agent | undefined): AgentSetupStep[] {
 function useSetupProgress(agent: Agent) {
   const { orgId, org } = useOrg();
   const dir = useDirectory();
-  const admin = can(org, "manage_agents");
+  const admin = managesAgent(agent);
   const steps = useSetupSteps(agent);
   const status = useAiStatus(orgId);
   const access = useAgentAccess(orgId, agent.id, admin && steps.includes("apps"));
@@ -406,7 +417,7 @@ export function SetupAsks({ lead, asks }: { lead: string; asks: { label: string;
           <Text variant="small" style={styles.fill}>
             {a.label}
           </Text>
-          <Icon name="right" size={16} color={c.faint} />
+          <Disclosure />
         </PressScale>
       ))}
     </View>

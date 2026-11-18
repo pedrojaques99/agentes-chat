@@ -19,6 +19,7 @@ import {
   ne,
   or,
   queryTrace,
+  type SQL,
   schema,
   sql,
 } from "@agenteschat/db";
@@ -135,7 +136,14 @@ import {
   triageSnapshot,
 } from "./catch-up-triage";
 import { REACT_TOOL } from "./chat-tools";
-import { kickRoomQueue, publishQueueChanged, roomGate, roomHead } from "./computer-queue";
+import {
+  kickRoomQueue,
+  publishQueueChanged,
+  roomGate,
+  roomHead,
+  SIGN_IN_CONCURRENCY,
+  signInSlotOf,
+} from "./computer-queue";
 import {
   CONFIDENTIAL_AI_CHANGED,
   confidentialThread,
@@ -183,6 +191,7 @@ import {
   heldReplyRead,
   type LearnSignal,
   localPathsCited,
+  repeatedCalls,
   reportRunFailure,
   type TurnEndDecision,
   toolsNamed,
@@ -234,6 +243,7 @@ import {
   kickKeyLine,
   rateLimited,
 } from "./key-line";
+import { carriesLiveFile } from "./live/tools";
 import { answerNoTurn, deliverLive, listenLiveSteering, renderSteered } from "./live-steer";
 import {
   accountEverWorked,
@@ -368,6 +378,8 @@ import {
   EVERY_TOOL,
   isCore,
   isStableTool,
+  LIVE_FILE_TOOLS,
+  LIVE_FILES_GROUP,
   listsEveryTool,
   ON_DEMAND_FIND,
   ON_DEMAND_USE,
@@ -405,6 +417,7 @@ import {
   USAGE_WAIT_CODES,
   USAGE_WINDOW_WORDS,
   usageCardResumed,
+  usageGranted,
   usageNoteHandOn,
   usageNoticeText,
   usageWaitClosed,
@@ -540,6 +553,8 @@ export interface EngineDeps {
   computerWakeWaitMs?: number;
   /** How long a computer turn is still read after its plan's `limit` event (default `PLAN_LIMIT_GRACE_MS`). */
   planLimitGraceMs?: number;
+  /** Runs one Claude plan sign-in thinks for at once (default `SIGN_IN_CONCURRENCY`; 0: no limit). */
+  signInConcurrency?: number;
   /**
    * Tools on demand (ADR 0043): each run lists the core tools and the groups the
    * judge (`context.judge`) expects it to need; the rest go behind
@@ -731,6 +746,12 @@ export interface Transcript {
    */
   usagePause?: { paused?: boolean; cardId?: string; override?: { until: string | null; by: string } };
   /**
+   * A person told the agent in the chat to go past the pause line (`ignore_usage_limit`): for the rest of the run long
+   * work goes on up to the plan's own allowance, as after Continuar agora, and no re-park drops it. Written on the row
+   * by the tool, so `storedTranscript` keeps the row's copy.
+   */
+  usageGrant?: { by: string; at: string };
+  /**
    * Since when (ms) this run waits on usage, across its re-parks, and how far along the re-checks of an unknown
    * reset it is (`LIMIT_LADDER_MS`); `noticed`: its owner heard that the reset is still unknown. Gone once a turn runs.
    */
@@ -753,12 +774,19 @@ export interface Transcript {
   roomWaitSince?: number;
   /** A wake that waited outside any run first (`StartRunOptions.park`): its place in the line counts from then. */
   roomOrderSince?: number;
+  /** When this run first waited for its computer in standby to wake (ms): past the outage grace it is down. */
+  standbyWaitSince?: number;
   /** A person waits on this run: it goes first in the computer's line (`computer-queue.ts`). */
   roomPeople?: boolean;
   /** Its stretch is work a person asked for lately (`personAskedLately`): next in the line after people's runs. */
   roomAsked?: boolean;
-  /** When this run last sent a turn to its computer: agents' turns there are spaced (`roomGate`). */
-  roomAsk?: { machineId: string; at: number };
+  /**
+   * When this run last sent a turn to its computer: agents' turns there are spaced (`roomGate`). `signIn`: the Claude
+   * plan sign-in whose slot it holds while it works (`signInSlotOf`).
+   */
+  roomAsk?: { machineId: string; at: number; signIn?: string };
+  /** In its computer's line because this plan sign-in has all the runs it takes at once (`SignInSlot`). */
+  signInWait?: { key: string };
   /** Its agent's computer was full: it thinks on another computer of the workspace, in a session of its own there. */
   spill?: SpillRecord;
   /** Its plan's limit moved it to the next account in the workspace's order (ADR 0041 §6), in a session of its own there. */
@@ -909,7 +937,7 @@ const CONTEXT_TOOLS: readonly string[] = [
 
 /** How long the first call waits for its pre-warm once the quiet window is over. */
 const PREWARM_WAIT_MS = 4000;
-/** A run's last claims whose stage profiles its transcript keeps (`profiles`): long work claims many times. */
+/** A run's last claims whose stage profiles it keeps (`agent_runs.profiles`): long work claims many times. */
 const RUN_PROFILES_KEPT = 10;
 /** How soon a quiet window that ends at once is told from one still running (no pre-warm then). */
 const PREWARM_PROBE_MS = 50;
@@ -1150,18 +1178,17 @@ export async function executeRun(deps: EngineDeps, runId: string, options: RunJo
     unregisterRunAbort(runId, abort);
     if (prof.stages.length > 0) {
       deps.onRunProfile?.({ runId, stages: prof.stages, total: prof.total() });
-      // Kept with the run, so the operator's work analytics can say where time went (`work-analytics.ts`). In its
-      // transcript, not as a step: steps are the run's trail, and its last one marks where a pause began (`whileHeld`).
+      // Kept with the run, so the operator's work analytics can say where time went (`work-analytics.ts`). In its own
+      // column, not as a step (steps are the run's trail, and its last one marks where a pause began, `whileHeld`) and
+      // not in the transcript (appending there would rewrite the whole TOASTed conversation on every claim).
       if (prof.run) {
         const brain = prof.brain.length > 0 ? { brain: prof.brain } : {};
         const kept = JSON.stringify([{ stages: prof.stages, total: prof.total(), ...brain }]);
-        const list = sql`coalesce(${agentRuns.transcript}->'profiles', '[]'::jsonb) || ${kept}::jsonb`;
+        const capped = (list: SQL) =>
+          sql`case when jsonb_array_length(${list}) > ${RUN_PROFILES_KEPT} then (${list}) - 0 else ${list} end`;
         await deps.db
           .update(agentRuns)
-          .set({
-            transcript: sql`jsonb_set(coalesce(${agentRuns.transcript}, '{}'::jsonb), '{profiles}',
-              case when jsonb_array_length(${list}) > ${RUN_PROFILES_KEPT} then (${list}) - 0 else ${list} end)`,
-          })
+          .set({ profiles: capped(sql`coalesce(${agentRuns.profiles}, '[]'::jsonb) || ${kept}::jsonb`) })
           .where(and(eq(agentRuns.orgId, prof.run.orgId), eq(agentRuns.id, prof.run.id)))
           .catch(() => {});
       }
@@ -1919,10 +1946,14 @@ async function executeRunInner(
   const judging: Promise<void> | null =
     needsContext && deps.toolsOnDemand && judge && granted.length > 0 && !every
       ? (async () => {
-          const [recent, keep] = await Promise.all([
+          const [recent, kept, live] = await Promise.all([
             recentMessages(),
             keptToolGroups(db, run, granted).catch(() => [] as string[]),
+            // Asked from inside a live file, one attached, or in a file's own conversation: its own tools come with
+            // it (ADR 0196 §6, ADR 0199).
+            carriesLiveFile(db, run.orgId, trigger?.meta, run.channelId).catch(() => false),
           ]);
+          const keep = live ? [...kept, LIVE_FILES_GROUP] : kept;
           const choice = await chooseToolGroups(judge, {
             orgId: run.orgId,
             agentId: agent.id,
@@ -2360,6 +2391,11 @@ async function executeRunInner(
         followUp: tools.some((t) => t.name === FOLLOW_UP_TOOL),
         work: workApplies && tools.some((t) => t.name === WORK_IN_BACKGROUND_TOOL),
         blocks: tools.some((t) => t.name === SHOW_BLOCK_TOOL),
+        // Granted is enough: on demand their group is one `use_tool` away (ADR 0196 §6). `image_search` is every
+        // agent's (no scope), so it says nothing about the Drive's.
+        ...(granted.some((t) => LIVE_FILE_TOOLS.has(t.name) && t.name !== "image_search" && !t.connectionId)
+          ? { liveFiles: { images: granted.some((t) => t.name === "generate_image" && !t.connectionId) } }
+          : {}),
         ...(deps.blockSpec ? { blockSpec: deps.blockSpec } : {}),
         choices: choicesApply && tools.some((t) => t.name === ASK_CHOICES_TOOL),
         // "What you can do" names the loaded groups: it waits for the judge.
@@ -2547,6 +2583,9 @@ async function executeRunInner(
               ...(deps.tools ? await grantedScopeKeys(db, run.orgId, agent.id) : []),
             ]),
           ].sort(),
+          // A session a person's own connection was offered in holds what it read: only their runs resume it
+          // (ADR 0099 addendum). Absent otherwise, so no other session's key changes.
+          ...[...new Set(granted.flatMap((t) => (t.ownerUserId ? [`personal:${t.ownerUserId}`] : [])))],
         ]),
       ),
       postedUpTo: context.messages.length,
@@ -3228,6 +3267,9 @@ async function executeRunInner(
     };
     return { evidence, gather };
   };
+  /** The run's executed calls less those repeating one that already worked (`repeatedCalls`): what a nudge must grow. */
+  const workDone = async (t: Transcript) =>
+    (t.executedCalls ?? 0) - (t.executedCalls ? await repeatedCalls(db, run).catch(() => 0) : 0);
   let brain = createBrain(deps, thinker, run, plan.kind, turnToken, () => transcript as Transcript);
   /**
    * What the key stands in for since this claim's stand-in for the right hand, until it answers a turn: the plan and
@@ -3735,11 +3777,17 @@ async function executeRunInner(
       }
     }
     // Just gone (our own deploy, a runner dialing again): it waits without a word until the outage grace is over.
+    // Asleep in standby, waking: without a word too, for one grace from its first such wait (ADR 0161); one that
+    // never wakes is down, and says so.
     let quietUntil: number | null = null;
     if (u.code === "machine_offline") {
       const status = await deps.machines?.status(machineId).catch(() => null);
       const seen = status?.lastSeenAt ? Date.parse(status.lastSeenAt) : Number.NaN;
-      if (status && !status.online && Date.now() - seen < TASK_OFFLINE_GRACE_MS)
+      if (status && !status.online && status.standby) {
+        t.standbyWaitSince ??= Date.now();
+        const until = t.standbyWaitSince + TASK_OFFLINE_GRACE_MS;
+        if (Date.now() < until) quietUntil = until;
+      } else if (status && !status.online && Date.now() - seen < TASK_OFFLINE_GRACE_MS)
         quietUntil = seen + TASK_OFFLINE_GRACE_MS;
     }
     // Only a blip keeps its place in the line: after a real outage the wait for room starts over, or its clock
@@ -3767,9 +3815,7 @@ async function executeRunInner(
           const m = await post(
             tx,
             replyThreadId,
-            busy
-              ? "Still in line for the computer. I'll answer as soon as it has room."
-              : `${u.message} I'll answer when it's back.`,
+            busy ? "Still in line. I'll answer as soon as my turn comes." : `${u.message} I'll answer when it's back.`,
             {
               ...bodyCode("brain_unavailable", { brain: name }),
               // `machineId` and `agentId`: the app shows the note as a live "waiting" card tied to the computer's outage.
@@ -4560,7 +4606,10 @@ async function executeRunInner(
     if (!(await longNow())) return null;
     const now = await usageReading();
     intoExtra = now?.source === "plan" && now.used >= PLAN_PAUSE && now.extra === true;
-    return longWorkHasRoom(now) ? null : now;
+    if (longWorkHasRoom(now)) return null;
+    // Told in the chat to go past the line: as after Continuar agora, up to the plan's own allowance.
+    if (await usageGranted(db, run.id, t)) return continuesPastPlan(now) ? now : null;
+    return now;
   };
   // From 90% the agent reads where its plan stands, every turn, so it can tell people a long task may pause.
   if (plan.kind !== "model") {
@@ -4568,7 +4617,13 @@ async function executeRunInner(
     transcript.system = transcript.system.filter((b) => !(b as ContextBlock).usage);
     if (reading && reading.used >= PLAN_NOTICE) {
       const name = planName(plan.kind, plan.account?.provider);
-      transcript.system.push({ turn: true, usage: true, text: usageNoticeText(name, reading) } as ContextBlock);
+      const t = transcript as Transcript;
+      const granted = Boolean(t.usageGrant) || overrideHolds(t.usagePause?.override);
+      transcript.system.push({
+        turn: true,
+        usage: true,
+        text: usageNoticeText(name, reading, granted),
+      } as ContextBlock);
     }
   }
 
@@ -4831,7 +4886,8 @@ async function executeRunInner(
         } as const;
         // The right hand is how people find out what the line is doing: it never waits behind it. Its turn is
         // locked down, so the runner lets it in on a lower floor (`admit`).
-        let behind = isRightHand(agent) ? null : await roomGate(db, run, roomMachine, place);
+        const slotOf = (p: BrainPlan) => signInSlotOf(p, deps.signInConcurrency ?? SIGN_IN_CONCURRENCY);
+        let behind = isRightHand(agent) ? null : await roomGate(db, run, roomMachine, place, slotOf(plan));
         let askOn = roomMachine;
         // Spill-over: behind others, or refused for room before, a person's first turn may think on another computer.
         const to =
@@ -4851,21 +4907,27 @@ async function executeRunInner(
           transcript.spill = { from: roomMachine, to: to.machineId };
           // There it thinks on its owner's sign-in, not the account it moved to.
           delete transcript.accountMove;
-          behind = await roomGate(db, run, to.machineId, place);
+          behind = await roomGate(db, run, to.machineId, place, slotOf(plan));
           // Its place in its own computer's line is free: the next one there asks now.
           await kickRoomQueue(db, roomMachine).catch(() => {});
           later(() => addRunStep(db, run, "context", { spill: transcript.spill }));
         }
+        const slot = slotOf(plan);
         if (behind) {
+          // Not working on the computer: no slot of a sign-in is its (`kickSignInLine` reads it as it leaves).
+          delete transcript.roomAsk;
+          if (behind.signIn && slot) transcript.signInWait = { key: slot.key };
+          else delete transcript.signInWait;
           const handled = await brainUnavailable({
             code: "busy",
-            message: "Waiting in line for the computer.",
+            message: "Waiting in line.",
             queued: true,
             retryAt: behind.retryAt,
           });
           if (handled === "waited" || handled === "failed") return;
         } else {
-          transcript.roomAsk = { machineId: askOn, at: Date.now() };
+          delete transcript.signInWait;
+          transcript.roomAsk = { machineId: askOn, at: Date.now(), ...(slot ? { signIn: slot.key } : {}) };
           admitted = { machineId: askOn, fromLine: transcript.roomWaitSince !== undefined };
         }
       }
@@ -5104,10 +5166,12 @@ async function executeRunInner(
             touchedAccount = account.id;
             later(() => touchMachineAccount(db, run.orgId, account.id));
           }
-          // A turn cut off by its computer is finished now, and one that found room ends that wait.
+          // A turn cut off by its computer is finished now, and one that found room ends that wait; its computer is
+          // awake, so a later sleep's wait starts its own clock.
           delete transcript.interruptedTurn;
           delete transcript.roomWaitSince;
           delete transcript.roomOrderSince;
+          delete transcript.standbyWaitSince;
           // The plan had room for this turn: the runs parked on its limit go on now, not at their own timers.
           const planMachine = turnPlan.session?.machineId;
           if (planMachine && !turnLimited) {
@@ -5658,10 +5722,11 @@ async function executeRunInner(
               .where(and(eq(routineRuns.id, routineRunId), eq(routineRuns.orgId, run.orgId)))
           : [];
         const judging = evidenceFor(transcript);
+        const work = await workDone(transcript);
         const decision = await decideTurnEnd({
           state,
           kind: "routine",
-          executed: transcript.executedCalls ?? 0,
+          executed: work,
           bound: run.turns + 1 >= maxTurns ? "turn_cap" : routineRun?.status === "reported" ? "reported" : null,
           // A good update made the run `reported`; one with `failed` left its code (ADR 0135 §5).
           widgetOwed:
@@ -5694,7 +5759,8 @@ async function executeRunInner(
             : null,
           evidence: judging.evidence,
         });
-        transcript.continuation = advanceContinuation(state, decision, transcript.executedCalls ?? 0);
+        prof.mark(`turn_end#${run.turns}`);
+        transcript.continuation = advanceContinuation(state, decision, work);
         const { nudge, ...recorded } = { ...decision, count: transcript.continuation.count };
         later(() =>
           addRunStep(db, run, "context", {
@@ -5883,13 +5949,14 @@ async function executeRunInner(
           machine.pairedByUserId === triggerMessage.authorUserId,
       );
       const localPaths = theirs ? [] : cited;
+      const work = await workDone(t);
       let decision = await decideTurnEnd({
         state,
         kind: betweenAgents ? "agents_dm" : "conversation",
         openRequest,
         namedTools,
         localPaths,
-        executed: transcript.executedCalls ?? 0,
+        executed: work,
         bound: t.stuck?.endAt !== undefined ? "stuck" : t.wrapUpNoted ? "step_limit" : null,
         quiet: silent && !judged,
         decided: decided && !silent && !said && !capped && !closingSummary(t, true) ? decided : null,
@@ -5950,10 +6017,12 @@ async function executeRunInner(
       if (decision.outcome === "ask_card" && (text || judged).length > QUESTION_MAX_CHARS)
         decision = { outcome: "done", rule: "ask_long", verdict: decision.verdict };
       turnEnd = decision;
+      // From the model's answer to the turn's decision (its judgments included): where a run's end waits shows apart.
+      prof.mark(`turn_end#${run.turns}`);
       // A promise something already keeps (`comes_back`) waits on it: no unkept promise.
       if (decision.verdict)
         t.followThroughVerdict = decision.outcome === "waiting" ? "waiting" : verdictRecord(decision.verdict);
-      t.continuation = advanceContinuation(state, decision, transcript.executedCalls ?? 0);
+      t.continuation = advanceContinuation(state, decision, work);
       const nudgedAs = {
         decision: "decision",
         answer: sentinelOnly ? "sentinel" : "empty",

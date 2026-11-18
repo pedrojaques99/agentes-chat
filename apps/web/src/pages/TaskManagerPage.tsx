@@ -417,7 +417,6 @@ export function TaskManagerPage({
           done={view.data.doneToday ?? view.data.ended.filter((e) => e.status === "done").length}
           causes={causes}
           computers={computers}
-          onQueue={setQueueOf}
         />
       )}
 
@@ -681,13 +680,11 @@ function CapacityStrip({
   done,
   causes,
   computers,
-  onQueue,
 }: {
   tasks: ManagedTask[];
   done: number;
   causes: WaitCause[];
   computers: ComputerSummary[];
-  onQueue: (machineId: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { org } = useOrg();
@@ -712,14 +709,9 @@ function CapacityStrip({
       return {
         ...words,
         lead: <Icon name="computer" size={18} />,
-        act: cause.busy ? t("queue.see") : t("taskManager.capacity.computers"),
-        onAct: cause.busy
-          ? () => onQueue(cause.machineId)
-          : () =>
-              void navigate({
-                to: "/org/$orgId/settings/$section",
-                params: { orgId: org.id, section: "computers" },
-              }),
+        act: t("taskManager.capacity.computers"),
+        onAct: () =>
+          void navigate({ to: "/org/$orgId/settings/$section", params: { orgId: org.id, section: "computers" } }),
       };
     return { ...words, lead: <WaitMark />, act: t("taskManager.actions.open"), onAct: () => openTask(first) };
   };

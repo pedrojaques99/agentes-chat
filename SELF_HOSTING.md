@@ -469,11 +469,14 @@ Then add to the `server` block:
     }
 ```
 
-Sign-in rate limits count per client address, read from `X-Forwarded-For`. A single value, as above,
-is trusted as is, and the client can't forge it (nginx replaces whatever the client sent). With
-another proxy or a CDN in front of nginx, send the chain instead (`$proxy_add_x_forwarded_for`) and
-list those proxies' addresses or ranges in `TRUSTED_PROXIES`, comma-separated: the chain is read from
-the right past every trusted hop, and the first other address is the client.
+Sign-in rate limits count per client address, read from `X-Forwarded-For`; wrong passwords also count
+per account (10 in 15 minutes from one address, 50 from all), each count kept in one server process's
+memory, so a restart starts them again and with several processes behind a load balancer each allows
+that many. A single value, as above, is trusted as is, and the client can't
+forge it (nginx replaces whatever the client sent). With another proxy or a CDN in front of nginx,
+send the chain instead (`$proxy_add_x_forwarded_for`) and list those proxies' addresses or ranges in
+`TRUSTED_PROXIES`, comma-separated: the chain is read from the right past every trusted hop, and the
+first other address is the client.
 
 </details>
 
@@ -1036,10 +1039,17 @@ your reason and in that workspace's own audit log (**Settings → Audit log**: w
 request or for which failed run, never your reason), credentials are masked, and the door takes 30
 calls a minute and 100 reads of one workspace a day. `GET /orgs/{orgId}/support-requests` lists who
 asked for help and when, and `POST` there records a request that reached you another way (a mail, a
-call), which the audit log then shows as recorded by you. Setting the token makes you a reader of
-your workspaces' content: tell them before the first read, and say whether an AI assistant reads
-with you (`assistedByAi`). It also makes the server keep what members write in the feedback form,
-and what the thing they reported says, for 90 days beside their request. Unset, every path under
+call), which the audit log then shows as recorded by you. `POST /reveal/orgs/{orgId}/replies` answers
+a member's support request by email, at the address of their account and in their language, never
+at one you name: one of the server's four sentences (`template`) or your own words as plain text
+(`text`, 2,000 characters at most, in which nothing becomes a link). It needs email set up, takes 3
+replies a request and 60 a day, and is recorded in the events feed and in that workspace's audit log
+(that you answered, whose request, and whether an AI assistant wrote the answer), never with its
+words, which the server forgets once the email is sent or given up. Write in a reply only what that
+member could read in the app. Setting the token makes you a reader of your workspaces' content: tell
+them before the first read, and say whether an AI assistant reads with you (`assistedByAi`). It also
+makes the server keep what members write in the feedback form, and what the thing they reported
+says, for 90 days beside their request. Unset, every path under
 `/reveal` answers 403 and the server keeps neither: of a member's feedback it keeps only that they
 asked (who, when, and which message), for a year. If you set the token and later take it away, the
 door closes at once and no new words are kept; the ones already kept stay until their 90 days are up.
@@ -1143,7 +1153,7 @@ party only when you turn that service on:
 | Another provider (OpenAI- or Anthropic-compatible) | An organization's endpoint (Settings → AI and usage → Other provider) | What the other model providers receive, sent to the address the organization typed. When it is saved, the server also reads that address's model list and makes one small test call per model. |
 | OpenRouter | An organization's key | What the other model providers receive, passed on by OpenRouter to the model's own provider (the organization's OpenRouter privacy settings decide which may keep it). While a workspace has an OpenRouter key, the server also reads OpenRouter's public model list, with no key: about once an hour, and up to once a minute while agents' runs ask for a model the list lacks. |
 | OpenCode | Always on | Nothing of yours: the server reads OpenCode Go's public model list, with no key, at boot and about once an hour, so that plan's model picker stays current. If the list is out of reach, the picker uses the list built into this version. |
-| TypeSafe Jev | `TYPESAFE_API_KEY`, or the key the owner adds in **Settings → AI and usage** (the variable wins). Either way it is your own key, so TypeSafe bills your account; with an OpenRouter key (`sk-or-…`) the same requests go through OpenRouter, which passes them on to TypeSafe and bills your OpenRouter account. | To pick which agent answers a message nobody @mentioned: the channel's name and topic, the message (up to 4,000 characters), recent messages (up to 800 each), and the name, role, description and tools of the channel's agents. To pick an agent's model or the tools it loads: its name, role and instructions (up to 1,500 characters), the message (up to 2,000) and recent messages (up to 400 each). Also the messages and memory items it is asked to judge (a request to stop, a hand-off, a permission change, whether to archive a memory), a long run's task and latest words with the tool calls and the start of the results it may set aside, a mission's commands it is asked to rate with the mission's goal and current step, the names and descriptions of a connector's tools, and, when a message meets no AI connected, that message (up to 4,000 characters), to tell whether it asks to connect one. On agents' computers, what is on the screen it is asked to look at: the page's address, its text and a screenshot. Without it, a small model on one of the organization's API keys picks and judges instead, each person's own plan picks for their own messages, and simple rules do the rest. Some memory and tool decisions go back to what they did before Jev, nothing guesses what to connect, and nothing is read from images. |
+| TypeSafe Jev | `TYPESAFE_API_KEY`, or the key the owner adds in **Settings → AI and usage** (the variable wins). Either way it is your own key, so TypeSafe bills your account; with an OpenRouter key (`sk-or-…`) the same requests go through OpenRouter, which passes them on to TypeSafe and bills your OpenRouter account. | To pick which agent answers a message nobody @mentioned: the channel's name and topic, the message (up to 4,000 characters), recent messages (up to 800 each), and the name, role, description and tools of the channel's agents. To pick an agent's model or the tools it loads: its name, role and instructions (up to 1,500 characters), the message (up to 2,000) and recent messages (up to 400 each). Also the messages and memory items it is asked to judge (a request to stop, a hand-off, a permission change, whether to archive a memory), a long run's task and latest words with the tool calls and the start of the results it may set aside, a mission's commands it is asked to rate with the mission's goal and current step, the names and descriptions of a connector's tools, and, when a message meets no AI connected, that message (up to 4,000 characters), to tell whether it asks to connect one. On agents' computers, what is on the screen it is asked to look at: the page's address, its text and a screenshot. Without it, a small model on one of the organization's API keys picks and judges instead, each person's own plan picks for their own messages on a server that had a workspace before 2026-11-18, and simple rules do the rest. Some memory and tool decisions go back to what they did before Jev, nothing guesses what to connect, and nothing is read from images. |
 | Voyage AI, DeepInfra, OpenAI or another embeddings server | `EMBEDDINGS_PROVIDER=voyage` with `VOYAGE_API_KEY`, or `EMBEDDINGS_PROVIDER=openai` with `EMBEDDINGS_URL` | The text of what `EMBEDDINGS_KINDS` lists (memory items by default) as it is indexed, up to 8,000 characters each, and search queries. The `embeddings` profile keeps them on this machine. Without one, search is full-text only. |
 | Web search for agents | Always on: DuckDuckGo's HTML page with no key, unless `BRAVE_SEARCH_API_KEY` (Brave Search) or `SEARXNG_URL` (your own SearXNG) is set; an agent with a browser on its computer searches there instead (Google, then Bing or DuckDuckGo) | The words an agent searches for (`web_search`). `web_fetch` opens the public pages an agent asks for, from this server: never an internal or private address. |
 | Composio | `COMPOSIO_API_KEY` | Gmail and Outlook mailboxes for agents, and the services connected through it (Google Drive, Calendar, Sheets and Docs, Slack, Microsoft Teams, OneDrive, HubSpot, Salesforce, Zendesk, Asana, Figma, Intercom, Dropbox, Square, Instagram, Facebook, LinkedIn, YouTube, Pinterest, Reddit and WhatsApp Business): Composio holds those connections, and what agents read or write there passes through it, files included. IMAP mailboxes and the other connectors connect directly. |
@@ -1287,7 +1297,7 @@ through a Grok account added in Settings, AI and usage, never the computer's own
 bubblewrap, `sudo apt install -y bubblewrap`, or Grok Build refuses to start and every turn fails), Google's
 Antigravity CLI with
 `curl -fsSL https://antigravity.google/cli/install.sh | bash` (`agy` in `~/.local/bin`; Gemini accounts sign in on Linux
-computers only, each in a folder of its own, and a personal Google plan used this way is against Google's terms for
+and macOS computers, not Windows yet, each in a folder of its own (on a Mac, with a keychain of its own there), and a personal Google plan used this way is against Google's terms for
 consumer plans: Gemini Enterprise or an API key avoids that). A runner in system mode (each agent
 its own system user) needs the CLI where every agent's user can run it, not in one user's home: install it
 under a shared folder and link it into `/usr/local/bin`, for example
@@ -1635,8 +1645,10 @@ name, email, plan, status and usage (how much of each limit is used, and when it
 there says it). The code pasted when signing in from a browser is encrypted there to a
 key made on the computer and relayed without being stored, so the server can't read it. A personal
 plan is meant for its owner: answering other people with it may go against the provider's terms.
-With no Jev and no API key that has a small model, a plan also picks who answers its owner's own
-messages that mention nobody: Claude Code or Codex reads the message and the few before it on that
+A plan never picks who answers a message on a server installed from 2026-11-18 on: without Jev or an
+API key that has a small model, simple rules pick. On a server that already had a workspace before that
+version, with no Jev and no API key that has a small model, a plan still picks who answers its owner's
+own messages that mention nobody: Claude Code or Codex reads the message and the few before it on that
 computer, with every tool off, in a few seconds, and only while nothing else runs on that sign-in. It
 never picks for other people's messages, a sign-in made with an API key never picks, and a Windows
 computer doesn't pick yet.
