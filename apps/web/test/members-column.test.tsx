@@ -338,11 +338,14 @@ describe("the members column", () => {
         ],
       },
     });
+    for (const a of state.agents) a.role = "Revisa pull requests e escreve as notas de cada versão";
     await open(state);
     await settle(4);
     const side = column() as HTMLElement;
     expect(side.textContent).not.toContain("Sem IA conectada");
     expect(row(side, "Ada")).toBeTruthy();
+    // Nor does its role take the caption's place: the row is the name alone.
+    expect(side.querySelector(".members-side__line.ac-tag")).toBeNull();
   });
 
   test("a row opens the member's card", async () => {

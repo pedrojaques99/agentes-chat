@@ -351,7 +351,9 @@ function AgentRow({
   const line = shown?.line ? agentStatusShort(t, shown.line, i18n.language) : null;
   const full = agentLine(t, shown?.line ?? null, i18n.language)?.text;
   const why = shown ? agentWhyKey(shown.presence, shown.noAi) : null;
-  const under = agentMemberLine(now, line, quietNoAi && why === "noAi" ? null : why);
+  // The caption left because it repeated the strip's: the row is the name alone, not its role put in its place.
+  const quiet = quietNoAi && why === "noAi";
+  const under = agentMemberLine(now, line, quiet ? null : why);
   // What it does here now (a run this tab hears), else its work's words: the orbit's label and the row's title.
   const doing =
     state !== "idle"
@@ -400,7 +402,7 @@ function AgentRow({
             <StatusLine {...under.line} className="members-side__line" />
           ) : under?.why ? (
             <span className="members-side__line">{t(`presence.agentWhy.${under.why}`)}</span>
-          ) : agent.role ? (
+          ) : agent.role && !quiet ? (
             <span className="members-side__line ac-tag">{agent.role}</span>
           ) : (
             word && <span className="members-side__line">{word}</span>
