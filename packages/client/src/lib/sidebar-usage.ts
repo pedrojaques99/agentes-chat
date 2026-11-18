@@ -47,6 +47,13 @@ export function topUsed(
 export const USAGE_MARGIN = 1.5;
 
 /**
+ * A tool counts as a habit only from about three recent visits (a score this high): one stray visit never moves the
+ * list. A tool already shown stays while it keeps a real score (`USAGE_FLOOR`), so the bar to enter is higher than the
+ * bar to stay, and the set changes rarely.
+ */
+export const USAGE_HABIT = 2.5;
+
+/**
  * The learned set: the tools to keep in sight for this usage, or `null` with nothing learned yet (the defaults then
  * apply). `previous` is the set shown last time: it only changes by a clear margin, so a tool that is on the edge never
  * flips in and out, and menus keep their places (an adaptive menu that moves hurts the person's spatial memory). A
@@ -63,9 +70,12 @@ export function learnedSet(
 ): SidebarItem[] | null {
   // Proposals are a tab of Approvals: using it never gives it a row of its own (only the person's choice does).
   const learnable = order.filter((id) => id !== "proposals");
-  const ranked = topUsed(usage, learnable, now, learnable.length);
-  if (!ranked.length) return null;
   const score = (id: SidebarItem) => usageScore(usage[id], now);
+  // What was shown stays while it has a real score; a newcomer enters only once it is a habit.
+  const ranked = topUsed(usage, learnable, now, learnable.length).filter(
+    (id) => previous.includes(id) || score(id) >= USAGE_HABIT,
+  );
+  if (!ranked.length) return null;
   const kept = ranked.filter((id) => previous.includes(id)).slice(0, n);
   const set = [...kept];
   for (const id of ranked) {
@@ -95,14 +105,13 @@ export function listedTools(opts: {
 }): SidebarItem[] {
   const { order, items, counts, learned, personal = false } = opts;
   const defaults = sidebarDefaults(personal);
-  // Fewer learned than the list keeps: the defaults that are always in sight fill the rest, so one visit never drops
-  // the list from its defaults to a single tool.
+  // Fewer habits than the list keeps: every always-in-sight default stays beside them, so the list only grows until
+  // the habits are known and nothing a person used to see leaves after one visit.
   const filled =
     learned &&
-    [...learned, ...order.filter((id) => !learned.includes(id) && !items?.[id] && defaults[id] === "always")].slice(
-      0,
-      Math.max(learned.length, USAGE_TOP),
-    );
+    (learned.length >= USAGE_TOP
+      ? learned
+      : [...learned, ...order.filter((id) => !learned.includes(id) && !items?.[id] && defaults[id] === "always")]);
   return order.filter((id) => {
     const count = counts[id] ?? 0;
     const chosen = items?.[id];

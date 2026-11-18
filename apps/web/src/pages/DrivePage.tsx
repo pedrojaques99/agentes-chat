@@ -580,6 +580,7 @@ export function DrivePage({ open }: { open?: { id: string; version?: number } })
               <EmptyState
                 size="page"
                 agent={look}
+                scene="files"
                 title={t("drive.emptyTitle")}
                 actions={
                   uploads && (

@@ -54,18 +54,26 @@ describe("the learned set", () => {
     expect(learnedSet(visits([["proposals", 9]]), order, NOW)).toBeNull();
   });
 
-  test("a free slot takes the best newcomer", () => {
+  test("a free slot takes the best newcomer, once it is a habit", () => {
     expect(
       learnedSet(
         visits([
           ["wiki", 3],
-          ["drive", 1],
+          ["drive", 3],
         ]),
         order,
         NOW,
         ["wiki"],
       ),
     ).toEqual(["wiki", "drive"]);
+  });
+
+  test("one or two visits are not a habit: nothing is learned and nothing moves", () => {
+    expect(learnedSet(visits([["issues", 1]]), order, NOW)).toBeNull();
+    expect(learnedSet(visits([["issues", 2]]), order, NOW)).toBeNull();
+    expect(learnedSet(visits([["issues", 3]]), order, NOW)).toEqual(["issues"]);
+    // A tool already shown keeps its place on a lower score: the bar to stay is under the bar to enter.
+    expect(learnedSet(visits([["issues", 1]]), order, NOW, ["issues"])).toEqual(["issues"]);
   });
 
   test("a full set swaps its weakest only past the margin", () => {
@@ -117,18 +125,21 @@ describe("the tools in the list", () => {
     expect(withCounts).toEqual(["waiting", "threads", "wiki", "routines", "calendar"]);
   });
 
-  test("fewer learned than the list keeps: the always-in-sight defaults fill the rest, in order", () => {
-    // One visit to Routines: Routines plus the first two defaults, never Routines alone.
+  test("fewer habits than the list keeps: every always-in-sight default stays beside them", () => {
+    // Routines became a habit: it joins the four defaults, none of them leaves.
     expect(listedTools({ ...base, items: undefined, learned: ["routines"] })).toEqual([
       "threads",
       "issues",
+      "drive",
       "routines",
+      "team",
     ]);
-    // A default the person moved to More is not used to fill.
+    // A default the person moved to More stays in More.
     expect(listedTools({ ...base, items: { threads: "more" }, learned: ["routines"] })).toEqual([
       "issues",
       "drive",
       "routines",
+      "team",
     ]);
   });
 
