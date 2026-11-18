@@ -2325,6 +2325,8 @@ export const en = {
     },
     sidebarSetup: {
       description: "Choose what stays in sight at the top of your sidebar. Just for you, in this workspace.",
+      usage: "By use",
+      usageHint: "Shows up if you use it a lot",
       always: "Always",
       more: "In More",
       auto: "When there's something",

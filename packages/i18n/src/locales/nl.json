@@ -2188,6 +2188,8 @@
     },
     "sidebarSetup": {
       "description": "Kies wat bovenaan je zijbalk in beeld blijft. Alleen voor jou, in deze werkruimte.",
+      "usage": "Op gebruik",
+      "usageHint": "Verschijnt als je het veel gebruikt",
       "always": "Altijd",
       "more": "Onder Meer",
       "auto": "Als er iets is",

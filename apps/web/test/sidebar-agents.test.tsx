@@ -462,14 +462,16 @@ describe("Fixar no topo", () => {
 
 describe("Esconder da sidebar", () => {
   test("hiding from the row's menu takes it off the list, Personalizar brings it back", async () => {
-    await go();
+    const state = seedState();
+    await go(state);
     expect(rowsIn(section("Agentes"))).toContain("Ada");
     await rightClick(within(nav()).getByRole("link", { name: /^Ada/ }));
     await pick("Esconder da sidebar");
     expect(rowsIn(section("Agentes"))).not.toContain("Ada");
     expect(rowsIn(section("Agentes"))).toContain("Atlas");
-    // Kept in this browser, per person and workspace.
-    expect(Object.keys(localStorage).some((k) => k.startsWith("agentes.sidebar.hiddenAgents."))).toBe(true);
+    // Saved with the sidebar view, so it holds on every device, not in this browser.
+    expect(Object.keys(localStorage).some((k) => k.startsWith("agentes.sidebar.hiddenAgents."))).toBe(false);
+    expect(views(state).at(-1)).toMatchObject({ hiddenAgents: [ADA_ID] });
 
     await rightClick(nav().querySelector(".sidebar__scroll") as HTMLElement);
     await pick("Personalizar a barra lateral");
@@ -479,6 +481,16 @@ describe("Esconder da sidebar", () => {
     expect(within(dialog).queryByText("Escondidos")).toBeNull();
     // The open dialog hides the sidebar from the accessibility tree: read its rows by id.
     expect(rowsIn(document.getElementById("app-nav") as HTMLElement)).toContain("Ada");
+    expect(views(state).at(-1)).toMatchObject({ hiddenAgents: [] });
+  });
+
+  test("a list an older build kept in this browser is sent once, then cleared", async () => {
+    const state = seedState();
+    localStorage.setItem(`agentes.sidebar.hiddenAgents.${state.me?.user.id}.${ORG_ID}`, JSON.stringify([ADA_ID]));
+    await go(state);
+    expect(rowsIn(section("Agentes"))).not.toContain("Ada");
+    expect(views(state).at(-1)).toMatchObject({ hiddenAgents: [ADA_ID] });
+    expect(Object.keys(localStorage).some((k) => k.startsWith("agentes.sidebar.hiddenAgents."))).toBe(false);
   });
 
   test("a hidden agent's unread still shows on the Agentes header", async () => {

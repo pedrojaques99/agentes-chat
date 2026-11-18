@@ -54,13 +54,7 @@ import { firstVisitOf, teamAnswered } from "../lib/right-hand";
 import { type LodiPrefs, type LodiPrefsPatch, legacyPatch } from "../lib/right-hand-prefs";
 import { usagePauseRefetchMs } from "../lib/routine-view";
 import { withRead } from "../lib/seen";
-import {
-  knownToolOrder,
-  sidebarDefaults,
-  sidebarItemOrder,
-  sidebarSections,
-  withSidebarPlace,
-} from "../lib/sidebar-items";
+import { knownToolOrder, sidebarItemOrder, sidebarSections, withSidebarPlace } from "../lib/sidebar-items";
 import { repinAgent, SIDEBAR_VIEW_DEFAULT, unpinAgents } from "../lib/sidebar-view";
 import { playSound } from "../lib/sounds";
 import type { TeamWeekAct } from "../lib/team-week";
@@ -6204,29 +6198,23 @@ export const useSidebarItems = (orgId: string) => {
  * Moves one tool, or with `null` puts every tool back on its default: the sidebar changes at once and goes back if the
  * server refuses. The server keeps my other choices as it has them, so one made on another device stays, and answers
  * with every choice it keeps. The requests go one at a time, so the last answer is what stays (`onMutate` still runs
- * at once for one that waits its turn). A tool put where the workspace's mode has it by default (`personal`, ADR
- * 0158) is no choice: it is dropped, and follows the mode from then on.
+ * at once for one that waits its turn). A place is always saved as the person's choice, even one equal to the
+ * default; `place: null` ("Pelo uso") deletes the choice, so the sidebar learns that tool's place again.
  */
-export function useSetSidebarItem(orgId: string, personal = false) {
+export function useSetSidebarItem(orgId: string) {
   const api = useApi();
   const qc = useQueryClient();
   const mutationKey = ["sidebar-items", orgId];
   return useMutation({
     mutationKey,
     scope: { id: `sidebar-items:${orgId}` },
-    mutationFn: (move: { item: SidebarItem; place: SidebarPlace } | null) =>
-      move
-        ? api.orgs.setSidebarItem(
-            orgId,
-            move.item,
-            move.place === sidebarDefaults(personal)[move.item] ? null : move.place,
-          )
-        : api.orgs.setSidebarItems(orgId, {}),
+    mutationFn: (move: { item: SidebarItem; place: SidebarPlace | null } | null) =>
+      move ? api.orgs.setSidebarItem(orgId, move.item, move.place) : api.orgs.setSidebarItems(orgId, {}),
     onMutate: async (move) => {
       await qc.cancelQueries({ queryKey: keys.sidebarItems(orgId) });
       const before = qc.getQueryData<SidebarItems>(keys.sidebarItems(orgId));
       qc.setQueryData<SidebarItems>(keys.sidebarItems(orgId), (items) =>
-        move ? withSidebarPlace(items, move.item, move.place, personal) : {},
+        move ? withSidebarPlace(items, move.item, move.place) : {},
       );
       return { before };
     },
@@ -6323,6 +6311,38 @@ export function useSetSidebarView(orgId: string) {
     const next = change(qc.getQueryData<SidebarView>(key) ?? SIDEBAR_VIEW_DEFAULT);
     qc.setQueryData(key, next);
     save.mutate(next);
+  };
+}
+
+/** At most this many hidden agents (`SIDEBAR_HIDDEN_LIMIT`, packages/engine/src/sidebar-items.ts). */
+const SIDEBAR_HIDDEN_LIMIT = 200;
+
+/**
+ * "Esconder da sidebar": the agents I took off the AGENTES list in this workspace, saved with my sidebar view so they
+ * stay hidden on every device. `loaded` is false until the view arrives: `hide`, `show` and `adopt` do nothing before
+ * that, so a change never starts from the default view and wipes what the server keeps. `adopt` adds ids at once
+ * (what an older build kept on this device).
+ */
+export function useHiddenSidebarAgentIds(orgId: string) {
+  const api = useApi();
+  const view = useQuery({
+    queryKey: keys.sidebarView(orgId),
+    queryFn: () => api.orgs.sidebarView(orgId),
+    staleTime: 60_000,
+  });
+  const setView = useSetSidebarView(orgId);
+  const ids = useMemo<ReadonlySet<string>>(() => new Set(view.data?.hiddenAgents ?? []), [view.data]);
+  const loaded = view.data !== undefined;
+  const change = (next: (now: string[]) => string[]) => {
+    if (!loaded) return;
+    setView((now) => ({ ...now, hiddenAgents: next(now.hiddenAgents ?? []).slice(0, SIDEBAR_HIDDEN_LIMIT) }));
+  };
+  return {
+    ids,
+    loaded,
+    hide: (agentId: string) => change((now) => [...new Set([...now, agentId])]),
+    show: (agentId: string) => change((now) => now.filter((id) => id !== agentId)),
+    adopt: (agentIds: readonly string[]) => change((now) => [...new Set([...now, ...agentIds])]),
   };
 }
 

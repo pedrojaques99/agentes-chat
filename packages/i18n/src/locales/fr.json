@@ -2261,6 +2261,8 @@
     },
     "sidebarSetup": {
       "description": "Choisissez ce qui reste visible en haut de votre barre latérale. Juste pour vous, dans cet espace de travail.",
+      "usage": "Selon l'usage",
+      "usageHint": "Apparaît si vous l'utilisez beaucoup",
       "always": "Toujours",
       "more": "Dans Plus",
       "auto": "Quand il y a quelque chose",

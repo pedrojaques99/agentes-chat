@@ -2260,6 +2260,8 @@
     },
     "sidebarSetup": {
       "description": "Elige qué queda a la vista arriba de tu barra lateral. Solo para ti, en este espacio de trabajo.",
+      "usage": "Por uso",
+      "usageHint": "Aparece si lo usas mucho",
       "always": "Siempre",
       "more": "En Más",
       "auto": "Cuando hay algo",

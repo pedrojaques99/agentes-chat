@@ -2117,6 +2117,8 @@
     },
     "sidebarSetup": {
       "description": "Pilih apa yang selalu terlihat di bagian atas sidebar-mu. Hanya untukmu, di ruang kerja ini.",
+      "usage": "Sesuai pemakaian",
+      "usageHint": "Muncul jika sering kamu pakai",
       "always": "Selalu",
       "more": "Di Lainnya",
       "auto": "Saat ada sesuatu",

@@ -2434,9 +2434,10 @@ function useWorkspaceLook() {
  * workspace when the person may make one. In the desktop app (ADR 0154) by server, then Add workspace; New workspace
  * (it makes one here) sits under this server's workspaces only on a server of one's own, since on agentes.chat Add
  * workspace makes one (`offersNewWorkspace`). Mounted only while the menu is open: the counts load then. No role beside
- * each: one person's own workspaces.
+ * each: one person's own workspaces. `withActions={false}` keeps only the list (the workspace header's quick menu; the
+ * full menu's own items make a workspace and add an account).
  */
-function MenuWorkspaces() {
+function MenuWorkspaces({ withActions = true }: { withActions?: boolean }) {
   const { t, i18n } = useTranslation();
   const { org, me } = useOrg();
   const look = useWorkspaceLook();
@@ -2445,12 +2446,12 @@ function MenuWorkspaces() {
   const api = useApi();
   const navigate = useNavigate();
   const go = (orgId: string) => void navigate({ to: "/org/$orgId", params: { orgId } });
-  const newWorkspace = offersNewWorkspace(me.user.canCreateWorkspace, groups) && (
+  const newWorkspace = withActions && offersNewWorkspace(me.user.canCreateWorkspace, groups) && (
     <MenuItem icon="plus" onSelect={() => void navigate({ to: "/onboarding" })}>
       {t("shell.newWorkspace")}
     </MenuItem>
   );
-  const addAccount = (
+  const addAccount = withActions && (
     <MenuItem
       icon="plus"
       description={t("shell.addAccountHint")}
@@ -2497,7 +2498,7 @@ function MenuWorkspaces() {
             {g.here && newWorkspace}
           </Fragment>
         ))}
-        {groups.some((g) => g.desktop) && (
+        {withActions && groups.some((g) => g.desktop) && (
           <MenuItem
             icon="plus"
             description={t("shell.addWorkspaceHint")}
@@ -2637,7 +2638,7 @@ function WorkspaceMenu({ summary }: { summary: string | null }) {
     <>
       {several ? (
         <Menu label={t("shell.yourWorkspaces")} trigger={header}>
-          <MenuWorkspaces />
+          <MenuWorkspaces withActions={false} />
           <MenuSeparator />
           <MenuItem icon="settings" onSelect={() => setOpen(true)}>
             {t("shell.workspaceSettings")}

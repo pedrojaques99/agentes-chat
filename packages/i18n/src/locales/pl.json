@@ -2333,6 +2333,8 @@
     },
     "sidebarSetup": {
       "description": "Wybierz, co ma być zawsze widoczne na górze paska bocznego. Tylko dla ciebie, w tej przestrzeni roboczej.",
+      "usage": "Według użycia",
+      "usageHint": "Pojawia się, jeśli często go używasz",
       "always": "Zawsze",
       "more": "W menu Więcej",
       "auto": "Gdy coś jest",

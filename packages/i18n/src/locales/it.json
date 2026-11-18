@@ -2261,6 +2261,8 @@
     },
     "sidebarSetup": {
       "description": "Scegli cosa resta in vista in cima alla barra laterale. Solo per te, in questo spazio di lavoro.",
+      "usage": "In base all'uso",
+      "usageHint": "Compare se lo usi spesso",
       "always": "Sempre",
       "more": "In Altro",
       "auto": "Quando c'è qualcosa",

@@ -49,7 +49,7 @@ const chosen = (dialog: HTMLElement, tool: string) =>
   within(within(dialog).getByRole("radiogroup", { name: tool }))
     .getAllByRole("radio")
     .find((r) => r.getAttribute("aria-checked") === "true")?.textContent;
-/** What each choice sent: the tool and its place (null: back on its default), or `{}` for Restaurar o padrão. */
+/** What each choice sent: the tool and its place (null: Pelo uso, the choice cleared), or `{}` for Restaurar o padrão. */
 const sent = (state: State) =>
   state.calls
     .filter((c) => c.method === "orgs.setSidebarItem" || c.method === "orgs.setSidebarItems")
@@ -164,15 +164,24 @@ describe("the tools on top", () => {
   test("Personalizar: each choice moves the tool at once and is saved for me; Restaurar o padrão undoes them", async () => {
     const state = await go(noneWaiting());
     const dialog = await openSetup();
-    expect(chosen(dialog, "Wiki")).toBe("Em Mais");
-    expect(chosen(dialog, "Aprovações")).toBe("Quando tiver algo");
-    // Only a tool with a count can wait until there's something.
+    // Never placed: every tool says it is learned from use, not the default it happens to start in.
+    expect(chosen(dialog, "Wiki")).toBe("Pelo uso");
+    expect(chosen(dialog, "Aprovações")).toBe("Pelo uso");
+    expect(chosen(dialog, "Threads")).toBe("Pelo uso");
+    // Three choices on every row: a tool with a count already shows "by use" while something waits.
     const offered = (tool: string) =>
       within(within(dialog).getByRole("radiogroup", { name: tool }))
         .getAllByRole("radio")
         .map((r) => r.textContent);
-    expect(offered("Threads")).toEqual(["Sempre", "Em Mais", "Quando tiver algo"]);
-    expect(offered("Wiki")).toEqual(["Sempre", "Em Mais"]);
+    expect(offered("Threads")).toEqual(["Pelo uso", "Sempre", "Em Mais"]);
+    expect(
+      within(within(dialog).getByRole("radiogroup", { name: "Threads" })).getByRole("radio", { name: "Pelo uso" })
+        .title,
+    ).toBe("Aparece quando tiver algo esperando você\nAparece se você usa bastante");
+    expect(offered("Wiki")).toEqual(["Pelo uso", "Sempre", "Em Mais"]);
+    expect(
+      within(within(dialog).getByRole("radiogroup", { name: "Wiki" })).getByRole("radio", { name: "Pelo uso" }).title,
+    ).toBe("Aparece se você usa bastante");
     const reset = within(dialog).getByRole("button", { name: "Restaurar o padrão" }) as HTMLButtonElement;
     expect(reset.disabled).toBe(true);
 
@@ -180,27 +189,34 @@ describe("the tools on top", () => {
     expect(listed()).toEqual(["Threads", "Tarefas", "Wiki", "Drive", "Equipe"]);
     await choose(dialog, "Drive", "Em Mais");
     await choose(dialog, "Aprovações", "Sempre");
-    // Threads with no mission waiting for me: in More until one does.
-    await choose(dialog, "Threads", "Quando tiver algo");
+    await choose(dialog, "Threads", "Em Mais");
     expect(listed()).toEqual(["Aprovações", "Tarefas", "Wiki", "Equipe"]);
     // One tool each time: what another device chose meanwhile stays.
     expect(sent(state)).toEqual([
       ["wiki", "always"],
       ["drive", "more"],
       ["approvals", "always"],
-      ["threads", "auto"],
+      ["threads", "more"],
     ]);
-    expect(state.sidebarItems).toEqual({ wiki: "always", drive: "more", approvals: "always", threads: "auto" });
-    // Back on its default: the tool leaves the saved choices.
+    expect(state.sidebarItems).toEqual({ wiki: "always", drive: "more", approvals: "always", threads: "more" });
+    // Sempre on a tool whose default is Sempre is still a choice: it is saved, and it wins over what is learned.
     await choose(dialog, "Threads", "Sempre");
+    expect(sent(state).at(-1)).toEqual(["threads", "always"]);
+    expect(chosen(dialog, "Threads")).toBe("Sempre");
+    expect(state.sidebarItems).toEqual({ wiki: "always", drive: "more", approvals: "always", threads: "always" });
+    // Pelo uso clears the choice: the tool leaves the saved ones.
+    await choose(dialog, "Threads", "Pelo uso");
     expect(sent(state).at(-1)).toEqual(["threads", null]);
+    expect(chosen(dialog, "Threads")).toBe("Pelo uso");
     expect(state.sidebarItems).toEqual({ wiki: "always", drive: "more", approvals: "always" });
 
     expect(reset.disabled).toBe(false);
     await click(reset);
     expect(listed()).toEqual(["Threads", "Tarefas", "Drive", "Equipe"]);
     expect(sent(state).at(-1)).toEqual([{}]);
-    expect(chosen(dialog, "Wiki")).toBe("Em Mais");
+    // Restaurar o padrão: every tool is Pelo uso again.
+    expect(chosen(dialog, "Wiki")).toBe("Pelo uso");
+    expect(chosen(dialog, "Drive")).toBe("Pelo uso");
   });
 
   test("another device moved a tool after this one loaded: Personalizar shows it, and a choice here keeps it", async () => {
@@ -220,7 +236,7 @@ describe("the tools on top", () => {
     expect([...dialog.querySelectorAll(".sidebar-setup__name")].map((n) => n.textContent)).toEqual(
       expect.arrayContaining(["Painéis", "Gerenciador de tarefas"]),
     );
-    expect(chosen(dialog, "Gerenciador de tarefas")).toBe("Em Mais");
+    expect(chosen(dialog, "Gerenciador de tarefas")).toBe("Pelo uso");
     await choose(dialog, "Gerenciador de tarefas", "Sempre");
     await choose(dialog, "Painéis", "Sempre");
     expect(sent(state)).toContainEqual(["taskManager", "always"]);
@@ -239,7 +255,7 @@ describe("the tools on top", () => {
     await renderApp(`/org/${ORG_ID}/c/${ENG_ID}`, { api });
     await settle(8);
     const dialog = await openSetup();
-    expect(chosen(dialog, "Wiki")).toBe("Em Mais");
+    expect(chosen(dialog, "Wiki")).toBe("Pelo uso");
     await choose(dialog, "Drive", "Em Mais");
     expect(state.sidebarItems).toEqual({ wiki: "always", routines: "always", drive: "more" });
     expect(chosen(dialog, "Wiki")).toBe("Sempre");
@@ -295,7 +311,7 @@ describe("the tools on top", () => {
     await choose(dialog, "Wiki", "Sempre");
     await settle(3);
     expect(listed()).toEqual(["Aprovações", "Threads", "Tarefas", "Drive", "Equipe"]);
-    expect(chosen(dialog, "Wiki")).toBe("Em Mais");
+    expect(chosen(dialog, "Wiki")).toBe("Pelo uso");
   });
 
   test("two choices in a row, both refused: the sidebar ends as the server keeps it", async () => {
@@ -323,7 +339,7 @@ describe("the tools on top", () => {
     await settle(6);
     expect(calls).toBe(2);
     expect(listed()).toEqual(["Aprovações", "Threads", "Tarefas", "Drive", "Equipe"]);
-    expect(chosen(dialog, "Wiki")).toBe("Em Mais");
+    expect(chosen(dialog, "Wiki")).toBe("Pelo uso");
   });
 
   describe("one by one, in my order", () => {

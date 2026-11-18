@@ -1,47 +1,31 @@
-import { useSyncExternalStore } from "react";
+import { useHiddenSidebarAgentIds } from "@agenteschat/client";
+import { useEffect } from "react";
 import { useOrg } from "@/components/org-context";
 import { STORAGE_KEYS, storage, storedStrings } from "@/lib/storage";
 
 /**
  * "Esconder da sidebar": the agents this person took off the sidebar's AGENTES list in this workspace. The agent keeps
- * working and answering, and stays one Ctrl K away; Personalizar brings it back. Kept in this browser (per person and
- * workspace, like the closed categories), not on the server: the saved sidebar view has no field for it.
+ * working and answering, and stays one Ctrl K away; Personalizar brings it back. Saved with the sidebar view
+ * (`…/me/sidebar/view`), so it holds on every device. Builds before that kept the list in this browser: the first load
+ * sends it once and clears it.
  */
-const listeners = new Set<() => void>();
-const cache = new Map<string, { raw: string | null; ids: ReadonlySet<string> }>();
-
-const keyOf = (userId: string, orgId: string) => `${STORAGE_KEYS.sidebarHiddenAgents}.${userId}.${orgId}`;
-
-function read(key: string): ReadonlySet<string> {
-  const raw = storage.get(key);
-  const hit = cache.get(key);
-  if (hit && hit.raw === raw) return hit.ids;
-  const ids: ReadonlySet<string> = new Set(storedStrings(key));
-  cache.set(key, { raw, ids });
-  return ids;
-}
-
-function write(key: string, ids: Iterable<string>) {
-  storage.set(key, JSON.stringify([...ids]));
-  for (const l of listeners) l();
-}
-
-const subscribe = (l: () => void) => {
-  listeners.add(l);
-  return () => void listeners.delete(l);
-};
+const legacyKey = (userId: string, orgId: string) => `${STORAGE_KEYS.sidebarHiddenAgents}.${userId}.${orgId}`;
 
 export function useHiddenSidebarAgents() {
   const { org, me } = useOrg();
-  const key = keyOf(me.user.id, org.id);
-  const ids = useSyncExternalStore(subscribe, () => read(key));
-  return {
-    ids,
-    hide: (agentId: string) => write(key, new Set([...read(key), agentId])),
-    show: (agentId: string) =>
-      write(
-        key,
-        [...read(key)].filter((id) => id !== agentId),
-      ),
-  };
+  const hidden = useHiddenSidebarAgentIds(org.id);
+  const { loaded, adopt } = hidden;
+  const key = legacyKey(me.user.id, org.id);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per workspace when the view arrives
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      const kept = storedStrings(key);
+      if (kept.length) adopt(kept);
+      if (storage.get(key) !== null) storage.remove(key);
+    } catch {
+      // Not migrated: the list stays where it was.
+    }
+  }, [loaded, key]);
+  return { ids: hidden.ids, hide: hidden.hide, show: hidden.show };
 }

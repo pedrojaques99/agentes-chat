@@ -7,7 +7,6 @@ import {
   SIDEBAR_COUNTED,
   sameOrder,
   sidebarItemOrder,
-  sidebarPlace,
   sidebarSections,
 } from "@agenteschat/client/lib/sidebar-items";
 import { isPersonal } from "@agenteschat/client/lib/workspace-mode";
@@ -83,6 +82,9 @@ function useToolOrder(orgId: string, personal = false) {
   return { order, put };
 }
 
+/** A tool's line in Personalizar: the person's place for it, or `usage` (none chosen: the sidebar learns it). */
+type Choice = SidebarPlace | "usage";
+
 const TOOL_DRAG = "application/x-agentes-tool";
 const MOVE_KEYS = "Alt+Shift+ArrowUp Alt+Shift+ArrowDown";
 
@@ -155,8 +157,9 @@ export function ToolList({ items, row }: { items: SidebarItem[]; row: (id: Sideb
 }
 
 /**
- * "Personalizar a barra lateral", from More: one line per tool and where it goes, Sempre, Em Mais or, for a tool with
- * a count, Quando tiver algo. A choice applies at once (no Save) and is kept on the server for this person in this
+ * "Personalizar a barra lateral", from More: one line per tool and where it goes: Pelo uso (never placed: the sidebar
+ * learns it, and it is what every tool shows until chosen), Sempre, Em Mais or, for a tool with a count, Quando tiver
+ * algo. The last three are an explicit choice that always wins, even one equal to the default. A choice applies at once (no Save) and is kept on the server for this person in this
  * workspace, so their other devices and the desktop app show the same sidebar. What shows before any choice, and what
  * Reset to default goes back to, is the workspace's mode's (ADR 0159).
  */
@@ -165,7 +168,7 @@ export function SidebarSetupDialog({ open, onClose }: { open: boolean; onClose: 
   const { org } = useOrg();
   const personal = isPersonal(org);
   const { data: items, refetch } = useSidebarItems(org.id);
-  const save = useSetSidebarItem(org.id, personal);
+  const save = useSetSidebarItem(org.id);
   const sections = useSectionOrder(org.id, personal);
   const tools = useToolOrder(org.id, personal);
   const hiddenAgents = useHiddenSidebarAgents();
@@ -174,13 +177,25 @@ export function SidebarSetupDialog({ open, onClose }: { open: boolean; onClose: 
   useEffect(() => {
     if (open) void refetch();
   }, [open, refetch]);
-  const options = (id: SidebarItem): SegmentedOption<SidebarPlace>[] => [
+  // "Pelo uso" is a tool the person never placed: the sidebar learns where it goes. "Sempre" and "Em Mais" are their
+  // choice. A tool with a count already shows "by use" while something waits (`listedTools`), so its "Quando tiver
+  // algo" is the same choice: one option fewer keeps every row the same three, whole at the dialog's width, and a
+  // place saved as `auto` before reads as "Pelo uso".
+  const options = (id: SidebarItem): SegmentedOption<Choice>[] => [
+    {
+      value: "usage",
+      label: t("shell.sidebarSetup.usage"),
+      title: SIDEBAR_COUNTED.includes(id)
+        ? `${t("shell.sidebarSetup.autoHint")}\n${t("shell.sidebarSetup.usageHint")}`
+        : t("shell.sidebarSetup.usageHint"),
+    },
     { value: "always", label: t("shell.sidebarSetup.always") },
     { value: "more", label: t("shell.sidebarSetup.more") },
-    ...(SIDEBAR_COUNTED.includes(id)
-      ? [{ value: "auto" as const, label: t("shell.sidebarSetup.auto"), title: t("shell.sidebarSetup.autoHint") }]
-      : []),
   ];
+  const choiceOf = (id: SidebarItem): Choice => {
+    const place = items?.[id];
+    return !place || place === "auto" ? "usage" : place;
+  };
   return (
     <Dialog
       open={open}
@@ -202,8 +217,8 @@ export function SidebarSetupDialog({ open, onClose }: { open: boolean; onClose: 
                 block
                 size="sm"
                 label={t(`shell.${id}`)}
-                value={sidebarPlace(items, id, personal)}
-                onValueChange={(place) => save.mutate({ item: id, place })}
+                value={choiceOf(id)}
+                onValueChange={(place) => save.mutate({ item: id, place: place === "usage" ? null : place })}
                 options={options(id)}
               />
               <span className="sidebar-setup__moves">

@@ -2231,6 +2231,8 @@ export const ptBR = {
     },
     sidebarSetup: {
       description: "Escolha o que fica à vista no topo da sua barra lateral. Vale só para você, neste workspace.",
+      usage: "Pelo uso",
+      usageHint: "Aparece se você usa bastante",
       always: "Sempre",
       more: "Em Mais",
       auto: "Quando tiver algo",

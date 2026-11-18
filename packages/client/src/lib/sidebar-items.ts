@@ -145,17 +145,17 @@ export const inSidebarList = (place: SidebarPlace, count: number) =>
   place === "always" || (place === "auto" && count > 0);
 
 /**
- * The choices with one tool moved. One put back on its default (the mode's) is dropped, so `{}` is the default, and a
- * workspace that changes mode shows its new defaults for every tool the person never moved.
+ * The choices with one tool moved. A place is always an explicit choice, even one equal to the default (the sidebar
+ * learns from use and may move a tool the person never placed, so only a choice keeps it where they put it). `null` is
+ * "Pelo uso": the choice is dropped and the tool follows the learned list and the mode's defaults again.
  */
 export function withSidebarPlace(
   items: SidebarItems | undefined,
   item: SidebarItem,
-  place: SidebarPlace,
-  personal = false,
+  place: SidebarPlace | null,
 ): SidebarItems {
   const next = { ...items };
-  if (place === sidebarDefaults(personal)[item]) delete next[item];
+  if (place === null) delete next[item];
   else next[item] = place;
   return next;
 }

@@ -37,10 +37,15 @@ describe("the workspace switcher", () => {
       .map((i) => i.textContent ?? "");
     expect(names.some((n) => n.includes("Acme") && n.includes("Você está aqui"))).toBe(true);
     expect(names.some((n) => n.includes("Beta"))).toBe(true);
+    // The quick menu is the list only: New workspace and Add account stay in the full menu.
+    expect(within(menu).queryByText("Novo workspace")).toBeNull();
+    expect(within(menu).queryByText("Adicionar conta")).toBeNull();
     expect(screen().queryByRole("dialog", { name: "Acme" })).toBeNull();
     await act(async () => fireEvent.click(within(menu).getByRole("menuitem", { name: /Configurações do workspace/ })));
     await settle(6);
-    expect(screen().getByRole("dialog", { name: "Acme" })).toBeTruthy();
+    const full = screen().getByRole("dialog", { name: "Acme" });
+    expect(within(full).getByText("Novo workspace")).toBeTruthy();
+    expect(within(full).getByText("Adicionar conta")).toBeTruthy();
     expect(domWindow()).toBeTruthy();
   });
 

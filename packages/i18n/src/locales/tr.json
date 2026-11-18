@@ -2188,6 +2188,8 @@
     },
     "sidebarSetup": {
       "description": "Kenar çubuğunuzun üstünde nelerin görünür kalacağını seçin. Yalnızca sizin için, bu çalışma alanında.",
+      "usage": "Kullanıma göre",
+      "usageHint": "Çok kullanırsan görünür",
       "always": "Her zaman",
       "more": "Daha fazla içinde",
       "auto": "Bir şey olduğunda",

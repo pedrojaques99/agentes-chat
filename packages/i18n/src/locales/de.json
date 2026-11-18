@@ -2188,6 +2188,8 @@
     },
     "sidebarSetup": {
       "description": "Wähle, was oben in deiner Seitenleiste sichtbar bleibt. Nur für dich, in diesem Workspace.",
+      "usage": "Nach Nutzung",
+      "usageHint": "Erscheint, wenn du es oft nutzt",
       "always": "Immer",
       "more": "Unter Mehr",
       "auto": "Wenn etwas da ist",

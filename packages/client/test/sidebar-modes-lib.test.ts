@@ -56,13 +56,12 @@ describe("the sidebar's defaults by the workspace's mode (ADR 0159)", () => {
     expect(sidebarPlace({ team: "more" }, "team")).toBe("more");
   });
 
-  test("a tool put back where the mode has it is no choice: dropped, so it follows the mode from then on", () => {
-    expect(withSidebarPlace({ issues: "always" }, "issues", "more", true)).toEqual({});
-    expect(withSidebarPlace({}, "issues", "always", true)).toEqual({ issues: "always" });
-    // The same place is a team's default: there it would be dropped.
-    expect(withSidebarPlace({}, "issues", "always")).toEqual({});
-    expect(withSidebarPlace({}, "routines", "more", true)).toEqual({});
-    expect(withSidebarPlace({}, "routines", "always", true)).toEqual({ routines: "always" });
+  test("a place is always an explicit choice, even the mode's default; null (Pelo uso) drops it", () => {
+    expect(withSidebarPlace({ issues: "always" }, "issues", "more")).toEqual({ issues: "more" });
+    expect(withSidebarPlace({}, "issues", "always")).toEqual({ issues: "always" });
+    expect(withSidebarPlace({}, "routines", "more")).toEqual({ routines: "more" });
+    expect(withSidebarPlace({ issues: "always", drive: "more" }, "issues", null)).toEqual({ drive: "more" });
+    expect(withSidebarPlace({}, "issues", null)).toEqual({});
   });
 
   test("a saved order keeps its tools; the ones it lacks follow in the mode's order", () => {

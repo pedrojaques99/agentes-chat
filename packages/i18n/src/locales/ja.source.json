@@ -5378,6 +5378,12 @@
   "shell.sidebarSetup.description": {
     "value": "Choose what stays in sight at the top of your sidebar. Just for you, in this workspace."
   },
+  "shell.sidebarSetup.usage": {
+    "value": "By use"
+  },
+  "shell.sidebarSetup.usageHint": {
+    "value": "Shows up if you use it a lot"
+  },
   "shell.sidebarSetup.always": {
     "value": "Always"
   },
