@@ -98,12 +98,35 @@ if (collisions.length) {
   const gen = JSON.parse(readFileSync(JOURNAL, "utf8")) as { entries: Entry[] };
   const added = gen.entries.at(-1);
   if (added?.tag.endsWith("_agent_personal_mcp")) {
-    const sqlPath = `packages/db/migrations/${added.tag}.sql`;
-    const num = added.tag.split("_")[0];
-    const sqlText = readFileSync(sqlPath, "utf8").replaceAll("ADD COLUMN ", "ADD COLUMN IF NOT EXISTS ");
-    writeFileSync(sqlPath, sqlText);
-    await $`git add ${sqlPath} packages/db/migrations/meta/${num}_snapshot.json ${JOURNAL}`.quiet();
-    await $`git commit -m "chore(db): regenerate idempotent ${added.tag} after upstream sync"`.quiet();
+    // drizzle-kit numbers a new migration by its journal index, but upstream numbers its tags past their indexes, so
+    // the generated number can be one upstream already uses: its snapshot file is then overwritten. The fork's takes
+    // the number after upstream's last tag instead, and upstream's snapshot comes back untouched.
+    const dir = "packages/db/migrations";
+    const genNum = added.tag.split("_")[0] as string;
+    const lastNum = Math.max(...gen.entries.slice(0, -1).map((e) => Number(e.tag.split("_")[0])));
+    const num = String(lastNum + 1).padStart(4, "0");
+    const tag = `${num}_agent_personal_mcp`;
+    const sqlText = readFileSync(`${dir}/${added.tag}.sql`, "utf8").replaceAll(
+      "ADD COLUMN ",
+      "ADD COLUMN IF NOT EXISTS ",
+    );
+    writeFileSync(`${dir}/${tag}.sql`, sqlText);
+    if (genNum !== num) {
+      writeFileSync(`${dir}/meta/${num}_snapshot.json`, readFileSync(`${dir}/meta/${genNum}_snapshot.json`));
+      await $`rm -f ${`${dir}/${added.tag}.sql`}`.quiet();
+      const upstreamHas =
+        (await $`git cat-file -e ${`${theirs}:${dir}/meta/${genNum}_snapshot.json`}`.nothrow().quiet()).exitCode === 0;
+      if (upstreamHas) await $`git checkout ${theirs} -- ${`${dir}/meta/${genNum}_snapshot.json`}`.quiet();
+      else await $`rm -f ${`${dir}/meta/${genNum}_snapshot.json`}`.quiet();
+      added.tag = tag;
+      writeFileSync(JOURNAL, JSON.stringify(gen, null, 2)); // as drizzle-kit writes it: no newline at the end
+    }
+    await $`git add -A ${dir}`.quiet();
+    await $`git commit -m "chore(db): regenerate idempotent ${tag} after upstream sync"`.quiet();
+    // A database that ran it at its old place is refused by the boot guard until that one record is forgotten.
+    console.log(
+      `\nMoved ${tag} to the end. Before deploying, on the production database: bun scripts/visant/fork-migration-repair.ts <DATABASE_URL>`,
+    );
   }
 }
 
