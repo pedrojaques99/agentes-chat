@@ -176,6 +176,7 @@ export {
   useUnsavedInDialog,
 } from "./components/Dialog";
 export { Diff, type DiffBlock, type DiffKind, type DiffLine, diffBlocks, diffLines } from "./components/Diff";
+export { Disclosure } from "./components/Disclosure";
 export { drawEffort, EffortPixels, type EffortStep } from "./components/EffortPixels";
 export {
   EMOJI_COLUMNS,
@@ -298,6 +299,7 @@ export {
   type PlanMeterUsage,
   type PlanMeterWindow,
   type PlanState,
+  planAgeShown,
   planAttention,
   planLevel,
   planLine,
@@ -334,6 +336,7 @@ export {
   PlanStrip,
   type PlanStripCell,
   planCellPixel,
+  type RunBar,
   RunKey,
   RunLane,
   RunMark,

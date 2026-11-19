@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Cerrar",
+    "details": "Detalles",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "No se puede deshacer.",
     "removeName": "Quitar a {{name}}",
@@ -6591,7 +6592,7 @@
         "cli_closed": "El programa {{brain}} se cerró de repente.",
         "cli_sandbox": "El programa {{brain}} no puede iniciar su sandbox en esta computadora. Elige otra IA en la configuración del agente.",
         "account_missing": "La cuenta elegida para este agente ya no está en su computadora. Elige otra en la configuración del agente o agrégala de nuevo.",
-        "windows_sandbox": "Esta computadora con Windows no puede aislar los comandos de Codex: necesita Windows 11 24H2 o una versión más reciente.",
+        "windows_sandbox": "Esta computadora con Windows no puede aislar los comandos de Codex: necesita Windows 11 24H2 o una versión más reciente. Actualiza Windows, elige Claude o una clave de API para este agente, o muévelo a una computadora con Linux.",
         "our_error": "Algo salió mal de nuestro lado y la tarea se detuvo. Pide de nuevo en un rato.",
         "unknown": "Falló."
       }
@@ -8123,7 +8124,10 @@
     "unreachableTitle": "No se puede conectar con agentes.chat",
     "unreachableText": "Puede que se esté reiniciando. Esta página se abre sola en cuanto vuelva.",
     "offlineTitle": "No tienes conexión",
-    "offlineText": "Esta página se abre sola cuando vuelvas a tener conexión."
+    "offlineText": "Esta página se abre sola cuando vuelvas a tener conexión.",
+    "unknownHostTitle": "Esta dirección aún no está configurada",
+    "unknownHostText": "Si se acaba de conectar, vuelve a intentarlo en unos minutos.",
+    "unknownHostTab": "Dirección sin configurar · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -12340,12 +12344,6 @@
       "read": "{{name}} lo leyó",
       "resolved": "{{name}} cerró el pedido de ayuda"
     },
-    "well": {
-      "readYours": "Leyó tu nota",
-      "readOf": "Leyó la nota de {{name}}",
-      "nowYours": "Se detuvo para leer tu nota",
-      "nowOf": "Se detuvo para leer la nota de {{name}}"
-    },
     "strip": {
       "see": "Ver",
       "toStop": "para detener"
@@ -12509,8 +12507,6 @@
     "see": "Ver cola",
     "openComputer": "Abrir la computadora",
     "label": "Cola de {{name}}",
-    "full": "Llena",
-    "fullNext": "Llena · el siguiente empieza en unos {{n}} min",
     "free": "Nadie en la cola",
     "workingNow": "Trabajando ahora · {{n}}",
     "inLine": "En la cola · {{n}}",
@@ -13013,7 +13009,15 @@
     "folderDeleted_other": "Carpeta eliminada. {{count}} archivos fueron a la papelera.",
     "folderDeletedKept_one": "Carpeta eliminada. {{count}} archivo que no puedes eliminar subió un nivel.",
     "folderDeletedKept_many": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel.",
-    "folderDeletedKept_other": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel."
+    "folderDeletedKept_other": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel.",
+    "delete": "Eliminar",
+    "deleteItemsTitle_one": "¿Eliminar {{count}} elemento?",
+    "deleteItemsTitle_many": "¿Eliminar {{count}} elementos?",
+    "deleteItemsTitle_other": "¿Eliminar {{count}} elementos?",
+    "deleteItemsBody": "Las carpetas se eliminan con todo lo que contienen. Los archivos que puedes eliminar van a la papelera durante 30 días. Los de otras personas suben un nivel.",
+    "itemsDeleted_one": "{{count}} elemento eliminado.",
+    "itemsDeleted_many": "{{count}} elementos eliminados.",
+    "itemsDeleted_other": "{{count}} elementos eliminados."
   },
   "storage": {
     "title": "Almacenamiento",
@@ -18061,7 +18065,7 @@
       "routines": "Rutinas"
     },
     "hint": {
-      "handoffs": "La mayor parte del uso de esta semana vino de agentes que se pasan trabajo entre sí. Para trabajos largos, pídeselo directamente al agente.",
+      "handoffs": "La mayor parte vino de traspasos entre agentes.",
       "message": "Escribir a {{name}}"
     }
   },

@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Sluiten",
+    "details": "Details",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Dit kan niet ongedaan worden gemaakt.",
     "removeName": "{{name}} verwijderen",
@@ -6411,7 +6412,7 @@
         "cli_closed": "Het programma {{brain}} werd onverwacht afgesloten.",
         "cli_sandbox": "Het programma {{brain}} kan zijn sandbox niet starten op deze computer. Kies een andere AI in de instellingen van de agent.",
         "account_missing": "Het account dat voor deze agent gekozen is staat niet meer op zijn computer. Kies een ander in de instellingen van de agent of voeg het opnieuw toe.",
-        "windows_sandbox": "Deze Windows-computer kan de opdrachten van Codex niet isoleren: hij heeft Windows 11 24H2 of nieuwer nodig.",
+        "windows_sandbox": "Deze Windows-computer kan de opdrachten van Codex niet isoleren: hij heeft Windows 11 24H2 of nieuwer nodig. Werk Windows bij, kies Claude of een API-sleutel voor deze agent, of verplaats hem naar een Linux-computer.",
         "our_error": "Er ging iets mis aan onze kant en de taak is gestopt. Vraag het over een poosje opnieuw.",
         "unknown": "Mislukt."
       }
@@ -7917,7 +7918,10 @@
     "unreachableTitle": "agentes.chat is niet bereikbaar",
     "unreachableText": "Misschien wordt het opnieuw opgestart. Deze pagina opent vanzelf zodra het weer werkt.",
     "offlineTitle": "Je bent offline",
-    "offlineText": "Deze pagina opent vanzelf zodra je weer online bent."
+    "offlineText": "Deze pagina opent vanzelf zodra je weer online bent.",
+    "unknownHostTitle": "Dit adres is nog niet ingesteld",
+    "unknownHostText": "Is het net gekoppeld, probeer het dan over een paar minuten opnieuw.",
+    "unknownHostTab": "Adres niet ingesteld · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -12016,12 +12020,6 @@
       "read": "{{name}} heeft het gelezen",
       "resolved": "{{name}} heeft het hulpverzoek gesloten"
     },
-    "well": {
-      "readYours": "Las je notitie",
-      "readOf": "Las de notitie van {{name}}",
-      "nowYours": "Stopte om je notitie te lezen",
-      "nowOf": "Stopte om de notitie van {{name}} te lezen"
-    },
     "strip": {
       "see": "Bekijken",
       "toStop": "om te stoppen"
@@ -12187,8 +12185,6 @@
     "see": "Wachtrij bekijken",
     "openComputer": "Computer openen",
     "label": "Wachtrij van {{name}}",
-    "full": "Vol",
-    "fullNext": "Vol · de volgende start over ongeveer {{n}} min",
     "free": "Niemand in de wachtrij",
     "workingNow": "Nu bezig · {{n}}",
     "inLine": "In de wachtrij · {{n}}",
@@ -12666,7 +12662,13 @@
     "folderDeleted_one": "Map verwijderd. {{count}} bestand ging naar de prullenbak.",
     "folderDeleted_other": "Map verwijderd. {{count}} bestanden gingen naar de prullenbak.",
     "folderDeletedKept_one": "Map verwijderd. {{count}} bestand dat je niet mag verwijderen ging een niveau omhoog.",
-    "folderDeletedKept_other": "Map verwijderd. {{count}} bestanden die je niet mag verwijderen gingen een niveau omhoog."
+    "folderDeletedKept_other": "Map verwijderd. {{count}} bestanden die je niet mag verwijderen gingen een niveau omhoog.",
+    "delete": "Verwijderen",
+    "deleteItemsTitle_one": "{{count}} item verwijderen?",
+    "deleteItemsTitle_other": "{{count}} items verwijderen?",
+    "deleteItemsBody": "Mappen gaan weg met alles erin. Bestanden die je mag verwijderen gaan 30 dagen naar de prullenbak. Bestanden van anderen gaan een niveau omhoog.",
+    "itemsDeleted_one": "{{count}} item verwijderd.",
+    "itemsDeleted_other": "{{count}} items verwijderd."
   },
   "storage": {
     "title": "Opslag",
@@ -17640,7 +17642,7 @@
       "routines": "Routines"
     },
     "hint": {
-      "handoffs": "Het meeste gebruik deze week kwam van agents die elkaar werk overdragen. Vraag lang werk rechtstreeks aan de agent.",
+      "handoffs": "Het meeste kwam van overdrachten tussen agents.",
       "message": "Bericht aan {{name}}"
     }
   },

@@ -51,8 +51,8 @@ export const DriveCard = memo(function DriveCard({
   artifact: Artifact;
   highlighted?: boolean;
   siblings?: readonly FileRef[];
-  /** Its actions (rename, move to a folder), for who arranges the Drive. */
-  onLongPress?: (a: Artifact) => void;
+  /** Its actions (open, send a copy, rename, move, delete); `open` opens it as a tap does. */
+  onLongPress?: (a: Artifact, open: () => void) => void;
   present?: readonly LivePresent[];
 }) {
   const { t } = useTranslation();
@@ -70,7 +70,7 @@ export const DriveCard = memo(function DriveCard({
       haptic={false}
       fill={false}
       onPress={() => void open(driveRef(a), siblings)}
-      {...(onLongPress ? { onLongPress: () => onLongPress(a) } : {})}
+      {...(onLongPress ? { onLongPress: () => onLongPress(a, () => void open(driveRef(a), siblings)) } : {})}
       accessibilityRole="button"
       accessibilityLabel={[a.title, t(`mobile.drive.kind.${kind}`), author, when.short(a.updatedAt)]
         .filter(Boolean)

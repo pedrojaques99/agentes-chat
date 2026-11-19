@@ -14,6 +14,7 @@ export const en = {
   },
   common: {
     close: "Close",
+    details: "Details",
     joinSentences: "{{a}} {{b}}",
     cantUndo: "This can't be undone.",
     removeName: "Remove {{name}}",
@@ -6876,7 +6877,8 @@ export const en = {
         account_missing:
           "The account chosen for this agent isn't on its computer anymore. Choose another one in the agent's settings, or add it again.",
         /** A Codex turn on a Windows computer where MXC can't hold its commands (runner `windows_sandbox`). */
-        windows_sandbox: "This Windows computer can't isolate Codex's commands: it needs Windows 11 24H2 or newer.",
+        windows_sandbox:
+          "This Windows computer can't isolate Codex's commands: it needs Windows 11 24H2 or newer. Update Windows, choose Claude or an API key for this agent, or move it to a Linux computer.",
         our_error: "Something went wrong on our side and it stopped. Ask again in a little while.",
         unknown: "Failed.",
       },
@@ -8394,6 +8396,11 @@ export const en = {
     unreachableText: "It may be restarting. This page opens by itself as soon as it's back.",
     offlineTitle: "You're offline",
     offlineText: "This page opens by itself when you're back online.",
+    /** The page on a hostname that reaches the server but isn't set up there. */
+    unknownHostTitle: "This address isn't set up yet",
+    unknownHostText: "If it was just connected, try again in a few minutes.",
+    /** That page's browser tab title. */
+    unknownHostTab: "Address not set up · agentes.chat",
   },
   scopes: {
     context_read: {
@@ -12342,12 +12349,6 @@ export const en = {
       read: "{{name}} read it",
       resolved: "{{name}} closed the help request",
     },
-    well: {
-      readYours: "Read your note",
-      readOf: "Read {{name}}'s note",
-      nowYours: "Stopped to read your note",
-      nowOf: "Stopped to read {{name}}'s note",
-    },
     strip: {
       see: "View",
       toStop: "to stop",
@@ -12528,8 +12529,6 @@ export const en = {
     openComputer: "Open the computer",
     /** The dialog's label for screen readers; the visible title is the computer's name. */
     label: "Line for {{name}}",
-    full: "Full",
-    fullNext: "Full · next starts in about {{n}} min",
     free: "Nobody in line",
     workingNow: "Working now · {{n}}",
     inLine: "In line · {{n}}",
@@ -13013,6 +13012,14 @@ export const en = {
     folderDeleted_other: "Folder deleted. {{count}} files went to the trash.",
     folderDeletedKept_one: "Folder deleted. {{count}} file you can't delete moved up a level.",
     folderDeletedKept_other: "Folder deleted. {{count}} files you can't delete moved up a level.",
+    /** A selection of folders and files: its menu, the selection bar and their one confirmation. */
+    delete: "Delete",
+    deleteItemsTitle_one: "Delete {{count}} item?",
+    deleteItemsTitle_other: "Delete {{count}} items?",
+    deleteItemsBody:
+      "Folders go with everything inside them. Files you can delete go to the trash for 30 days. Anyone else's files move up a level.",
+    itemsDeleted_one: "{{count}} item deleted.",
+    itemsDeleted_other: "{{count}} items deleted.",
   },
   storage: {
     title: "Storage",
@@ -17981,8 +17988,7 @@ export const en = {
     },
     hint: {
       /** Shown when handoffs led the week's use; followed by the `message` link. */
-      handoffs:
-        "Most of this week's use came from agents handing work to each other. Ask the agent directly for long work.",
+      handoffs: "Most of it came from handoffs between agents.",
       /** Opens the DM with the agent that took most of the handed work. */
       message: "Message {{name}}",
     },

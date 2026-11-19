@@ -33,6 +33,7 @@ import { recordAudit } from "./audit";
 import { UUID } from "./authority";
 import { brainOf } from "./brain-settings";
 import { BRAIN_PLAN_NAMES, type BrainKind, isComputerBrain } from "./brains/types";
+import { caches, type TtlCache } from "./cache";
 import { canceledBy } from "./cancel";
 import { requireChannelAccess } from "./channels";
 import {
@@ -583,6 +584,8 @@ interface RunDetails {
   names: Map<string, string>;
 }
 
+type RoutineWeekUsage = { routineId: string; tokens: string; cost: string; plan: boolean; api: boolean };
+
 /** Every token a call used (as the usage page counts them). */
 const TOKENS = sql`${usageRecords.inputTokens} + ${usageRecords.outputTokens}
   + ${usageRecords.cacheReadTokens} + ${usageRecords.cacheWriteTokens}`;
@@ -603,15 +606,30 @@ async function runDetails(db: Database, orgId: string, runs: RunRow[]): Promise<
           status: agentRuns.status,
           error: agentRuns.error,
           waitingMachineId: agentRuns.waitingMachineId,
-          waitingCode: sql<string | null>`${agentRuns.transcript}->'waitingForBrain'->>'code'`,
-          waitSource: sql<string | null>`${agentRuns.transcript}->'waitingForBrain'->>'source'`,
-          resetsAt: sql<string | null>`${agentRuns.transcript}->'waitingForBrain'->>'resetsAt'`,
-          plan: sql<string | null>`${agentRuns.transcript}->'waitingForBrain'->>'plan'`,
-          continued: sql<boolean>`(${agentRuns.transcript}->'usagePause'->'override') is not null`,
+          // The transcript is a large TOASTed jsonb: only a waiting_input run's wait is read from it (all that the
+          // views use it for), as one value, so other rows never detoast it.
+          wait: sql<{ wait: Record<string, unknown> | null; continued: boolean } | null>`case
+            when ${agentRuns.status} = 'waiting_input' then jsonb_build_object(
+              'wait', ${agentRuns.transcript}->'waitingForBrain',
+              'continued', (${agentRuns.transcript}->'usagePause'->'override') is not null) end`,
           updatedAt: agentRuns.updatedAt,
         })
         .from(agentRuns)
-        .where(and(eq(agentRuns.orgId, orgId), inArray(agentRuns.id, ids))),
+        .where(and(eq(agentRuns.orgId, orgId), inArray(agentRuns.id, ids)))
+        .then((rows) =>
+          rows.map(({ wait, ...row }): AgentRunInfo => {
+            const w = wait?.wait;
+            const text = (key: string) => (typeof w?.[key] === "string" ? (w[key] as string) : null);
+            return {
+              ...row,
+              waitingCode: text("code"),
+              waitSource: text("source"),
+              resetsAt: text("resetsAt"),
+              plan: text("plan"),
+              continued: wait?.continued === true,
+            };
+          }),
+        ),
     ),
     lookup(ids, () =>
       db
@@ -882,18 +900,24 @@ async function views(
       .from(routineRuns)
       .where(inWeek)
       .groupBy(routineRuns.routineId, routineRuns.status),
-    db
-      .select({
-        routineId: routineRuns.routineId,
-        tokens: sql<string>`coalesce(sum(${TOKENS}), 0)`,
-        cost: sql<string>`coalesce(sum(${usageRecords.costNanoUsd}), 0)`,
-        plan: sql<boolean>`coalesce(bool_or(${usageRecords.billedTo} = 'plan'), false)`,
-        api: sql<boolean>`coalesce(bool_or(${usageRecords.billedTo} <> 'plan'), false)`,
-      })
-      .from(routineRuns)
-      .innerJoin(usageRecords, eq(usageRecords.runId, routineRuns.agentRunId))
-      .where(inWeek)
-      .groupBy(routineRuns.routineId),
+    // Every usage row of a week of runs: the list's heaviest read, asked again on each run event by every open app.
+    // A minute-old sum is fine for "this week".
+    (caches.routineWeekUsage as TtlCache<RoutineWeekUsage[]>).getOrLoad(
+      `${orgId}:${[...ids].sort().join(",")}`,
+      async () =>
+        db
+          .select({
+            routineId: routineRuns.routineId,
+            tokens: sql<string>`coalesce(sum(${TOKENS}), 0)`,
+            cost: sql<string>`coalesce(sum(${usageRecords.costNanoUsd}), 0)`,
+            plan: sql<boolean>`coalesce(bool_or(${usageRecords.billedTo} = 'plan'), false)`,
+            api: sql<boolean>`coalesce(bool_or(${usageRecords.billedTo} <> 'plan'), false)`,
+          })
+          .from(routineRuns)
+          .innerJoin(usageRecords, eq(usageRecords.runId, routineRuns.agentRunId))
+          .where(inWeek)
+          .groupBy(routineRuns.routineId),
+    ),
     db
       .select({
         id: agents.id,

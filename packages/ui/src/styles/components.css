@@ -10927,6 +10927,29 @@ html:not([data-pointer]) .ac-filter__option:focus-visible {
   display: block;
   image-rendering: pixelated;
 }
+/* A strip whose bars are buttons (RunStrip's `bar`): each bar's button covers its column, a little taller for a finger. */
+.ac-run-bars {
+  position: relative;
+  display: block;
+  flex: none;
+}
+.ac-run-bars__bar {
+  position: absolute;
+  top: calc(-1 * var(--space-1));
+  bottom: calc(-1 * var(--space-1));
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+}
+.ac-run-bars__bar:hover {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+html:not([data-pointer]) .ac-run-bars__bar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
 /* An agent's month (MonthRuns): the row's whole width, 2px cells. */
 .ac-month-runs {
   display: block;
@@ -11141,6 +11164,66 @@ html:not([data-pointer]) .ac-optrow[data-state="checked"]:focus-visible {
 }
 .ac-optlist--locked .ac-optrow[data-state="checked"]:hover {
   box-shadow: var(--optrow-chosen);
+}
+/* List: plain compact rows, 2 apart as menu rows, no border; hover and the chosen one are a quiet fill. */
+.ac-optlist--list {
+  gap: 2px;
+}
+.ac-optlist--list .ac-optrow,
+.ac-optlist--list .ac-optrow--lead {
+  min-height: var(--control-h-md);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+}
+.ac-optlist--list .ac-optrow:hover {
+  background: color-mix(in srgb, var(--sunken) 70%, transparent);
+  box-shadow: none;
+}
+.ac-optlist--list .ac-optrow:active {
+  transform: none;
+}
+.ac-optlist--list .ac-optrow[data-state="checked"],
+.ac-optlist--locked.ac-optlist--list .ac-optrow[data-state="checked"]:hover {
+  --optrow-chosen: none;
+  background: var(--chosen-bg);
+  box-shadow: none;
+  transform: none;
+}
+html:not([data-pointer]) .ac-optlist--list .ac-optrow:focus-visible {
+  box-shadow: var(--field-ring);
+}
+.ac-optlist--list .ac-optrow__title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.ac-optlist--list .ac-optrow__lead {
+  color: var(--muted);
+}
+.ac-optlist--list .ac-optrow[data-state="checked"] .ac-optrow__title {
+  font-weight: 650;
+}
+.ac-optlist--list .ac-optrow--lead[data-state="unchecked"] .ac-optrow__lead {
+  opacity: 1;
+  filter: none;
+}
+/* A tree level: 16 per level, its hairline under the middle of the parent's 16 icon, through the row's padding and
+   the 2 between rows (the row's 12 gap is taken back, so levels step by 16, not 28). */
+.ac-optrow__guide {
+  flex: none;
+  align-self: stretch;
+  width: var(--space-4);
+  margin-block: calc(-1 * var(--space-2) - 1px);
+  margin-inline-end: calc(-1 * var(--space-3));
+  background: linear-gradient(var(--line2), var(--line2)) center / 1px 100% no-repeat;
+}
+/* Phone width: 12 per level, the hairline still under the parent's icon (8 in), so deep trees keep room for words. */
+@media (max-width: 640px) {
+  .ac-optrow__guide {
+    width: var(--space-3);
+    background-position: var(--space-2) 0;
+  }
 }
 /*
  * Attached: the chosen row and its settings are one card. The row on top, a hairline, then the settings
@@ -12824,6 +12907,63 @@ html:not([data-pointer]) .ac-foldrow__head:focus-visible {
 .ac-foldrow__more > .ac-acts {
   flex-wrap: wrap;
   row-gap: var(--space-2);
+}
+
+/* ---------- Disclosure: what most people never need, behind one quiet line ---------- */
+/* The summary is a small control tall, in muted words with the chevron after them; it opens what it holds 8 under it,
+   growing to its height where the browser can animate to `auto` and opening at once where it can't. */
+.ac-disclosure__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-h-sm);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.ac-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+.ac-disclosure__summary:hover {
+  color: var(--ink);
+}
+html:not([data-pointer]) .ac-disclosure__summary:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+}
+.ac-disclosure__chevron {
+  color: var(--faint);
+}
+.ac-disclosure[open] > .ac-disclosure__summary > .ac-disclosure__chevron {
+  rotate: 90deg;
+}
+.ac-disclosure__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ac-disclosure {
+    interpolate-size: allow-keywords;
+  }
+  .ac-disclosure::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size var(--dur-panel) ease,
+      content-visibility var(--dur-panel) allow-discrete;
+  }
+  .ac-disclosure[open]::details-content {
+    block-size: auto;
+  }
+  .ac-disclosure__chevron {
+    transition: rotate var(--dur-base) ease;
+  }
 }
 
 /* ---------- A phone's own Settings path (`SettingsPath`) ---------- */

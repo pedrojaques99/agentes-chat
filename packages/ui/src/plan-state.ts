@@ -210,6 +210,10 @@ export const PLAN_AGE_SHOWN_MS = 10 * 60_000;
 /** Numbers older than this read as out of date. */
 export const PLAN_STALE_MS = 6 * 3_600_000;
 
+/** Whether a meter says how old its numbers are: from `PLAN_AGE_SHOWN_MS`, and always at the limit. */
+export const planAgeShown = (usage: PlanMeterUsage, now = Date.now()) =>
+  planState(usage, now).state === "limited" || now - Date.parse(planCheckedAt(usage) ?? usage.at) >= PLAN_AGE_SHOWN_MS;
+
 /**
  * The compact meter's words: the tightest windows by their short names ("semana 40% · 5h 12%"), every window
  * with its reset for the title, the tightest (`top`) for its one bar, and only near or at the limit what matters then

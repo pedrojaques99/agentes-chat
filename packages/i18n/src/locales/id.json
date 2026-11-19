@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Tutup",
+    "details": "Detail",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Ini tidak bisa diurungkan.",
     "removeName": "Hapus {{name}}",
@@ -6145,7 +6146,7 @@
         "cli_closed": "Program {{brain}} tertutup tiba-tiba.",
         "cli_sandbox": "Program {{brain}} tidak bisa menjalankan sandbox-nya di komputer ini. Pilih AI lain di pengaturan agen.",
         "account_missing": "Akun yang dipilih untuk agen ini sudah tidak ada di komputernya. Pilih akun lain di pengaturan agen, atau tambahkan lagi.",
-        "windows_sandbox": "Komputer Windows ini tidak dapat mengisolasi perintah Codex: perlu Windows 11 24H2 atau yang lebih baru.",
+        "windows_sandbox": "Komputer Windows ini tidak dapat mengisolasi perintah Codex: perlu Windows 11 24H2 atau yang lebih baru. Perbarui Windows, pilih Claude atau kunci API untuk agen ini, atau pindahkan ke komputer Linux.",
         "our_error": "Ada yang salah di pihak kami dan tugasnya berhenti. Minta lagi sebentar lagi.",
         "unknown": "Gagal."
       }
@@ -7601,7 +7602,10 @@
     "unreachableTitle": "agentes.chat tidak bisa dijangkau",
     "unreachableText": "Mungkin sedang dimulai ulang. Halaman ini terbuka sendiri begitu kembali normal.",
     "offlineTitle": "Kamu sedang offline",
-    "offlineText": "Halaman ini terbuka sendiri saat kamu kembali online."
+    "offlineText": "Halaman ini terbuka sendiri saat kamu kembali online.",
+    "unknownHostTitle": "Alamat ini belum disiapkan",
+    "unknownHostText": "Kalau baru saja dihubungkan, coba lagi dalam beberapa menit.",
+    "unknownHostTab": "Alamat belum disiapkan · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -11505,12 +11509,6 @@
       "read": "{{name}} sudah membacanya",
       "resolved": "{{name}} menutup permintaan bantuan"
     },
-    "well": {
-      "readYours": "Membaca catatanmu",
-      "readOf": "Membaca catatan {{name}}",
-      "nowYours": "Berhenti untuk membaca catatanmu",
-      "nowOf": "Berhenti untuk membaca catatan {{name}}"
-    },
     "strip": {
       "see": "Lihat",
       "toStop": "untuk menghentikan"
@@ -11673,8 +11671,6 @@
     "see": "Lihat antrean",
     "openComputer": "Buka komputer",
     "label": "Antrean {{name}}",
-    "full": "Penuh",
-    "fullNext": "Penuh · berikutnya mulai sekitar {{n}} mnt lagi",
     "free": "Tidak ada yang mengantre",
     "workingNow": "Sedang bekerja · {{n}}",
     "inLine": "Dalam antrean · {{n}}",
@@ -12122,7 +12118,11 @@
     "deleteFolderBody": "Folder di dalamnya juga ikut terhapus. File yang bisa kamu hapus masuk ke sampah selama 30 hari. File milik orang lain naik ke tempat folder ini berada.",
     "folderDeletedEmpty": "Folder dihapus.",
     "folderDeleted_other": "Folder dihapus. {{count}} file masuk ke sampah.",
-    "folderDeletedKept_other": "Folder dihapus. {{count}} file yang tidak bisa kamu hapus naik satu tingkat."
+    "folderDeletedKept_other": "Folder dihapus. {{count}} file yang tidak bisa kamu hapus naik satu tingkat.",
+    "delete": "Hapus",
+    "deleteItemsTitle_other": "Hapus {{count}} item?",
+    "deleteItemsBody": "Folder dihapus beserta semua isinya. File yang boleh Anda hapus masuk ke sampah selama 30 hari. File milik orang lain naik satu tingkat.",
+    "itemsDeleted_other": "{{count}} item dihapus."
   },
   "storage": {
     "title": "Penyimpanan",
@@ -17028,7 +17028,7 @@
       "routines": "Rutinitas"
     },
     "hint": {
-      "handoffs": "Sebagian besar penggunaan minggu ini berasal dari agen yang saling menyerahkan pekerjaan. Untuk pekerjaan panjang, minta langsung ke agennya.",
+      "handoffs": "Sebagian besar berasal dari serah terima antaragen.",
       "message": "Kirim pesan ke {{name}}"
     }
   },

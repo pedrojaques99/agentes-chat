@@ -8,6 +8,9 @@
   "common.close": {
     "value": "Close"
   },
+  "common.details": {
+    "value": "Details"
+  },
   "common.joinSentences": {
     "value": "{{a}} {{b}}"
   },
@@ -15764,7 +15767,7 @@
     "value": "The account chosen for this agent isn't on its computer anymore. Choose another one in the agent's settings, or add it again."
   },
   "agentPage.activity.errors.windows_sandbox": {
-    "value": "This Windows computer can't isolate Codex's commands: it needs Windows 11 24H2 or newer."
+    "value": "This Windows computer can't isolate Codex's commands: it needs Windows 11 24H2 or newer. Update Windows, choose Claude or an API key for this agent, or move it to a Linux computer."
   },
   "agentPage.activity.errors.our_error": {
     "value": "Something went wrong on our side and it stopped. Ask again in a little while."
@@ -19305,6 +19308,15 @@
   },
   "empty.offlineText": {
     "value": "This page opens by itself when you're back online."
+  },
+  "empty.unknownHostTitle": {
+    "value": "This address isn't set up yet"
+  },
+  "empty.unknownHostText": {
+    "value": "If it was just connected, try again in a few minutes."
+  },
+  "empty.unknownHostTab": {
+    "value": "Address not set up · agentes.chat"
   },
   "scopes.context_read.label": {
     "value": "Read context"
@@ -29219,18 +29231,6 @@
   "run.steer.resolved": {
     "value": "{{name}} closed the help request"
   },
-  "run.well.readYours": {
-    "value": "Read your note"
-  },
-  "run.well.readOf": {
-    "value": "Read {{name}}'s note"
-  },
-  "run.well.nowYours": {
-    "value": "Stopped to read your note"
-  },
-  "run.well.nowOf": {
-    "value": "Stopped to read {{name}}'s note"
-  },
   "run.strip.see": {
     "value": "View"
   },
@@ -29614,12 +29614,6 @@
   },
   "queue.label": {
     "value": "Line for {{name}}"
-  },
-  "queue.full": {
-    "value": "Full"
-  },
-  "queue.fullNext": {
-    "value": "Full · next starts in about {{n}} min"
   },
   "queue.free": {
     "value": "Nobody in line"
@@ -30849,6 +30843,24 @@
     "value": {
       "one": "Folder deleted. {{count}} file you can't delete moved up a level.",
       "other": "Folder deleted. {{count}} files you can't delete moved up a level."
+    }
+  },
+  "drive.delete": {
+    "value": "Delete"
+  },
+  "drive.deleteItemsTitle": {
+    "value": {
+      "one": "Delete {{count}} item?",
+      "other": "Delete {{count}} items?"
+    }
+  },
+  "drive.deleteItemsBody": {
+    "value": "Folders go with everything inside them. Files you can delete go to the trash for 30 days. Anyone else's files move up a level."
+  },
+  "drive.itemsDeleted": {
+    "value": {
+      "one": "{{count}} item deleted.",
+      "other": "{{count}} items deleted."
     }
   },
   "storage.title": {
@@ -43284,7 +43296,7 @@
     "value": "Routines"
   },
   "usage.hint.handoffs": {
-    "value": "Most of this week's use came from agents handing work to each other. Ask the agent directly for long work."
+    "value": "Most of it came from handoffs between agents."
   },
   "usage.hint.message": {
     "value": "Message {{name}}"

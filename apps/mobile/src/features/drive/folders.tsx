@@ -1,10 +1,12 @@
-import { type Artifact, type DriveFolder, useDriveArrange, useDriveFolders } from "@agenteschat/client";
-import { folderAndInside, folderOutline, folderTrail } from "@agenteschat/client/lib/drive";
+import { type Artifact, type DriveFolder, keys, useApi, useDriveArrange, useDriveFolders } from "@agenteschat/client";
+import { folderAndInside, folderOutline } from "@agenteschat/client/lib/drive";
 import { errorText } from "@agenteschat/client/lib/errors";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
 import { GroupedList, GroupedRow, SCREEN_X, Text, useToast } from "@/ui";
 import { router } from "@/ui/navigation";
+import { shareFile } from "../files/source";
 import { useOrgId } from "../shared/hooks";
 import { pickOne, showActionSheet } from "../shared/PickerSheet";
 import { PromptForm } from "../shared/PromptForm";
@@ -29,6 +31,8 @@ export function useFolderActions() {
   const orgId = useOrgId();
   const sheet = useSheet();
   const toast = useToast();
+  const api = useApi();
+  const qc = useQueryClient();
   const folders = useDriveFolders(orgId);
   const arrange = useDriveArrange(orgId);
   const all = folders.data ?? [];
@@ -52,10 +56,9 @@ export function useFolderActions() {
       />,
     );
 
-  /** Where to: the top level, then every folder but the ones being moved and those inside them. */
+  /** Where to: the top level, then every folder as a tree (a guide line per level), but the ones being moved. */
   const pickPlace = async (count: number, from: string | null, movingFolder?: string) => {
     const blocked = movingFolder ? folderAndInside(all, movingFolder) : new Set<string>();
-    const path = (id: string | null) => folderTrail(all, id).map((f) => f.name);
     const key = await pickOne({
       title: t("drive.moveTitle", { count }),
       value: from ?? TOP,
@@ -63,10 +66,10 @@ export function useFolderActions() {
         { key: TOP, label: t("drive.title"), leading: { kind: "icon", name: "drive" } },
         ...folderOutline(all)
           .filter(({ folder }) => !blocked.has(folder.id))
-          .map(({ folder }) => ({
+          .map(({ folder, depth }) => ({
             key: folder.id,
             label: folder.name,
-            sub: [t("drive.title"), ...path(folder.parentId)].join(" / "),
+            depth: depth + 1,
             leading: { kind: "icon" as const, name: "drive" as const },
           })),
       ],
@@ -121,6 +124,49 @@ export function useFolderActions() {
     }
   };
 
+  const deleteFile = async (a: Artifact) => {
+    const sure = await pickOne({
+      title: t("artifacts.deleteTitle", { title: a.title }),
+      note: t("artifacts.deleteBody"),
+      options: [{ key: "delete", label: t("artifacts.deleteConfirm"), destructive: true }],
+    });
+    if (sure !== "delete") return;
+    try {
+      await api.artifacts.remove(orgId, a.id);
+      void qc.invalidateQueries({ queryKey: keys.artifacts(orgId) });
+      toast({ title: t("artifacts.deleted"), icon: "check" });
+    } catch (e) {
+      failed(e);
+    }
+  };
+
+  /** Enviar cópia: the system's share sheet with the file (save to Files, other apps), as the file screen's. */
+  const sendCopy = async (a: Artifact) => {
+    try {
+      await shareFile(api, orgId, await api.artifacts.get(orgId, a.id, a.version));
+    } catch {
+      toast({ title: t("mobile.files.shareFailed"), icon: "x" });
+    }
+  };
+
+  const renameFile = (a: Artifact) =>
+    askName(t("drive.renameFile"), a.title, t("drive.rename"), (title) =>
+      arrange.rename.mutateAsync({ id: a.id, title }),
+    );
+
+  const folderArrange = (f: DriveFolder) => [
+    {
+      label: t("drive.rename"),
+      icon: "pen" as const,
+      onPress: () =>
+        askName(t("drive.renameFolder"), f.name, t("drive.rename"), (name) =>
+          arrange.updateFolder.mutateAsync({ id: f.id, name }),
+        ),
+    },
+    { label: t("drive.moveToMenu"), icon: "right" as const, onPress: () => void moveFolder(f) },
+    { label: t("drive.deleteFolder"), icon: "trash" as const, destructive: true, onPress: () => void deleteFolder(f) },
+  ];
+
   return {
     folders: all,
     loaded: folders.isSuccess,
@@ -128,41 +174,49 @@ export function useFolderActions() {
       askName(t("drive.newFolder"), "", t("drive.create"), (name) =>
         arrange.createFolder.mutateAsync({ name, parentId }),
       ),
-    folderMenu: (f: DriveFolder) =>
+    /** A folder's actions: its "…" and its long press. `may`: who adds to the Drive arranges it. */
+    folderMenu: (f: DriveFolder, may: boolean) =>
       showActionSheet(f.name, [
-        {
-          label: t("drive.rename"),
-          icon: "pen",
-          onPress: () =>
-            askName(t("drive.renameFolder"), f.name, t("drive.rename"), (name) =>
-              arrange.updateFolder.mutateAsync({ id: f.id, name }),
-            ),
-        },
-        { label: t("drive.moveToMenu"), icon: "right", onPress: () => void moveFolder(f) },
-        { label: t("drive.deleteFolder"), icon: "trash", destructive: true, onPress: () => void deleteFolder(f) },
+        { label: t("drive.openFolder"), icon: "drive", onPress: () => openFolder(f.id) },
+        ...(may ? folderArrange(f) : []),
       ]),
-    fileMenu: (a: Artifact) =>
+    /** A file's long press: the web's right click. Open and send a copy for all; the rest by permission. */
+    fileMenu: (a: Artifact, open: () => void, may: boolean) =>
       showActionSheet(a.title, [
-        {
-          label: t("drive.rename"),
-          icon: "pen",
-          onPress: () =>
-            askName(t("drive.renameFile"), a.title, t("drive.rename"), (title) =>
-              arrange.rename.mutateAsync({ id: a.id, title }),
-            ),
-        },
-        { label: t("drive.moveToMenu"), icon: "right", onPress: () => void moveFile(a) },
+        { label: t("artifacts.openFile"), icon: "doc", onPress: open },
+        { label: t("mobile.files.sendCopy"), icon: "share", onPress: () => void sendCopy(a) },
+        ...(may
+          ? [
+              { label: t("drive.rename"), icon: "pen" as const, onPress: () => renameFile(a) },
+              { label: t("drive.moveToMenu"), icon: "right" as const, onPress: () => void moveFile(a) },
+            ]
+          : []),
+        ...(a.canDelete
+          ? [
+              {
+                label: t("artifacts.delete"),
+                icon: "trash" as const,
+                destructive: true,
+                onPress: () => void deleteFile(a),
+              },
+            ]
+          : []),
       ]),
   };
 }
 
-/** The folders of where the person is, each a row that opens it; "…" for its actions (who adds to the Drive). */
+/**
+ * The folders of where the person is, each a row that opens it; a long press for its actions, and "…" for them too
+ * for who arranges the Drive (`more`).
+ */
 export function FolderRows({
   folders,
   onMenu,
+  more,
 }: {
   folders: readonly DriveFolder[];
-  onMenu: ((f: DriveFolder) => void) | null;
+  onMenu: (f: DriveFolder) => void;
+  more: boolean;
 }) {
   const { t } = useTranslation();
   if (folders.length === 0) return null;
@@ -175,9 +229,10 @@ export function FolderRows({
             icon="drive"
             label={f.name}
             labelLines={0}
-            chevron={!onMenu}
+            chevron={!more}
             onPress={() => openFolder(f.id)}
-            {...(onMenu
+            onLongPress={() => onMenu(f)}
+            {...(more
               ? {
                   buttons: [
                     { icon: "more" as const, label: t("drive.folderMore", { name: f.name }), onPress: () => onMenu(f) },

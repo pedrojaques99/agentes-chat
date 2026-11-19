@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Fermer",
+    "details": "Détails",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Cette action est définitive.",
     "removeName": "Retirer {{name}}",
@@ -6628,7 +6629,7 @@
         "cli_closed": "Le programme {{brain}} s'est fermé de façon inattendue.",
         "cli_sandbox": "Le programme {{brain}} ne peut pas démarrer sa sandbox sur cet ordinateur. Choisissez une autre IA dans les paramètres de l'agent.",
         "account_missing": "Le compte choisi pour cet agent n'est plus sur son ordinateur. Choisissez-en un autre dans les paramètres de l'agent, ou ajoutez-le à nouveau.",
-        "windows_sandbox": "Cet ordinateur Windows ne peut pas isoler les commandes de Codex : il lui faut Windows 11 24H2 ou une version plus récente.",
+        "windows_sandbox": "Cet ordinateur Windows ne peut pas isoler les commandes de Codex : il lui faut Windows 11 24H2 ou une version plus récente. Mettez Windows à jour, choisissez Claude ou une clé API pour cet agent, ou déplacez-le sur un ordinateur Linux.",
         "our_error": "Un problème est survenu de notre côté et la tâche s'est arrêtée. Redemandez dans un moment.",
         "unknown": "Échec."
       }
@@ -8173,7 +8174,10 @@
     "unreachableTitle": "Impossible de joindre agentes.chat",
     "unreachableText": "Il est peut-être en train de redémarrer. Cette page s'ouvre d'elle-même dès qu'il est de retour.",
     "offlineTitle": "Vous êtes hors ligne",
-    "offlineText": "Cette page s'ouvre d'elle-même dès que vous êtes de nouveau en ligne."
+    "offlineText": "Cette page s'ouvre d'elle-même dès que vous êtes de nouveau en ligne.",
+    "unknownHostTitle": "Cette adresse n'est pas encore configurée",
+    "unknownHostText": "Si elle vient d'être connectée, réessayez dans quelques minutes.",
+    "unknownHostTab": "Adresse non configurée · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -12413,12 +12417,6 @@
       "read": "{{name}} l'a lu",
       "resolved": "{{name}} a clos la demande d'aide"
     },
-    "well": {
-      "readYours": "A lu votre note",
-      "readOf": "A lu la note de {{name}}",
-      "nowYours": "S'est arrêté pour lire votre note",
-      "nowOf": "S'est arrêté pour lire la note de {{name}}"
-    },
     "strip": {
       "see": "Voir",
       "toStop": "pour arrêter"
@@ -12584,8 +12582,6 @@
     "see": "Voir la file",
     "openComputer": "Ouvrir l'ordinateur",
     "label": "File de {{name}}",
-    "full": "Plein",
-    "fullNext": "Plein · le prochain démarre dans environ {{n}} min",
     "free": "Personne dans la file",
     "workingNow": "Au travail · {{n}}",
     "inLine": "Dans la file · {{n}}",
@@ -13088,7 +13084,15 @@
     "folderDeleted_other": "Dossier supprimé. {{count}} fichiers sont allés dans la corbeille.",
     "folderDeletedKept_one": "Dossier supprimé. {{count}} fichier que vous ne pouvez pas supprimer est remonté d’un niveau.",
     "folderDeletedKept_many": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau.",
-    "folderDeletedKept_other": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau."
+    "folderDeletedKept_other": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau.",
+    "delete": "Supprimer",
+    "deleteItemsTitle_one": "Supprimer {{count}} élément ?",
+    "deleteItemsTitle_many": "Supprimer {{count}} éléments ?",
+    "deleteItemsTitle_other": "Supprimer {{count}} éléments ?",
+    "deleteItemsBody": "Les dossiers partent avec tout leur contenu. Les fichiers que vous pouvez supprimer vont dans la corbeille pendant 30 jours. Ceux des autres remontent d’un niveau.",
+    "itemsDeleted_one": "{{count}} élément supprimé.",
+    "itemsDeleted_many": "{{count}} éléments supprimés.",
+    "itemsDeleted_other": "{{count}} éléments supprimés."
   },
   "storage": {
     "title": "Stockage",
@@ -18136,7 +18140,7 @@
       "routines": "Routines"
     },
     "hint": {
-      "handoffs": "Cette semaine, l’essentiel de l’utilisation vient d’agents qui se transmettent du travail. Pour un travail long, demandez directement à l’agent.",
+      "handoffs": "La plupart vient de transmissions entre agents.",
       "message": "Écrire à {{name}}"
     }
   },

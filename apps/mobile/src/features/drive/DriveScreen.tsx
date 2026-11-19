@@ -195,7 +195,7 @@ function DriveBody({ highlightId = null, folderId = null }: { highlightId?: stri
           setShown(PAGE);
         }}
       />
-      <FolderRows folders={subfolders} onMenu={mayUpload ? arrange.folderMenu : null} />
+      <FolderRows folders={subfolders} onMenu={(f) => arrange.folderMenu(f, mayUpload)} more={mayUpload} />
       {view === "loading" ? (
         // Loading, or still looking for files of the type: the rows' own shape, never a spinner.
         <SkeletonList rows={4} />
@@ -249,7 +249,7 @@ function DriveBody({ highlightId = null, folderId = null }: { highlightId?: stri
                           artifact={a}
                           highlighted={a.id === highlightId}
                           siblings={shownRefs}
-                          {...(mayUpload ? { onLongPress: arrange.fileMenu } : {})}
+                          onLongPress={(x, open) => arrange.fileMenu(x, open, mayUpload)}
                           present={presence.data?.[a.id]}
                         />
                       ))}

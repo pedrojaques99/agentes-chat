@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "关闭",
+    "details": "详情",
     "joinSentences": "{{a}}{{b}}",
     "cantUndo": "此操作无法撤销。",
     "removeName": "移除 {{name}}",
@@ -6164,7 +6165,7 @@
         "cli_closed": "程序 {{brain}} 意外关闭。",
         "cli_sandbox": "程序 {{brain}} 无法在这台电脑上启动它的沙盒。请在智能体设置中选择其他 AI。",
         "account_missing": "为这个智能体选择的账号已不在它的电脑上。请在智能体设置中选择另一个账号，或重新添加。",
-        "windows_sandbox": "这台 Windows 电脑无法隔离 Codex 的命令：需要 Windows 11 24H2 或更高版本。",
+        "windows_sandbox": "这台 Windows 电脑无法隔离 Codex 的命令：需要 Windows 11 24H2 或更高版本。请更新 Windows，为这个智能体选择 Claude 或 API 密钥，或把它移到一台 Linux 电脑上。",
         "our_error": "我们这边出了点问题，任务已停止。请稍后再提一次。",
         "unknown": "失败。"
       }
@@ -7611,7 +7612,10 @@
     "unreachableTitle": "无法连接 agentes.chat",
     "unreachableText": "它可能正在重启。恢复后此页面会自动打开。",
     "offlineTitle": "你已离线",
-    "offlineText": "恢复联网后此页面会自动打开。"
+    "offlineText": "恢复联网后此页面会自动打开。",
+    "unknownHostTitle": "此地址尚未设置",
+    "unknownHostText": "如果刚刚完成连接，请过几分钟再试。",
+    "unknownHostTab": "地址未设置 · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -11523,12 +11527,6 @@
       "read": "{{name}} 已读",
       "resolved": "{{name}} 关闭了求助请求"
     },
-    "well": {
-      "readYours": "已读你的留言",
-      "readOf": "已读 {{name}} 的留言",
-      "nowYours": "停下来阅读你的留言",
-      "nowOf": "停下来阅读 {{name}} 的留言"
-    },
     "strip": {
       "see": "查看",
       "toStop": "以停止"
@@ -11693,8 +11691,6 @@
     "see": "查看队列",
     "openComputer": "打开电脑",
     "label": "{{name}} 的队列",
-    "full": "已满",
-    "fullNext": "已满 · 下一个约 {{n}} 分钟后开始",
     "free": "没有排队",
     "workingNow": "正在工作 · {{n}}",
     "inLine": "排队中 · {{n}}",
@@ -12142,7 +12138,11 @@
     "deleteFolderBody": "其中的文件夹也会一并删除。你可以删除的文件会进入回收站保留 30 天。其他人的文件会移到此文件夹原来的位置。",
     "folderDeletedEmpty": "文件夹已删除。",
     "folderDeleted_other": "文件夹已删除。{{count}} 个文件已进入回收站。",
-    "folderDeletedKept_other": "文件夹已删除。{{count}} 个你无法删除的文件已移到上一级。"
+    "folderDeletedKept_other": "文件夹已删除。{{count}} 个你无法删除的文件已移到上一级。",
+    "delete": "删除",
+    "deleteItemsTitle_other": "删除 {{count}} 项？",
+    "deleteItemsBody": "文件夹会连同其中的所有内容一起删除。你可以删除的文件会在回收站保留 30 天。其他人的文件会上移一级。",
+    "itemsDeleted_other": "已删除 {{count}} 项。"
   },
   "storage": {
     "title": "存储",
@@ -17044,7 +17044,7 @@
       "routines": "例行任务"
     },
     "hint": {
-      "handoffs": "本周的大部分用量来自智能体之间互相交接工作。长任务请直接交给该智能体。",
+      "handoffs": "大部分来自智能体之间的交接。",
       "message": "给 {{name}} 发消息"
     }
   },

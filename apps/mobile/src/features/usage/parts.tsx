@@ -2,7 +2,6 @@ import type { PlanAccountInfo, PlanUsage } from "@agenteschat/client";
 import {
   accountName,
   accountWhose,
-  brandOf,
   type MeterSegment,
   type MeterWindow,
   planMeterText,
@@ -13,6 +12,7 @@ import { mixHex } from "@agenteschat/ui/agent/engine";
 import {
   PLAN_ALMOST,
   PLAN_TONE,
+  planAgeShown,
   planLevel,
   planLine,
   planState,
@@ -192,9 +192,11 @@ export function PlanMeter({
           {renews}
         </Text>
       ) : null}
-      <Text variant="caption" tone="muted">
-        {text.updated(usage.at)}
-      </Text>
+      {planAgeShown(usage, now) ? (
+        <Text variant="caption" tone="muted">
+          {text.updated(usage.at)}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -223,11 +225,12 @@ export function PlanModels({ usage, provider }: { usage: Pick<PlanUsage, "models
   );
 }
 
-/** An account's head: the maker's mark, its name and plan, its maker and whose it is. */
+/** An account's head: the maker's mark, its name and plan, and whose it is. */
 export function AccountHead({ account, extra }: { account: PlanAccountInfo; extra?: string | null }) {
   const { t } = useTranslation();
   const c = useColors();
-  const whose = accountWhose(t, account);
+  // The logo already names the maker: under the name only whose it is.
+  const sub = [accountWhose(t, account), extra].filter(Boolean).join(" · ");
   // The maker's logo, the account and its plan on one line, whose it is under them at the row's width.
   return (
     <View style={styles.acctBox}>
@@ -241,9 +244,11 @@ export function AccountHead({ account, extra }: { account: PlanAccountInfo; extr
           {account.signedOut ? <Tag text={t("usageViews.signedOut")} color={c.warn} /> : null}
         </View>
       </View>
-      <Text variant="small" tone="muted">
-        {[brandOf(account), whose, extra].filter(Boolean).join(" · ")}
-      </Text>
+      {sub ? (
+        <Text variant="small" tone="muted">
+          {sub}
+        </Text>
+      ) : null}
     </View>
   );
 }

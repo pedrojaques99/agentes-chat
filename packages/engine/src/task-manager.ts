@@ -371,7 +371,7 @@ async function visibleRuns(
   return rowsOf<Row>(
     await db.execute(sql`select r.id, r.agent_id, r.channel_id, ${shownStatusSql} as status, r.thread_root_id, r.trigger_message_id,
         r.started_at, r.created_at, r.finished_at, r.error, c.kind, c.name, c.dm_key, t.title,
-        array_to_json(r.pending_message_ids) as pending, r.background, r.brain,
+        array_to_json(r.pending_message_ids || r.after_message_ids) as pending, r.background, r.brain,
         a.owner_user_id, a.machine_id, mc.name as machine_name,
         trig.author_user_id as requester_id, ru.name as requester_name, trig.author_agent_id as asker_agent_id,
         ${which.active ? sql`consult.question` : sql`null`} as question,
@@ -379,8 +379,14 @@ async function visibleRuns(
         last.data as last_data, last.created_at as last_at,
         ${which.active ? sql`(select count(*) from ${agentRunSteps} s where s.run_id = r.id and s.kind = 'tool_call')` : sql`0`} as steps,
         su.name as stopper_name,
-        coalesce(r.transcript->'waitingForBrain', case when r.status = 'running' and r.waiting_machine_id is not null
-          then '{"code":"busy"}'::jsonb end) as wait, pause.data as wait_pause, r.waiting_machine_id,
+        ${
+          // An ended run's wait is never read, and reading it would detoast every candidate's transcript (a large
+          // jsonb) before the sort keeps the last few.
+          which.active
+            ? sql`coalesce(r.transcript->'waitingForBrain', case when r.status = 'running' and r.waiting_machine_id is not null
+          then '{"code":"busy"}'::jsonb end)`
+            : sql`null`
+        } as wait, pause.data as wait_pause, r.waiting_machine_id,
         rt.created_by_user_id as routine_creator, ${managesSql(userId)} as manages,
         ${which.active ? waitsOnViewerIn("r", userId) : sql`false`} as you,
         ${which.active ? outageIn("r") : sql`false`} as outage,
@@ -706,6 +712,7 @@ export async function taskManager(
     machine: r.machine_id ? { id: r.machine_id, name: r.machine_name ?? "" } : null,
     now: nowOf(r),
     steps: Number(r.steps ?? 0),
+    // Unread, a separate request left for after the task (`after_message_ids`) too.
     pendingMessageIds: pendingIds(r.pending),
     canStop: truthy(r.manages) || r.requester_id === userId || r.owner_user_id === userId,
     held: heldOf(r),

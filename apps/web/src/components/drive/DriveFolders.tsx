@@ -1,4 +1,4 @@
-import { type Artifact, type DriveFolder, useDriveArrange, useDriveFolders } from "@agenteschat/client";
+import { type Artifact, type DriveFolder, keys, useApi, useDriveArrange, useDriveFolders } from "@agenteschat/client";
 import {
   DRIVE_DRAG_TYPE,
   type DriveDrag,
@@ -10,6 +10,7 @@ import { errorText } from "@agenteschat/client/lib/errors";
 import { relativeTime } from "@agenteschat/client/lib/format";
 import {
   Button,
+  Checkbox,
   cx,
   Dialog,
   DialogBody,
@@ -22,8 +23,9 @@ import {
   Menu,
   OptionList,
 } from "@agenteschat/ui";
+import { useQueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
-import { type CSSProperties, type DragEvent, useEffect, useState } from "react";
+import { type DragEvent, type MouseEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActorAvatar } from "@/components/AgentAvatar";
 import { useAuthorName } from "@/components/artifacts/ArtifactViewer";
@@ -209,6 +211,7 @@ function MoveDialog({
             emptyText={t("drive.moveEmpty", { q: q.trim() })}
           >
             <OptionList
+              layout="list"
               aria-label={t("drive.moveTo")}
               value={dest}
               onValueChange={setDest}
@@ -216,11 +219,8 @@ function MoveDialog({
                 value: o.value,
                 title: o.name,
                 tag: o.value === here ? t("drive.moveHere") : undefined,
-                leading: (
-                  <span className="drive-move__lead" style={{ "--depth": o.depth } as CSSProperties}>
-                    <Icon name="drive" size={16} />
-                  </span>
-                ),
+                depth: o.depth,
+                leading: <Icon name="drive" size={16} />,
               }))}
             />
           </DialogSearchList>
@@ -238,6 +238,13 @@ function MoveDialog({
   );
 }
 
+/** What a delete asks about: one folder (its own words), or a selection of folders and files. */
+interface Deleting {
+  folders: DriveFolder[];
+  files: Artifact[];
+  done?: () => void;
+}
+
 type Naming =
   | { kind: "new"; parentId: string | null }
   | { kind: "folder"; folder: DriveFolder }
@@ -250,13 +257,16 @@ type Naming =
 export function useFolderActions() {
   const { t } = useTranslation();
   const { org } = useOrg();
+  const api = useApi();
+  const qc = useQueryClient();
   const toast = useToast();
   const folders = useDriveFolders(org.id);
   const arrange = useDriveArrange(org.id);
   const all = folders.data ?? [];
   const [naming, setNaming] = useState<Naming | null>(null);
   const [moving, setMoving] = useState<{ drag: DriveDrag; from: string | null | undefined } | null>(null);
-  const [deleting, setDeleting] = useState<DriveFolder | null>(null);
+  const [deleting, setDeleting] = useState<Deleting | null>(null);
+  const [removing, setRemoving] = useState(false);
   const failed = (e: unknown) => toast.show(errorText(t, e), "error");
   const nameOf = (id: string | null) => (id ? (all.find((f) => f.id === id)?.name ?? "") : t("drive.title"));
 
@@ -272,6 +282,45 @@ export function useFolderActions() {
     } catch (e) {
       failed(e);
       return false;
+    }
+  };
+
+  const one = deleting && deleting.folders.length === 1 && deleting.files.length === 0 ? deleting.folders[0] : null;
+  const deleteCount = (deleting?.folders.length ?? 0) + (deleting?.files.length ?? 0);
+  /** Folders with what's inside (as the server decides), then files to the trash; one toast for all. */
+  const remove = async () => {
+    if (!deleting) return;
+    setRemoving(true);
+    let trashed = 0;
+    let kept = 0;
+    let gone = 0;
+    try {
+      for (const f of deleting.folders) {
+        const r = await arrange.deleteFolder.mutateAsync(f.id);
+        trashed += r.trashed;
+        kept += r.kept;
+        gone += 1;
+      }
+      for (const a of deleting.files) {
+        await api.artifacts.remove(org.id, a.id);
+        gone += 1;
+      }
+      toast.show(
+        !one
+          ? t("drive.itemsDeleted", { count: gone })
+          : kept > 0
+            ? t("drive.folderDeletedKept", { count: kept })
+            : trashed > 0
+              ? t("drive.folderDeleted", { count: trashed })
+              : t("drive.folderDeletedEmpty"),
+      );
+      deleting.done?.();
+      setDeleting(null);
+    } catch (e) {
+      failed(e);
+    } finally {
+      setRemoving(false);
+      if (deleting.files.length > 0) void qc.invalidateQueries({ queryKey: keys.artifacts(org.id) });
     }
   };
 
@@ -317,37 +366,20 @@ export function useFolderActions() {
       />
       <Dialog
         open={deleting !== null}
-        onOpenChange={(o) => !o && setDeleting(null)}
-        title={t("drive.deleteFolderTitle", { name: deleting?.name ?? "" })}
-        description={t("drive.deleteFolderBody")}
+        onOpenChange={(o) => !o && !removing && setDeleting(null)}
+        title={
+          one ? t("drive.deleteFolderTitle", { name: one.name }) : t("drive.deleteItemsTitle", { count: deleteCount })
+        }
+        description={t(one ? "drive.deleteFolderBody" : "drive.deleteItemsBody")}
         closeLabel={t("common.close")}
         width={460}
       >
         <DialogFooter>
-          <Button onClick={() => setDeleting(null)} disabled={arrange.deleteFolder.isPending}>
+          <Button onClick={() => setDeleting(null)} disabled={removing}>
             {t("common.cancel")}
           </Button>
-          <Button
-            variant="danger"
-            loading={arrange.deleteFolder.isPending}
-            onClick={() => {
-              if (!deleting) return;
-              arrange.deleteFolder.mutate(deleting.id, {
-                onSuccess: (r) => {
-                  setDeleting(null);
-                  toast.show(
-                    r.kept > 0
-                      ? t("drive.folderDeletedKept", { count: r.kept })
-                      : r.trashed > 0
-                        ? t("drive.folderDeleted", { count: r.trashed })
-                        : t("drive.folderDeletedEmpty"),
-                  );
-                },
-                onError: failed,
-              });
-            }}
-          >
-            {t("drive.deleteFolder")}
+          <Button variant="danger" loading={removing} onClick={() => void remove()}>
+            {one ? t("drive.deleteFolder") : t("drive.delete")}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -363,7 +395,10 @@ export function useFolderActions() {
     renameFolder: (folder: DriveFolder) => setNaming({ kind: "folder", folder }),
     renameFile: (file: Artifact) => setNaming({ kind: "file", file }),
     askMove: (drag: DriveDrag, from: string | null | undefined) => setMoving({ drag, from }),
-    askDelete: (folder: DriveFolder) => setDeleting(folder),
+    askDelete: (folder: DriveFolder) => setDeleting({ folders: [folder], files: [] }),
+    /** A selection with folders in it: one confirmation; `done` once they're gone. */
+    askDeleteMany: (folders: DriveFolder[], files: Artifact[], done?: () => void) =>
+      setDeleting({ folders, files, ...(done ? { done } : {}) }),
   };
 }
 
@@ -409,7 +444,7 @@ function folderEntries(
   ];
 }
 
-interface FolderItemProps {
+export interface FolderItemProps {
   folder: DriveFolder;
   actions: FolderActions;
   /** The viewer adds to the Drive: may rename, move and delete. */
@@ -417,9 +452,39 @@ interface FolderItemProps {
   onOpen: (id: string) => void;
   /** Items dropped on it go into it. */
   onDrop: (drag: DriveDrag, folderId: string) => void;
+  selected: boolean;
+  onToggle: (f: DriveFolder) => void;
+  /** A click on its name: opens it, or selects with ⌘ / Ctrl or while selecting. */
+  onPick: (f: DriveFolder, e: MouseEvent) => void;
+  /** The selection's menu when it is part of one (null: its own). */
+  selectionMenu: (kind: "folder" | "file", id: string) => MenuEntry[] | null;
+  /** What dragging it carries: the selection when it is in it, else itself. */
+  dragging: (kind: "folder" | "file", id: string) => DriveDrag;
 }
 
-function FolderMore({ folder, actions, may, onOpen }: Omit<FolderItemProps, "onDrop">) {
+/** Its right click and menu key: the selection's menu when it is in one, else its own. */
+const folderMenu = (t: TFunction, p: FolderItemProps) =>
+  entityMenu(
+    () =>
+      p.selectionMenu("folder", p.folder.id) ?? [
+        { kind: "header", label: p.folder.name },
+        ...folderEntries(t, p.folder, p.actions, () => p.onOpen(p.folder.id), p.may),
+      ],
+  );
+
+function FolderCheck({ folder, selected, onToggle }: Pick<FolderItemProps, "folder" | "selected" | "onToggle">) {
+  const { t } = useTranslation();
+  return (
+    <Checkbox
+      className="drive-check"
+      checked={selected}
+      onCheckedChange={() => onToggle(folder)}
+      aria-label={t("drive.select", { title: folder.name })}
+    />
+  );
+}
+
+function FolderMore({ folder, actions, may, onOpen }: Pick<FolderItemProps, "folder" | "actions" | "may" | "onOpen">) {
   const { t } = useTranslation();
   const label = t("drive.folderMore", { name: folder.name });
   return (
@@ -435,25 +500,25 @@ function FolderMore({ folder, actions, may, onOpen }: Omit<FolderItemProps, "onD
   );
 }
 
-/** A folder in the grid: its icon and name, a drop target, dragged into another folder to move it. */
+/** A folder in the grid: its icon (the checkbox in its place on hover or while selecting) and name, a drop target. */
 export function FolderCard(props: FolderItemProps) {
   const { t } = useTranslation();
-  const { folder, actions, may, onOpen, onDrop } = props;
+  const { folder, actions, may, onOpen, onDrop, selected, onPick } = props;
   const drop = useDropTarget((drag) => onDrop(drag, folder.id));
   return (
     <article
-      className={cx("drive-folder", drop.over && "drive-folder--over")}
+      className={cx("drive-folder", selected && "drive-folder--selected", drop.over && "drive-folder--over")}
       {...drop.props}
-      {...(may ? dragOut(() => ({ files: [], folders: [folder.id] })) : {})}
-      {...entityMenu(() => [
-        { kind: "header", label: folder.name },
-        ...folderEntries(t, folder, actions, () => onOpen(folder.id), may),
-      ])}
+      {...(may ? dragOut(() => props.dragging("folder", folder.id)) : {})}
+      {...folderMenu(t, props)}
     >
-      <span className="drive-folder__icon" aria-hidden="true">
-        <Icon name="drive" size={20} />
+      <span className="drive-folder__lead">
+        <span className="drive-row__icon" aria-hidden="true">
+          <Icon name="drive" size={20} />
+        </span>
+        <FolderCheck {...props} />
       </span>
-      <button type="button" className="drive-folder__name drive-hit" onClick={() => onOpen(folder.id)}>
+      <button type="button" className="drive-folder__name drive-hit" onClick={(e) => onPick(folder, e)}>
         {folder.name}
       </button>
       <span className="drive-folder__more">
@@ -463,31 +528,28 @@ export function FolderCard(props: FolderItemProps) {
   );
 }
 
-/** A folder in the list: the same columns as a file, its maker and when it changed. */
+/** A folder in the list: the same columns as a file (checkbox, icon, name), its maker and when it changed. */
 export function FolderRow(props: FolderItemProps) {
   const { t, i18n } = useTranslation();
   const authorName = useAuthorName();
-  const { folder, actions, may, onOpen, onDrop } = props;
+  const { folder, actions, may, onOpen, onDrop, selected, onPick } = props;
   const drop = useDropTarget((drag) => onDrop(drag, folder.id));
   const name = authorName(folder.createdBy);
   const when = relativeTime(t, i18n.language, folder.updatedAt);
   return (
     <li
-      className={cx("drive-row drive-row--folder", drop.over && "drive-row--over")}
+      className={cx("drive-row drive-row--folder", selected && "drive-row--selected", drop.over && "drive-row--over")}
       {...drop.props}
-      {...(may ? dragOut(() => ({ files: [], folders: [folder.id] })) : {})}
-      {...entityMenu(() => [
-        { kind: "header", label: folder.name },
-        ...folderEntries(t, folder, actions, () => onOpen(folder.id), may),
-      ])}
+      {...(may ? dragOut(() => props.dragging("folder", folder.id)) : {})}
+      {...folderMenu(t, props)}
     >
-      <span />
-      <span className="drive-row__name">
-        <span className="drive-folder__icon" aria-hidden="true">
+      <FolderCheck {...props} />
+      <span className="drive-row__name ac-iconline">
+        <span className="drive-row__icon" aria-hidden="true">
           <Icon name="drive" size={20} />
         </span>
         <span className="drive-row__text">
-          <button type="button" className="drive-row__title drive-hit" onClick={() => onOpen(folder.id)}>
+          <button type="button" className="drive-row__title drive-hit" onClick={(e) => onPick(folder, e)}>
             {folder.name}
           </button>
           <span className="drive-row__sub">

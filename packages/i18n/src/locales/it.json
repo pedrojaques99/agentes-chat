@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Chiudi",
+    "details": "Dettagli",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Non si può annullare.",
     "removeName": "Rimuovi {{name}}",
@@ -6632,7 +6633,7 @@
         "cli_closed": "Il programma {{brain}} si è chiuso all'improvviso.",
         "cli_sandbox": "Il programma {{brain}} non riesce ad avviare la sua sandbox su questo computer. Scegli un'altra IA nelle impostazioni dell'agente.",
         "account_missing": "L'account scelto per questo agente non è più sul suo computer. Scegline un altro nelle impostazioni dell'agente o aggiungilo di nuovo.",
-        "windows_sandbox": "Questo computer Windows non riesce a isolare i comandi di Codex: serve Windows 11 24H2 o più recente.",
+        "windows_sandbox": "Questo computer Windows non riesce a isolare i comandi di Codex: serve Windows 11 24H2 o più recente. Aggiorna Windows, scegli Claude o una chiave API per questo agente, oppure spostalo su un computer Linux.",
         "our_error": "Qualcosa è andato storto da parte nostra e l'attività si è fermata. Richiedilo tra poco.",
         "unknown": "Non riuscita."
       }
@@ -8184,7 +8185,10 @@
     "unreachableTitle": "Impossibile raggiungere agentes.chat",
     "unreachableText": "Potrebbe essere in riavvio. Questa pagina si riapre da sola appena torna disponibile.",
     "offlineTitle": "Sei offline",
-    "offlineText": "Questa pagina si riapre da sola quando torni online."
+    "offlineText": "Questa pagina si riapre da sola quando torni online.",
+    "unknownHostTitle": "Questo indirizzo non è ancora configurato",
+    "unknownHostText": "Se è stato appena collegato, riprova tra qualche minuto.",
+    "unknownHostTab": "Indirizzo non configurato · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -12433,12 +12437,6 @@
       "read": "{{name}} l'ha letto",
       "resolved": "{{name}} ha chiuso la richiesta di aiuto"
     },
-    "well": {
-      "readYours": "Ha letto la tua nota",
-      "readOf": "Ha letto la nota di {{name}}",
-      "nowYours": "Si è fermato per leggere la tua nota",
-      "nowOf": "Si è fermato per leggere la nota di {{name}}"
-    },
     "strip": {
       "see": "Vedi",
       "toStop": "per fermare"
@@ -12604,8 +12602,6 @@
     "see": "Vedi la coda",
     "openComputer": "Apri il computer",
     "label": "Coda di {{name}}",
-    "full": "Pieno",
-    "fullNext": "Pieno · il prossimo inizia tra circa {{n}} min",
     "free": "Nessuno in coda",
     "workingNow": "Al lavoro ora · {{n}}",
     "inLine": "In coda · {{n}}",
@@ -13108,7 +13104,15 @@
     "folderDeleted_other": "Cartella eliminata. {{count}} file sono andati nel cestino.",
     "folderDeletedKept_one": "Cartella eliminata. {{count}} file che non puoi eliminare è salito di un livello.",
     "folderDeletedKept_many": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello.",
-    "folderDeletedKept_other": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello."
+    "folderDeletedKept_other": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello.",
+    "delete": "Elimina",
+    "deleteItemsTitle_one": "Eliminare {{count}} elemento?",
+    "deleteItemsTitle_many": "Eliminare {{count}} elementi?",
+    "deleteItemsTitle_other": "Eliminare {{count}} elementi?",
+    "deleteItemsBody": "Le cartelle vengono eliminate con tutto ciò che contengono. I file che puoi eliminare vanno nel cestino per 30 giorni. Quelli degli altri salgono di un livello.",
+    "itemsDeleted_one": "{{count}} elemento eliminato.",
+    "itemsDeleted_many": "{{count}} elementi eliminati.",
+    "itemsDeleted_other": "{{count}} elementi eliminati."
   },
   "storage": {
     "title": "Archiviazione",
@@ -18152,7 +18156,7 @@
       "routines": "Routine"
     },
     "hint": {
-      "handoffs": "Gran parte dell’uso di questa settimana viene da agenti che si passano il lavoro. Per i lavori lunghi, chiedi direttamente all’agente.",
+      "handoffs": "La maggior parte è venuta da passaggi tra agenti.",
       "message": "Scrivi a {{name}}"
     }
   },

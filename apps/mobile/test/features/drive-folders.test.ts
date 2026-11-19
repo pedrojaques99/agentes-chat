@@ -9,18 +9,33 @@ describe("the phone's Drive folders", () => {
     expect(read("app/(app)/(main)/drive/index.tsx")).toContain("folderId={isSafeId(folder) ? folder : null}");
     const screen = read("src/features/drive/DriveScreen.tsx");
     expect(screen).toContain("{here ? <FolderPath trail={trail} /> : null}");
-    expect(screen).toContain("<FolderRows folders={subfolders} onMenu={mayUpload ? arrange.folderMenu : null} />");
+    expect(screen).toContain(
+      "<FolderRows folders={subfolders} onMenu={(f) => arrange.folderMenu(f, mayUpload)} more={mayUpload} />",
+    );
     expect(screen).toContain('title={t("drive.folderEmptyTitle")}');
     // Uploads land in the folder shown.
     expect(screen).toContain("useDriveUpload(list.refetch, folderId)");
   });
 
-  test("who adds to the Drive makes folders and moves or renames files from a long press", () => {
+  test("a long press on a file or a folder opens its actions, as the web's right click", () => {
     const screen = read("src/features/drive/DriveScreen.tsx");
     expect(screen).toContain("onPress: () => arrange.newFolder(folderId)");
-    expect(screen).toContain("{...(mayUpload ? { onLongPress: arrange.fileMenu } : {})}");
+    expect(screen).toContain("onLongPress={(x, open) => arrange.fileMenu(x, open, mayUpload)}");
     const folders = read("src/features/drive/folders.tsx");
-    expect(folders).toContain('label: t("drive.moveToMenu")');
+    expect(folders).toContain("onLongPress={() => onMenu(f)}");
+    for (const label of ["artifacts.openFile", "mobile.files.sendCopy", "drive.rename", "drive.moveToMenu"]) {
+      expect(folders).toContain(`label: t("${label}")`);
+    }
+    expect(folders).toContain('label: t("artifacts.delete")');
+    expect(folders).toContain('label: t("drive.openFolder")');
     expect(folders).toContain("folderAndInside(all, movingFolder)");
+  });
+
+  test("the move picker is a tree: a guide line per level, no path line", () => {
+    const folders = read("src/features/drive/folders.tsx");
+    expect(folders).toContain("depth: depth + 1,");
+    expect(folders).not.toContain('sub: [t("drive.title")');
+    const grouped = read("src/ui/Grouped.tsx");
+    expect(grouped).toContain("left: TREE_X + i * NEST");
   });
 });

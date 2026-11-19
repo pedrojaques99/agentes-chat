@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "閉じる",
+    "details": "詳細",
     "joinSentences": "{{a}}{{b}}",
     "cantUndo": "元に戻せません。",
     "removeName": "{{name}}を削除",
@@ -6131,7 +6132,7 @@
         "cli_closed": "突然{{brain}}が終了しました。",
         "cli_sandbox": "{{brain}}がこのコンピューターでサンドボックスを起動できません。エージェントの設定で別のAIを選んでください。",
         "account_missing": "このエージェント用に選んだアカウントが、もうコンピューターにありません。エージェントの設定で別のアカウントを選ぶか、もう一度追加してください。",
-        "windows_sandbox": "この Windows コンピューターでは Codex のコマンドを隔離できません。Windows 11 24H2 以降が必要です。",
+        "windows_sandbox": "この Windows コンピューターでは Codex のコマンドを隔離できません。Windows 11 24H2 以降が必要です。Windows を更新するか、このエージェントに Claude または API キーを選ぶか、Linux コンピューターに移してください。",
         "our_error": "こちら側で問題が発生し、タスクが止まりました。少し時間をおいてもう一度依頼してください。",
         "unknown": "失敗しました。"
       }
@@ -7574,7 +7575,10 @@
     "unreachableTitle": "agentes.chatに接続できません",
     "unreachableText": "再起動中かもしれません。復旧しだい、このページは自動で開きます。",
     "offlineTitle": "オフラインです",
-    "offlineText": "オンラインに戻ると、このページは自動で開きます。"
+    "offlineText": "オンラインに戻ると、このページは自動で開きます。",
+    "unknownHostTitle": "このアドレスはまだ設定されていません",
+    "unknownHostText": "接続したばかりなら、数分後にもう一度お試しください。",
+    "unknownHostTab": "未設定のアドレス · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -11453,12 +11457,6 @@
       "read": "{{name}}が読みました",
       "resolved": "{{name}}がヘルプリクエストを閉じました"
     },
-    "well": {
-      "readYours": "あなたのメモを読みました",
-      "readOf": "{{name}}のメモを読みました",
-      "nowYours": "手を止めてあなたのメモを読みました",
-      "nowOf": "手を止めて{{name}}のメモを読みました"
-    },
     "strip": {
       "see": "表示",
       "toStop": "で停止"
@@ -11620,8 +11618,6 @@
     "see": "待ち行列を見る",
     "openComputer": "コンピューターを開く",
     "label": "{{name}}の待ち行列",
-    "full": "満杯",
-    "fullNext": "満杯 · 次は約{{n}}分後に開始",
     "free": "待っている人はいません",
     "workingNow": "作業中 · {{n}}",
     "inLine": "待機中 · {{n}}",
@@ -12069,7 +12065,11 @@
     "deleteFolderBody": "中のフォルダも削除されます。削除できるファイルは30日間ゴミ箱に入ります。ほかの人のファイルは、このフォルダがあった場所に移ります。",
     "folderDeletedEmpty": "フォルダを削除しました。",
     "folderDeleted_other": "フォルダを削除しました。{{count}} 件のファイルがゴミ箱に入りました。",
-    "folderDeletedKept_other": "フォルダを削除しました。削除できない {{count}} 件のファイルは1つ上の階層に移りました。"
+    "folderDeletedKept_other": "フォルダを削除しました。削除できない {{count}} 件のファイルは1つ上の階層に移りました。",
+    "delete": "削除",
+    "deleteItemsTitle_other": "{{count}} 件を削除しますか？",
+    "deleteItemsBody": "フォルダは中身ごと削除されます。削除できるファイルは 30 日間ゴミ箱に入ります。ほかの人のファイルは 1 つ上の階層に移動します。",
+    "itemsDeleted_other": "{{count}} 件を削除しました。"
   },
   "storage": {
     "title": "ストレージ",
@@ -16975,7 +16975,7 @@
       "routines": "ルーティン"
     },
     "hint": {
-      "handoffs": "今週の利用の大半は、エージェント同士の作業の引き継ぎによるものです。長い作業はエージェントに直接頼みましょう。",
+      "handoffs": "大半はエージェント間の引き継ぎによるものです。",
       "message": "{{name}}にメッセージ"
     }
   },

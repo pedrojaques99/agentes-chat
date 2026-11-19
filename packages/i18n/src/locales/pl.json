@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Zamknij",
+    "details": "Szczegóły",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Tego nie da się cofnąć.",
     "removeName": "Usuń {{name}}",
@@ -6876,7 +6877,7 @@
         "cli_closed": "Program {{brain}} nagle się zamknął.",
         "cli_sandbox": "Program {{brain}} nie może uruchomić swojego sandboxa na tym komputerze. Wybierz inną AI w ustawieniach agenta.",
         "account_missing": "Konta wybranego dla tego agenta nie ma już na jego komputerze. Wybierz inne w ustawieniach agenta albo dodaj je ponownie.",
-        "windows_sandbox": "Ten komputer z Windows nie może odizolować poleceń Codex: potrzebuje Windows 11 24H2 lub nowszego.",
+        "windows_sandbox": "Ten komputer z Windows nie może odizolować poleceń Codex: potrzebuje Windows 11 24H2 lub nowszego. Zaktualizuj Windows, wybierz Claude albo klucz API dla tego agenta lub przenieś go na komputer z Linuksem.",
         "our_error": "Coś poszło nie tak po naszej stronie i zadanie się zatrzymało. Poproś ponownie za chwilę.",
         "unknown": "Błąd."
       }
@@ -8455,7 +8456,10 @@
     "unreachableTitle": "Brak połączenia z agentes.chat",
     "unreachableText": "Może trwa ponowne uruchamianie. Ta strona otworzy się sama, gdy tylko wszystko wróci.",
     "offlineTitle": "Jesteś offline",
-    "offlineText": "Ta strona otworzy się sama, gdy wrócisz do sieci."
+    "offlineText": "Ta strona otworzy się sama, gdy wrócisz do sieci.",
+    "unknownHostTitle": "Ten adres nie jest jeszcze skonfigurowany",
+    "unknownHostText": "Jeśli został właśnie podłączony, spróbuj ponownie za kilka minut.",
+    "unknownHostTab": "Adres nieskonfigurowany · agentes.chat"
   },
   "scopes": {
     "context_read": {
@@ -12880,12 +12884,6 @@
       "read": "{{name}}: przeczytane",
       "resolved": "{{name}}: prośba o pomoc zamknięta"
     },
-    "well": {
-      "readYours": "Twoja notatka przeczytana",
-      "readOf": "Notatka od {{name}} przeczytana",
-      "nowYours": "Przerwa na przeczytanie twojej notatki",
-      "nowOf": "Przerwa na przeczytanie notatki od {{name}}"
-    },
     "strip": {
       "see": "Zobacz",
       "toStop": "aby zatrzymać"
@@ -13052,8 +13050,6 @@
     "see": "Zobacz kolejkę",
     "openComputer": "Otwórz komputer",
     "label": "Kolejka: {{name}}",
-    "full": "Pełny",
-    "fullNext": "Pełny · następny zacznie za około {{n}} min",
     "free": "Nikt nie czeka",
     "workingNow": "Pracuje teraz · {{n}}",
     "inLine": "W kolejce · {{n}}",
@@ -13591,7 +13587,17 @@
     "folderDeletedKept_one": "Folder usunięty. {{count}} plik, którego nie możesz usunąć, przeszedł poziom wyżej.",
     "folderDeletedKept_few": "Folder usunięty. {{count}} pliki, których nie możesz usunąć, przeszły poziom wyżej.",
     "folderDeletedKept_many": "Folder usunięty. {{count}} plików, których nie możesz usunąć, przeszło poziom wyżej.",
-    "folderDeletedKept_other": "Folder usunięty. {{count}} pliku, których nie możesz usunąć, przeszło poziom wyżej."
+    "folderDeletedKept_other": "Folder usunięty. {{count}} pliku, których nie możesz usunąć, przeszło poziom wyżej.",
+    "delete": "Usuń",
+    "deleteItemsTitle_one": "Usunąć {{count}} element?",
+    "deleteItemsTitle_few": "Usunąć {{count}} elementy?",
+    "deleteItemsTitle_many": "Usunąć {{count}} elementów?",
+    "deleteItemsTitle_other": "Usunąć {{count}} elementu?",
+    "deleteItemsBody": "Foldery znikają razem z całą zawartością. Pliki, które możesz usunąć, trafiają do kosza na 30 dni. Pliki innych osób przechodzą poziom wyżej.",
+    "itemsDeleted_one": "Usunięto {{count}} element.",
+    "itemsDeleted_few": "Usunięto {{count}} elementy.",
+    "itemsDeleted_many": "Usunięto {{count}} elementów.",
+    "itemsDeleted_other": "Usunięto {{count}} elementu."
   },
   "storage": {
     "title": "Miejsce na dane",
@@ -18710,7 +18716,7 @@
       "routines": "Rutyny"
     },
     "hint": {
-      "handoffs": "Większość użycia w tym tygodniu pochodziła z agentów przekazujących sobie pracę. Długą pracę zlecaj bezpośrednio agentowi.",
+      "handoffs": "Większość pochodziła z przekazań między agentami.",
       "message": "Napisz do: {{name}}"
     }
   },

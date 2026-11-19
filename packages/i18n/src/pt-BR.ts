@@ -14,6 +14,7 @@ export const ptBR = {
   },
   common: {
     close: "Fechar",
+    details: "Detalhes",
     joinSentences: "{{a}} {{b}}",
     cantUndo: "Não dá para desfazer.",
     removeName: "Remover {{name}}",
@@ -6767,7 +6768,7 @@ export const ptBR = {
           "A conta escolhida para este agente não está mais no computador dele. Escolha outra nas configurações do agente ou adicione de novo.",
         /** A Codex turn on a Windows computer where MXC can't hold its commands (runner `windows_sandbox`). */
         windows_sandbox:
-          "Este computador com Windows não consegue isolar os comandos do Codex: ele precisa do Windows 11 24H2 ou mais novo.",
+          "Este computador com Windows não consegue isolar os comandos do Codex: ele precisa do Windows 11 24H2 ou mais novo. Atualize o Windows, escolha o Claude ou uma chave de API para este agente, ou mova-o para um computador Linux.",
         our_error: "Algo deu errado do nosso lado e a tarefa parou. Peça de novo daqui a pouco.",
         unknown: "Falhou.",
       },
@@ -8351,6 +8352,9 @@ export const ptBR = {
     unreachableText: "Ele pode estar reiniciando. Esta página abre sozinha assim que ele voltar.",
     offlineTitle: "Você está sem internet",
     offlineText: "Esta página abre sozinha quando a internet voltar.",
+    unknownHostTitle: "Este endereço ainda não está configurado",
+    unknownHostText: "Se ele acabou de ser conectado, tente de novo em alguns minutos.",
+    unknownHostTab: "Endereço não configurado · agentes.chat",
   },
   scopes: {
     context_read: { label: "Ler o contexto", description: "Buscar mensagens, resumos e fatos nos canais do agente." },
@@ -12350,12 +12354,6 @@ export const ptBR = {
       read: "{{name}} leu",
       resolved: "{{name}} encerrou o pedido de ajuda",
     },
-    well: {
-      readYours: "Leu seu recado",
-      readOf: "Leu o recado de {{name}}",
-      nowYours: "Parou para ler seu recado",
-      nowOf: "Parou para ler o recado de {{name}}",
-    },
     strip: {
       see: "Ver",
       toStop: "para parar",
@@ -12534,8 +12532,6 @@ export const ptBR = {
     /** In the line's dialog opened from a DM: on to the agent's computer. */
     openComputer: "Abrir o computador",
     label: "Fila de {{name}}",
-    full: "Cheio",
-    fullNext: "Cheio · o próximo começa em cerca de {{n}} min",
     free: "Ninguém na fila",
     workingNow: "Trabalhando agora · {{n}}",
     inLine: "Na fila · {{n}}",
@@ -13005,6 +13001,13 @@ export const ptBR = {
     folderDeleted_other: "Pasta excluída. {{count}} arquivos foram para a lixeira.",
     folderDeletedKept_one: "Pasta excluída. {{count}} arquivo que você não pode excluir subiu um nível.",
     folderDeletedKept_other: "Pasta excluída. {{count}} arquivos que você não pode excluir subiram um nível.",
+    delete: "Excluir",
+    deleteItemsTitle_one: "Excluir {{count}} item?",
+    deleteItemsTitle_other: "Excluir {{count}} itens?",
+    deleteItemsBody:
+      "As pastas vão com tudo o que têm dentro. Os arquivos que você pode excluir vão para a lixeira por 30 dias. Os de outras pessoas sobem um nível.",
+    itemsDeleted_one: "{{count}} item excluído.",
+    itemsDeleted_other: "{{count}} itens excluídos.",
   },
   storage: {
     title: "Armazenamento",
@@ -17840,8 +17843,7 @@ export const ptBR = {
       routines: "Rotinas",
     },
     hint: {
-      handoffs:
-        "A maior parte do uso desta semana veio de agentes passando trabalho uns aos outros. Para trabalhos longos, peça direto ao agente.",
+      handoffs: "A maior parte veio de repasses entre agentes.",
       message: "Mandar mensagem para {{name}}",
     },
   },

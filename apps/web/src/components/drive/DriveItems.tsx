@@ -1,6 +1,7 @@
 import type { Artifact, ArtifactKind } from "@agenteschat/client";
 import { isLiveFileKind } from "@agenteschat/client";
 import { KIND_ICON } from "@agenteschat/client/lib/artifacts";
+import type { DriveDrag } from "@agenteschat/client/lib/drive";
 import { fileIcon } from "@agenteschat/client/lib/files";
 import { relativeTime } from "@agenteschat/client/lib/format";
 import { Checkbox, cx, Icon, type IconName } from "@agenteschat/ui";
@@ -9,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { ActorAvatar } from "@/components/AgentAvatar";
 import { ArtifactMoreMenu, useArtifactEntries } from "@/components/artifacts/ArtifactActions";
 import { useAuthorName } from "@/components/artifacts/ArtifactViewer";
+import type { MenuEntry } from "@/lib/context-menu";
 import { entityMenu } from "@/lib/entity-menu";
 import { dragOut } from "./DriveFolders";
 import { DrivePreview } from "./DrivePreview";
@@ -38,7 +40,9 @@ export interface ItemProps {
   onRename?: (a: Artifact) => void;
   onMove?: (a: Artifact) => void;
   /** What dragging it carries: the selection when it is in it, else itself. */
-  dragging?: (a: Artifact) => string[];
+  dragging?: (a: Artifact) => DriveDrag;
+  /** The selection's menu when it is part of one (null: its own). */
+  selectionMenu?: (kind: "folder" | "file", id: string) => MenuEntry[] | null;
 }
 
 /**
@@ -58,18 +62,19 @@ export function DriveCard({
   onRename,
   onMove,
   dragging,
+  selectionMenu,
 }: ItemProps & { onDelete: (a: Artifact) => void }) {
   const { t, i18n } = useTranslation();
   const authorName = useAuthorName();
   const name = authorName(a.createdBy);
-  const menu = useItemMenu(a, { onOpen, onDelete, onRename, onMove });
+  const menu = useItemMenu(a, { onOpen, onDelete, onRename, onMove }, selectionMenu);
   return (
     <>
       <article
         className={cx("drive-card", selected && "drive-card--selected")}
         data-kind={a.kind}
         {...menu.props}
-        {...(dragging ? dragOut(() => ({ files: dragging(a), folders: [] })) : {})}
+        {...(dragging ? dragOut(() => dragging(a)) : {})}
       >
         <DrivePreview artifact={a} />
         <span className="drive-card__kind">
@@ -118,12 +123,16 @@ export function DriveCard({
 function useItemMenu(
   a: Artifact,
   handlers: Pick<ItemProps, "onOpen" | "onRename" | "onMove"> & { onDelete: (a: Artifact) => void },
+  selectionMenu: ItemProps["selectionMenu"],
 ) {
   const entries = useArtifactEntries();
-  const props = entityMenu(() => [
-    { kind: "header", label: a.title },
-    ...entries(a, { ...menuOptions(a, handlers), download: true }),
-  ]);
+  const props = entityMenu(
+    () =>
+      selectionMenu?.("file", a.id) ?? [
+        { kind: "header", label: a.title },
+        ...entries(a, { ...menuOptions(a, handlers), download: true }),
+      ],
+  );
   return { props, dialog: entries.dialog };
 }
 
@@ -138,7 +147,7 @@ const menuOptions = (
   ...(h.onMove ? { onMove: () => h.onMove?.(a) } : {}),
 });
 
-/** A list row: checkbox, small preview + title, who, where, when, "…". */
+/** A list row: checkbox, the kind's icon and the title (a folder row's columns), who, where, when, "…". */
 export function DriveRow({
   artifact: a,
   selected,
@@ -150,19 +159,20 @@ export function DriveRow({
   onRename,
   onMove,
   dragging,
+  selectionMenu,
 }: ItemProps & { onDelete: (a: Artifact) => void }) {
   const { t, i18n } = useTranslation();
   const authorName = useAuthorName();
   const name = authorName(a.createdBy);
   const when = relativeTime(t, i18n.language, a.updatedAt);
-  const menu = useItemMenu(a, { onOpen, onDelete, onRename, onMove });
+  const menu = useItemMenu(a, { onOpen, onDelete, onRename, onMove }, selectionMenu);
   return (
     <>
       <li
         className={cx("drive-row", selected && "drive-row--selected")}
         data-kind={a.kind}
         {...menu.props}
-        {...(dragging ? dragOut(() => ({ files: dragging(a), folders: [] })) : {})}
+        {...(dragging ? dragOut(() => dragging(a)) : {})}
       >
         <Checkbox
           className="drive-check"
@@ -171,8 +181,10 @@ export function DriveRow({
           onClick={(e) => shiftRange(e, a, onPick)}
           aria-label={t("drive.select", { title: a.title })}
         />
-        <span className="drive-row__name">
-          <DrivePreview artifact={a} size="sm" />
+        <span className="drive-row__name ac-iconline">
+          <span className="drive-row__icon" aria-hidden="true">
+            <Icon name={itemIcon(a)} size={20} />
+          </span>
           <span className="drive-row__text">
             <button
               type="button"
@@ -183,7 +195,6 @@ export function DriveRow({
               {a.title}
             </button>
             <span className="drive-row__sub">
-              <Icon name={itemIcon(a)} size={14} />
               <span className="drive-row__subtext">
                 {t(`artifacts.kind.${a.kind}`)}
                 {a.version > 1 && !isLiveFileKind(a.kind) && ` · ${t("artifacts.version", { version: a.version })}`}

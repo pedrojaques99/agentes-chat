@@ -55,6 +55,36 @@ export function useDriveUpload(onUploaded?: (saved: ArtifactDetail, file: File) 
   return { upload, busy: current !== null, current, queue };
 }
 
+/** The system's file picker on demand (a button, a menu entry): `input` goes on the page, hidden; `open` shows it. */
+export function useFilePicker({
+  label,
+  onFiles,
+  multiple,
+}: {
+  label: string;
+  onFiles: (files: File[]) => void;
+  multiple?: boolean | undefined;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const input = (
+    <input
+      ref={ref}
+      type="file"
+      hidden
+      tabIndex={-1}
+      multiple={multiple}
+      aria-label={label}
+      data-upload-input=""
+      onChange={(e) => {
+        const files = Array.from(e.target.files ?? []);
+        e.target.value = "";
+        if (files.length > 0) onFiles(files);
+      }}
+    />
+  );
+  return { input, open: () => ref.current?.click() };
+}
+
 /** A button that opens the file picker (the input itself stays hidden). */
 export function UploadButton({
   label,
@@ -76,7 +106,7 @@ export function UploadButton({
   /** The words in a span of this class (a bar that shows only the icon on a phone), the button titled with them. */
   labelClassName?: string;
 }) {
-  const input = useRef<HTMLInputElement>(null);
+  const picker = useFilePicker({ label, onFiles, multiple });
   return (
     <>
       <Button
@@ -86,25 +116,12 @@ export function UploadButton({
         className={className}
         loading={busy}
         disabled={busy}
-        onClick={() => input.current?.click()}
+        onClick={picker.open}
         {...(labelClassName ? { title: label } : {})}
       >
         {labelClassName ? <span className={labelClassName}>{label}</span> : label}
       </Button>
-      <input
-        ref={input}
-        type="file"
-        hidden
-        tabIndex={-1}
-        multiple={multiple}
-        aria-label={label}
-        data-upload-input=""
-        onChange={(e) => {
-          const files = Array.from(e.target.files ?? []);
-          e.target.value = "";
-          if (files.length > 0) onFiles(files);
-        }}
-      />
+      {picker.input}
     </>
   );
 }

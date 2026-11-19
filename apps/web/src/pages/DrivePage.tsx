@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactFilters, ArtifactKind } from "@agenteschat/client";
+import type { Artifact, ArtifactFilters, ArtifactKind, DriveFolder } from "@agenteschat/client";
 import { isLiveFileKind, keys as queryKeys, useApi, useArtifacts, useChannels } from "@agenteschat/client";
 import { ARTIFACT_KINDS, KIND_ICON } from "@agenteschat/client/lib/artifacts";
 import {
@@ -47,8 +47,14 @@ import { ActorAvatar } from "@/components/AgentAvatar";
 import { useArtifactDownload, useDeleteArtifact } from "@/components/artifacts/ArtifactActions";
 import { artifactLink, useArtifactViewer, useAuthorName } from "@/components/artifacts/ArtifactViewer";
 import { useFileShare } from "@/components/artifacts/ShareDialog";
-import { UploadButton, useDriveUpload } from "@/components/artifacts/Upload";
-import { DriveCrumbs, FolderCard, FolderRow, useFolderActions } from "@/components/drive/DriveFolders";
+import { UploadButton, useDriveUpload, useFilePicker } from "@/components/artifacts/Upload";
+import {
+  DriveCrumbs,
+  FolderCard,
+  type FolderItemProps,
+  FolderRow,
+  useFolderActions,
+} from "@/components/drive/DriveFolders";
 import { DriveCard, DriveRow, type ItemProps } from "@/components/drive/DriveItems";
 import { DriveTrash } from "@/components/drive/DriveTrash";
 import { DropOverlay, UploadProgress, useFileDrop } from "@/components/drive/DriveUploads";
@@ -61,6 +67,8 @@ import { COMPACT_QUERY } from "@/components/NavDrawer";
 import { useOrg } from "@/components/org-context";
 import { SelectionBar } from "@/components/SelectionBar";
 import { useRightHandLook } from "@/hooks/useRightHandLook";
+import type { MenuEntry } from "@/lib/context-menu";
+import { entityMenu } from "@/lib/entity-menu";
 import { STORAGE_KEYS, storage } from "@/lib/storage";
 import { useToast } from "@/lib/toast";
 import "./drive.css";
@@ -120,6 +128,11 @@ export function DrivePage({
   const [group, setGroup] = useState<DriveGroup>("date");
   const [sort, setSort] = useState<DriveSort>("recent");
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(() => new Set());
+  const clearSelection = () => {
+    setSelected(new Set());
+    setSelectedFolders(new Set());
+  };
   const anchor = useRef<string | null>(null);
   const [uploadsHidden, setUploadsHidden] = useState(false);
 
@@ -172,13 +185,21 @@ export function DrivePage({
       : []
     : (folderChildren(arrange.folders).get(folder ?? "") ?? []);
   const openFolder = (id: string | null) => {
-    setSelected(new Set());
+    clearSelection();
     onFolder(id);
   };
   const dropInto = (drag: { files: string[]; folders: string[] }, target: string | null) =>
     void arrange.move(drag, target);
-  /** A file dragged while selected takes the whole selection along. */
-  const dragging = (a: Artifact) => (selected.has(a.id) ? [...selected] : [a.id]);
+  /** An item dragged while selected takes the whole selection along. */
+  const inSelection = (kind: "folder" | "file", id: string) =>
+    kind === "folder" ? selectedFolders.has(id) : selected.has(id);
+  const selectionDrag = () => ({ files: [...selected], folders: [...selectedFolders] });
+  const dragOf = (kind: "folder" | "file", id: string) =>
+    inSelection(kind, id)
+      ? selectionDrag()
+      : kind === "folder"
+        ? { files: [], folders: [id] }
+        : { files: [id], folders: [] };
   const drop = useFileDrop(upload, !trashOpen);
 
   // A shared link (`/drive?artifact=…&v=…`) opens the viewer, or a live file's own page in its place (ADR 0196 §9):
@@ -239,9 +260,15 @@ export function DrivePage({
     setWho("all");
   };
   const picked = shown.filter((a) => selected.has(a.id));
+  const pickedFolders = subfolders.filter((f) => selectedFolders.has(f.id));
+  const pickedCount = picked.length + pickedFolders.length;
+  const shownCount = shown.length + subfolders.length;
   // Who is in the live files shown, asked once for the page (their cards show the faces).
   const liveIds = shown.filter((a) => isLiveFileKind(a.kind)).map((a) => a.id);
-  const selectAll = () => setSelected(new Set(shown.map((a) => a.id)));
+  const selectAll = () => {
+    setSelected(new Set(shown.map((a) => a.id)));
+    setSelectedFolders(new Set(subfolders.map((f) => f.id)));
+  };
 
   const toggle = (a: Artifact) => {
     anchor.current = a.id;
@@ -263,7 +290,7 @@ export function DrivePage({
       setSelected((s) => new Set([...s, ...range]));
       return;
     }
-    if (e.metaKey || e.ctrlKey || selected.size > 0) {
+    if (e.metaKey || e.ctrlKey || pickedCount > 0) {
       toggle(a);
       return;
     }
@@ -277,9 +304,21 @@ export function DrivePage({
     else viewer.open(a.id);
   };
 
+  const toggleFolder = (f: DriveFolder) =>
+    setSelectedFolders((s) => {
+      const next = new Set(s);
+      if (next.has(f.id)) next.delete(f.id);
+      else next.add(f.id);
+      return next;
+    });
+  const pickFolder = (f: DriveFolder, e: MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || pickedCount > 0) toggleFolder(f);
+    else openFolder(f.id);
+  };
+
   // "/" searches, ⌘A selects what's shown, Esc clears the selection.
-  const keys = useRef({ shown, selected, trashOpen, selectAll });
-  keys.current = { shown, selected, trashOpen, selectAll };
+  const keys = useRef({ shownCount, pickedCount, trashOpen, selectAll, clearSelection });
+  keys.current = { shownCount, pickedCount, trashOpen, selectAll, clearSelection };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const s = keys.current;
@@ -288,14 +327,14 @@ export function DrivePage({
       if (e.key === "Escape") {
         if (typingInField(active)) return;
         // The viewer closes itself on Esc; here Esc clears the selection.
-        if (s.selected.size > 0) setSelected(new Set());
+        if (s.pickedCount > 0) s.clearSelection();
         return;
       }
       if (typingInField(active) || e.altKey) return;
       if (e.key === "/" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         searchRef.current?.focus();
-      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a" && s.shown.length > 0) {
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a" && s.shownCount > 0) {
         e.preventDefault();
         s.selectAll();
       }
@@ -319,6 +358,59 @@ export function DrivePage({
     } else toast.show(t("drive.linksCopied", { count: picked.length }));
   };
   const deletable = picked.filter((a) => a.canDelete);
+  // Folders go only for who arranges the Drive; their own files the server sorts (trash, or up a level).
+  const deletableFolders = uploads ? pickedFolders : [];
+  const canDeleteSelection = deletable.length + deletableFolders.length > 0;
+  const moveSelection = () => {
+    const at = new Set([...picked.map((a) => a.folderId ?? null), ...pickedFolders.map((f) => f.parentId)]);
+    arrange.askMove(
+      { files: picked.map((a) => a.id), folders: pickedFolders.map((f) => f.id) },
+      at.size === 1 ? [...at][0] : undefined,
+    );
+  };
+  const deleteSelection = () => {
+    if (deletableFolders.length > 0) arrange.askDeleteMany(deletableFolders, deletable, clearSelection);
+    else remover.ask(deletable);
+  };
+  /** Right click on an item of a selection of several: the menu is for all of them. */
+  const selectionMenu = (kind: "folder" | "file", id: string): MenuEntry[] | null =>
+    pickedCount > 1 && inSelection(kind, id)
+      ? [
+          { kind: "header", label: t("drive.selected", { count: pickedCount }) },
+          ...(uploads
+            ? ([{ kind: "item", id: "move", label: t("drive.moveToMenu"), icon: "move", run: moveSelection }] as const)
+            : []),
+          ...(canDeleteSelection
+            ? ([
+                { kind: "separator" },
+                {
+                  kind: "item",
+                  id: "delete",
+                  label: deletableFolders.length > 0 ? t("drive.delete") : t("drive.moveToTrash"),
+                  icon: "trash",
+                  danger: true,
+                  run: deleteSelection,
+                },
+              ] as const)
+            : []),
+        ]
+      : null;
+  const filePicker = useFilePicker({ label: t("files.upload"), onFiles: upload, multiple: true });
+  /** Right click or the menu key on the Drive's empty space: what makes something here. */
+  const pageMenu = entityMenu((): MenuEntry[] =>
+    uploads && !trashOpen
+      ? [
+          {
+            kind: "item",
+            id: "new-folder",
+            label: t("drive.newFolder"),
+            icon: "plus",
+            run: () => arrange.newFolder(folder),
+          },
+          { kind: "item", id: "upload", label: t("files.upload"), icon: "upload", run: filePicker.open },
+        ]
+      : [],
+  );
 
   const authorOptions = useActorFilterOptions();
   const channelOptions: FilterOption[] = (channels.data ?? []).map((c) => ({ value: c.id, label: `#${c.name}` }));
@@ -335,19 +427,27 @@ export function DrivePage({
     onPick: pick,
     onToggle: toggle,
     onOpen: openViewer,
+    selectionMenu,
     ...(uploads
       ? {
           onRename: arrange.renameFile,
-          onMove: (x: Artifact) =>
-            arrange.askMove(
-              selected.has(x.id) ? { files: [...selected], folders: [] } : { files: [x.id], folders: [] },
-              x.folderId ?? null,
-            ),
-          dragging,
+          onMove: (x: Artifact) => arrange.askMove(dragOf("file", x.id), x.folderId ?? null),
+          dragging: (x: Artifact) => dragOf("file", x.id),
         }
       : {}),
   });
-  const folderProps = { actions: arrange, may: uploads, onOpen: openFolder, onDrop: dropInto };
+  const folderProps = (f: DriveFolder): FolderItemProps => ({
+    folder: f,
+    actions: arrange,
+    may: uploads,
+    onOpen: openFolder,
+    onDrop: dropInto,
+    selected: selectedFolders.has(f.id),
+    onToggle: toggleFolder,
+    onPick: pickFolder,
+    selectionMenu,
+    dragging: dragOf,
+  });
 
   const sectionTitle = (s: DriveSection) => {
     if (s.key === PRIVATE_SECTION) return t("drive.private");
@@ -412,8 +512,9 @@ export function DrivePage({
   );
 
   return (
-    <div className={cx("page drive drive-drop", drop.over && "drive-drop--over")} {...drop.props}>
+    <div className={cx("page drive drive-drop", drop.over && "drive-drop--over")} {...drop.props} {...pageMenu}>
       {drop.over && <DropOverlay />}
+      {filePicker.input}
       <div className="drive__main">
         <PageHeader
           title={trashOpen ? t("artifacts.trashTitle") : (here?.name ?? t("drive.title"))}
@@ -449,7 +550,7 @@ export function DrivePage({
                   icon="trash"
                   onClick={() => {
                     setTrashOpen(true);
-                    setSelected(new Set());
+                    clearSelection();
                   }}
                 >
                   {t("artifacts.trash")}
@@ -746,16 +847,16 @@ export function DrivePage({
             {subfolders.length > 0 && view === "grid" && (
               <section className="drive-group" aria-label={t("drive.folders")}>
                 <GroupHeading className="drive-group__head" title={t("drive.folders")} count={subfolders.length} />
-                <div className="drive-folders">
+                <div className={cx("drive-folders", pickedCount > 0 && "drive--selecting")}>
                   {subfolders.map((f) => (
-                    <FolderCard key={f.id} folder={f} {...folderProps} />
+                    <FolderCard key={f.id} {...folderProps(f)} />
                   ))}
                 </div>
               </section>
             )}
             <LivePresenceScope ids={liveIds}>
               {rows.length > 0 && view === "grid" && (
-                <div className={cx("ac-groups", selected.size > 0 && "drive--selecting")}>
+                <div className={cx("ac-groups", pickedCount > 0 && "drive--selecting")}>
                   {sections.map((s) => (
                     <section key={s.key || "all"} className="drive-group">
                       {sectionHead(s)}
@@ -769,19 +870,15 @@ export function DrivePage({
                 </div>
               )}
               {(rows.length > 0 || subfolders.length > 0) && view === "list" && (
-                <div className={cx("drive-table", selected.size > 0 && "drive--selecting")}>
+                <div className={cx("drive-table", pickedCount > 0 && "drive--selecting")}>
                   <div className="drive-table__head">
                     <Checkbox
                       className="drive-check"
                       checked={
-                        shown.length > 0 && picked.length === shown.length
-                          ? true
-                          : picked.length > 0
-                            ? "indeterminate"
-                            : false
+                        shownCount > 0 && pickedCount === shownCount ? true : pickedCount > 0 ? "indeterminate" : false
                       }
-                      onCheckedChange={(on) => (on ? selectAll() : setSelected(new Set()))}
-                      aria-label={t("drive.selectAll", { count: shown.length })}
+                      onCheckedChange={(on) => (on ? selectAll() : clearSelection())}
+                      aria-label={t("drive.selectAll", { count: shownCount })}
                     />
                     <span aria-hidden="true">{t("drive.name")}</span>
                     <span aria-hidden="true">{t("drive.by")}</span>
@@ -794,7 +891,7 @@ export function DrivePage({
                   {subfolders.length > 0 && (
                     <ul className="drive-list" aria-label={t("drive.folders")}>
                       {subfolders.map((f) => (
-                        <FolderRow key={f.id} folder={f} {...folderProps} />
+                        <FolderRow key={f.id} {...folderProps(f)} />
                       ))}
                     </ul>
                   )}
@@ -820,45 +917,40 @@ export function DrivePage({
               </div>
             )}
 
-            {picked.length > 0 && (
+            {pickedCount > 0 && (
               <SelectionBar label={t("drive.selection")}>
-                <span className="drive-selbar__count">{t("drive.selected", { count: picked.length })}</span>
-                {picked.length < shown.length && (
+                <span className="drive-selbar__count">{t("drive.selected", { count: pickedCount })}</span>
+                {pickedCount < shownCount && (
                   <Button size="sm" variant="ghost" icon="checks" onClick={selectAll}>
-                    <span className="drive-selbar__label">{t("drive.selectAll", { count: shown.length })}</span>
+                    <span className="drive-selbar__label">{t("drive.selectAll", { count: shownCount })}</span>
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" icon="download" onClick={() => void downloadPicked()}>
-                  <span className="drive-selbar__label">{t("artifacts.download")}</span>
-                </Button>
-                <Button size="sm" variant="ghost" icon="link" onClick={() => void copyLinks()}>
-                  <span className="drive-selbar__label">{t("drive.copyLinks")}</span>
-                </Button>
+                {picked.length > 0 && (
+                  <>
+                    <Button size="sm" variant="ghost" icon="download" onClick={() => void downloadPicked()}>
+                      <span className="drive-selbar__label">{t("artifacts.download")}</span>
+                    </Button>
+                    <Button size="sm" variant="ghost" icon="link" onClick={() => void copyLinks()}>
+                      <span className="drive-selbar__label">{t("drive.copyLinks")}</span>
+                    </Button>
+                  </>
+                )}
                 {uploads && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon="move"
-                    onClick={() => {
-                      const at = new Set(picked.map((a) => a.folderId ?? null));
-                      arrange.askMove(
-                        { files: picked.map((a) => a.id), folders: [] },
-                        at.size === 1 ? [...at][0] : undefined,
-                      );
-                    }}
-                  >
+                  <Button size="sm" variant="ghost" icon="move" onClick={moveSelection}>
                     <span className="drive-selbar__label">{t("drive.move")}</span>
                   </Button>
                 )}
-                {deletable.length > 0 && (
+                {canDeleteSelection && (
                   <Button
                     size="sm"
                     variant="ghost"
                     icon="trash"
                     className="drive-selbar__danger"
-                    onClick={() => remover.ask(deletable)}
+                    onClick={deleteSelection}
                   >
-                    <span className="drive-selbar__label">{t("drive.moveToTrash")}</span>
+                    <span className="drive-selbar__label">
+                      {deletableFolders.length > 0 ? t("drive.delete") : t("drive.moveToTrash")}
+                    </span>
                   </Button>
                 )}
                 <span className="drive-selbar__sep" aria-hidden="true" />
@@ -869,7 +961,7 @@ export function DrivePage({
                   icon="close"
                   aria-label={t("drive.clearSelection")}
                   title={t("drive.clearSelection")}
-                  onClick={() => setSelected(new Set())}
+                  onClick={clearSelection}
                 />
               </SelectionBar>
             )}
