@@ -69,7 +69,7 @@ if (collisions.length) {
   const dropTags = new Set(collisions.map((e) => e.tag));
   const journal = JSON.parse(readFileSync(JOURNAL, "utf8")) as { version: string; dialect: string; entries: Entry[] };
   journal.entries = journal.entries.filter((e) => !dropTags.has(e.tag));
-  writeFileSync(JOURNAL, `${JSON.stringify(journal, null, 2)}\n`);
+  writeFileSync(JOURNAL, JSON.stringify(journal, null, 2)); // as drizzle-kit writes it: no newline at the end
   for (const c of collisions) {
     const num = c.tag.split("_")[0];
     await $`git rm -f packages/db/migrations/${c.tag}.sql packages/db/migrations/meta/${num}_snapshot.json`.quiet();
