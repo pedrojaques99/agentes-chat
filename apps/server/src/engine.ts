@@ -864,6 +864,8 @@ export function buildEngine(o: EngineOptions) {
         path,
         { content: `Saved ${path} in your folder.` },
       ),
+    // Picture links in a reply come in as picture files on it, never shown from outside (ADR 0197 addendum).
+    pictureLinks: { artifacts, ownOrigins: [new URL(config.PUBLIC_URL).origin], ...(o.log ? { log: o.log } : {}) },
     machines: machineHub,
     workspaceComputer,
     releaseRunPhones: (run) => releaseRunPhones({ db, hub: machineHub }, run),

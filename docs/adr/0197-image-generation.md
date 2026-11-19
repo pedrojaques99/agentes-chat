@@ -82,3 +82,17 @@ image AIs take only raster pictures.
 *Amended 2026-11-18.* The canvas's own "Generate image" panel (a prompt, a model, a shape, a count) is gone, with
 the route that made pictures for a person directly: pictures are asked for in a conversation, where the agent can
 also write an SVG or find a real photo when that fits better.
+
+*Amended 2026-11-19.* Picture links in an agent's reply become pictures on it. An agent often lists pictures as
+links (ones an outside generator returned, or found on the web), and the apps showed only long addresses. When a
+reply is posted, the server reads the links in its text whose path ends as a PNG, JPEG, WebP or GIF (bare or in
+Markdown, none in code, none on this server's own address), downloads each under the run's outbound policy (the
+check every address an agent opens meets, ADR 0117) through the public-address guard pictures from the web already
+use (ADR 0196 §8), and stores each as a picture file of the agent's on that reply, as `generate_image`'s are
+(`meta.artifacts`, `importPictureLinks` in `packages/engine/src/image-links.ts`). The link stays in the text. Readers
+never load the outside address: an `<img>` pointing outside would let a link tell its host who read it, which is why
+GIFs come from our server too (ADR 0091). At most 8 links a reply, 3 downloads at a time and 30 seconds for all of
+them; a link refused, failed, too large, over the workspace's storage or past that time stays a link, and nothing
+fails the reply. It is the run's ending that does it, so every brain gets it, a model's and a computer's alike, and
+none of it counts as the agent's tool calls. A confidential run (ADR 0190) and a background run that posts nothing
+(ADR 0053 §5) import nothing.

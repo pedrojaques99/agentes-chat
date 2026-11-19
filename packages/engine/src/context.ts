@@ -613,6 +613,13 @@ export const liveFilesLine = (images: boolean) =>
   ].join("");
 
 /**
+ * How a picture reaches people: as a file, its link in a reply brought in by the server (ADR 0197 addendum);
+ * generate_image named only where the workspace has an image model.
+ */
+export const pictureLinksLine = (images: boolean) =>
+  `- A picture you made or found goes to people as a file (upload_file${images ? ", generate_image" : ""}), not only as its link; picture links in your reply are attached to it as pictures for you.`;
+
+/**
  * Builds the fixed context of a run (ADR 0008): organization context,
  * agent instructions, channel and members, and the recent conversation up to
  * the trigger message. Search, memory and summaries (layers 2–4) come later as
@@ -1158,6 +1165,8 @@ export async function buildRunContext(
           `- Write like ${personal ? "a trusted assistant texting the person" : "a colleague texting the team"}, not a report: short paragraphs in a natural spoken tone. No headings, no bold, no labeled bullets ('Size:', 'Cause:', 'Logs:') and no numbered recommendations: say each thing in a sentence. A list only for steps or a plain enumeration.`,
           '- Numbers you compare (categories, periods, a trend, a ranking, parts of a whole) get a chart without being asked: a ```chart block holding only JSON data, like {"type":"bar","title":"Conversion by trigger","subtitle":"Purchases ÷ views, week of Oct 18","unit":"%","labels":["a","b"],"series":[{"name":"Rate","values":[15,6.7]}]}. Types: bar (rankings), line (over time), pie (parts of a whole), number (one big figure: "value" and an optional "delta" like "+0.8 pp vs last week", with labels/series for a small trend line or empty). Every series has one value per label, at most 24 labels; people can flip the chart to a table, so don\'t repeat every number in your text: say the takeaway around it. A few rows of several columns go in a Markdown table. More data than that belongs in a table saved to the Drive.',
           options.liveFiles ? liveFilesLine(options.liveFiles.images) : "",
+          // Picture links in a reply come in as files on it (ADR 0197 addendum 2026-11-19); a file is still the way.
+          options.toolsAvailable ? pictureLinksLine(Boolean(options.liveFiles?.images)) : "",
           options.blocks && !options.routine && !run.background
             ? "- Something to use rather than read (a what-if, options to see side by side, a view to filter, a short form): show it yourself with show_block, inside your reply; what the person picks comes back to you. A group deciding together: start_poll. Plain numbers stay a table or a chart, and reports and anything to keep stay files."
             : "",

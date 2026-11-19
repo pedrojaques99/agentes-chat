@@ -232,6 +232,7 @@ import type { ModelGateway } from "./gateway";
 import { type CodeSetup, codeStart } from "./git/machine";
 import { agentRepositoryList, repositoriesPrompt } from "./git/repos";
 import { askVerdict, handOffHolds, repeatedAsk, saysNeedsNothing } from "./hand-off";
+import { imageLinksOf, importPictureLinks, type PictureLinkDeps } from "./image-links";
 import { UPDATE_ISSUE_TOOL } from "./issue-tools";
 import { linkRunToIssue, mirrorReplyToIssue } from "./issues";
 import { type Judge, judgeCallOf } from "./judge";
@@ -543,6 +544,11 @@ export interface EngineDeps {
    * files stay on the computer.
    */
   shareFile?(ctx: ToolContext, machineId: string, path: string): Promise<ToolOutput>;
+  /**
+   * Picture links in a posted reply are downloaded and attached to it as picture files (ADR 0197 addendum 2026-11-19,
+   * `importPictureLinks`). Absent: they stay links.
+   */
+  pictureLinks?: PictureLinkDeps;
   /** Each workspace gets its own computer here (`workspaceComputerText`); absent: people connect theirs. */
   workspaceComputer?: WorkspaceComputer;
   /** How long a run whose computer dropped mid-turn waits quietly for it (default `COMPUTER_DROP_GRACE_MS`). */
@@ -623,6 +629,8 @@ export interface Transcript {
   memoryUpdates?: MemoryUpdate[];
   /** Artifacts created or changed by tools, not yet attached to a posted message (`meta.artifacts`, with titles). */
   artifacts?: ArtifactLink[];
+  /** Picture links of its replies already tried (`importPictureLinks`): never downloaded twice in one run. */
+  pictureLinks?: string[];
   /** A mission proposed with its home elsewhere (a flat DM's new thread): the reply carries its link card (`meta.missionLink`). */
   missionLink?: { missionId: string; threadId: string } | null;
   /** Agents it consulted (`ask_agent`, ADR 0034), not yet shown on a posted message (`meta.consulted`). */
@@ -2191,6 +2199,21 @@ async function executeRunInner(
           ? maskCredentialsExcept(body, await personWords(tx, run.orgId, run.channelId, threadId))
           : body;
     return isRightHand(agent) ? await scrubRightHandReply(tx, run, masked) : masked;
+  };
+  /**
+   * Before a reply is posted in `threadId`: its picture links come in as picture files on it (ADR 0197 addendum
+   * 2026-11-19), whatever brain wrote it. Never a background run's (it posts nothing by itself, ADR 0053 §5) nor a
+   * confidential one's (ADR 0190: nothing of it leaves for the Drive), and a link once tried is not tried again.
+   */
+  const attachPictureLinks = async (t: Transcript, text: string, threadId: string | null) => {
+    const links = deps.pictureLinks;
+    if (!links || !text || run.background || ctx.confidential || isConfidentialRun(run.id)) return;
+    const tried = new Set(t.pictureLinks ?? []);
+    const urls = imageLinksOf(stripSentinel(text), links.ownOrigins).filter((u) => !tried.has(u));
+    if (urls.length === 0) return;
+    t.pictureLinks = [...tried, ...urls];
+    const files = await importPictureLinks(links, ctx, threadId, urls).catch(() => []);
+    if (files.length > 0) absorbToolData(t, { artifacts: files });
   };
   /**
    * Posts as the agent where it replies, at the end of the conversation (what it writes shows whole there, once: none of
@@ -6156,6 +6179,7 @@ async function executeRunInner(
         .where(eq(agentRuns.id, run.id));
       // At the cap this answer ends the run instead: what came in gets a run of its own.
       if (((still?.pending.length ?? 0) > 0 && run.turns < maxTurns) || keep) {
+        if (text && !repeatsLastPost(text)) await attachPictureLinks(t, text, replyThreadId);
         const posted =
           text && !repeatsLastPost(text)
             ? await db.transaction(async (tx) => {
@@ -6180,6 +6204,7 @@ async function executeRunInner(
       }
       // A move made since (a computer brain's tool, through the bridge): the report goes home, or it waits in line.
       if (await workWaitsInLine()) return parkQueuedWork();
+      if (text) await attachPictureLinks(t, text, workThread());
       const reply = await db.transaction(async (tx) => {
         // Told to wrap up near its cap, or found stuck twice: this is where it stands, and Continuar under it goes
         // on from here.
