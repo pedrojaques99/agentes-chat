@@ -819,6 +819,7 @@ ones a self-hosted instance usually touches:
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`. |
 | `LOG_FORMAT` | `json` | `gcp` for Google Cloud Logging (`severity` and `message`). |
 | `TELEMETRY` | `on` | `off` stops the anonymous usage report (Optional services and what they receive). |
+| `PROBLEM_REPORT_URL` | `https://telemetry.agentes.chat/v1/problem-report` | Where **Send a report** sends a report someone chose to send. `off`: it only copies it (Optional services and what they receive). |
 | `FEEDBACK_RELAY` | `true` | The apps' feedback form sends what a person writes to the agentes.chat team. `false`: no form (Optional services and what they receive). |
 | `TYPESAFE_API_KEY` | | Your TypeSafe key for Jev, or an OpenRouter key (`sk-or-…`) to call the same Jev through OpenRouter (AI: plans and keys). Wins over the key added in Settings → AI and usage. |
 | `COMPOSIO_API_KEY`, `COMPOSIO_WEBHOOK_SECRET` | | Your Composio project: Gmail and Outlook mailboxes and the services connected through Composio (below). |
@@ -1021,6 +1022,9 @@ by day, workspace and agent, in counts the server always keeps: never what a too
 `GET /analytics/work` and `GET /analytics/work/orgs/{orgId}` say how much the agents work and spend:
 turns by who started them and how they ended, waits for room on a computer, reply times, and tokens by
 type and who pays, with what they would cost through the API, per workspace or per agent, never what anyone wrote.
+`GET /analytics/run-timings` says where the runs' time went in a window of up to 2 days (31 for one workspace):
+each stage's median, p90, p99 and slowest, how turns on a computer started and how long runs waited for one, by
+what the agents think with.
 `MACHINE_PROVISIONING=external` (with the token) is for giving every workspace a computer of its own
 from a provisioner you run: it lists the workspaces still waiting (`GET /machine-requests`), says how
 far each one is, and asks for a single-use code that the computer connects with
@@ -1033,14 +1037,21 @@ with one exception you have to switch on: `OPERATOR_API_REVEAL_TOKEN` (a third v
 the other two). Leave it unset unless a tool of yours needs it. Set, `POST /reveal/orgs/{orgId}` reads
 one field of one record at a time (a message, a step of a run, an agent's instructions, a routine, a
 task, a connection's error, what a member wrote to you), at most 2,000 characters a call, with a
-reason in one line, for one of two purposes the server checks for itself. For a member who asked for
-help (`member_request` with the id of their support request, 30 days at most): only what that member
-reads in the app. To diagnose a run that failed or got stuck (`fault` with the run's id, 14 days at
-most): only what hangs on that run. Never a file or a credential, and of a direct conversation only
-for a member who is in it. Every read is recorded before any text leaves, in the events feed with
-your reason and in that workspace's own audit log (**Settings → Audit log**: who read what, at whose
-request or for which failed run, never your reason), credentials are masked, and the door takes 30
-calls a minute and 100 reads of one workspace a day. `GET /orgs/{orgId}/support-requests` lists who
+reason in one line, for one of three purposes. Two the server checks for itself. For a member who
+asked for help (`member_request` with the id of their support request, 30 days at most): only what
+that member reads in the app. To diagnose a run that failed or got stuck (`fault` with the run's id,
+14 days at most): only what hangs on that run. Never a file or a credential, and of a direct
+conversation only for a member who is in it. The third, `trust_safety`, is for investigating
+suspected abuse. The server has no record that could prove it, so it names no request and no run,
+never opens a support request's words or what people said to each other in a direct conversation,
+and is capped at 150 reads a day for the whole server. Every read is recorded before any text
+leaves, in the events feed with your reason. Requests and faults show in each workspace's own audit
+log at once (**Settings → Audit log**: who read what, at whose request or for which failed run,
+never your reason). A read to investigate abuse shows there when you disclose it, which you owe
+within 7 days and as soon as your review ends: `POST /orgs/{orgId}/content-reads/disclosure` with
+your full token and `{ from, to, count }` writes one entry that says you reviewed that many items
+for safety in that period. Credentials are masked, and the door takes 30 calls a minute and 100
+reads of one workspace a day. `GET /orgs/{orgId}/support-requests` lists who
 asked for help and when, and `POST` there records a request that reached you another way (a mail, a
 call), which the audit log then shows as recorded by you. `POST /reveal/orgs/{orgId}/replies` answers
 a member's support request by email, at the address of their account and in their language, never
@@ -1050,7 +1061,8 @@ replies a request and 60 a day, and is recorded in the events feed and in that w
 (that you answered, whose request, and whether an AI assistant wrote the answer), never with its
 words, which the server forgets once the email is sent or given up. Write in a reply only what that
 member could read in the app. Setting the token makes you a reader of your workspaces' content: tell
-them before the first read, and say whether an AI assistant reads with you (`assistedByAi`). It also
+them before the first read what you may read it for, and say whether an AI assistant reads with you
+(`assistedByAi`). It also
 makes the server keep what members write in the feedback form, and what the thing they reported
 says, for 90 days beside their request. Unset, every path under
 `/reveal` answers 403 and the server keeps neither: of a member's feedback it keeps only that they
@@ -1109,6 +1121,27 @@ either way:
   Docker, in `~/.agentes/.env`, then start it again. This wins over the switch below.
 - The switch in **Settings → General → Usage statistics**. Only the installation's first account (the
   person who set it up) sees it.
+
+**Send a report.** Where something fails (an agent's browser that doesn't open, a computer that stopped
+answering, an agent's run that failed, the desktop app's server that won't start) and in **Settings → General**,
+**Send a report** shows a report in full, then sends it to the agentes.chat team only when someone presses **Send**,
+so it goes even with `TELEMETRY=off`. The server posts it as JSON to `PROBLEM_REPORT_URL`
+(`https://telemetry.agentes.chat/v1/problem-report`); the desktop app posts its own (its cover and Preferences →
+Activity) when the server is down or out of reach. Set `PROBLEM_REPORT_URL=off` and the button only copies the
+report. A report holds:
+
+| Field | What it is |
+| --- | --- |
+| `format`, `source`, `place` | `1`; `server` or `desktop`; where it was sent from (`browser`, `computer`, `run`, `desktop_server`, `settings`). |
+| `instance` | The usage report's random id (`null` from the desktop app). |
+| `code`, `step`, `happenedAt`, `timings` | What failed and at which step, as codes (`browser.no_answer`, a run's error code), when, and counts or durations the screen measured (`attempts`). |
+| `versions` | The server's, the runner's (and its protocol), the desktop app's and the phone app's versions, the server's system and processor, and the browser's family and major version (`chrome 142`), never the whole User-Agent. |
+| `install`, `locale` | `docker`, `native` or `desktop`; the app's language. |
+| `facts` | Which settings differ from their defaults, as `config.<NAME>: "set"`, never their values (`TELEMETRY`, `INSTALL_MODE`, `NODE_ENV`, `LOG_LEVEL` and `MACHINE_PROVISIONING` by value, and `config.publicUrl` as `https`, `http` or `loopback`, never the address); how many workspaces, agents and computers; hours since the server started; migrations applied; for the computer involved, its system, processor, runner version, connection, last sign of life, pause, its coding CLIs' versions and which of its tools are on; for a run, its status, brain, turns and hop. |
+| `logs` | The last lines of the computer's `runner.log` (up to 300, from its app when it answers within 5 seconds), and the server's own last log lines from the last 30 minutes (only when the installation's owner sends it); the desktop app's server log and setup steps. Every line is scrubbed first: emails, IP addresses, keys, tokens and cookie headers masked, links cut to their origin (with any user and password in them), home folders as `~`, and the names of the server, its workspaces, computers, agents and the sender replaced by `[server]`, `[workspace]`, `[computer]`, `[agent]`, `[person]`. Lines over 1,000 characters are cut. |
+| `note`, `replyTo` | What the person wrote (credentials masked) and an email for a reply, both optional and empty unless filled in. |
+
+Never messages, prompts, tool calls, pages or files. Each person can send 5 reports an hour, and the server 20.
 
 **Feedback.** The apps have a feedback form (**Send feedback**, at the bottom of the sidebar), and an
 agent can send one when a person asks it to or agrees to its offer. Each one

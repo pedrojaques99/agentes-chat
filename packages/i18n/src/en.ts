@@ -421,7 +421,7 @@ export const en = {
     },
     view_all_agents: {
       title: "See all agents",
-      desc: "On Team and in the sidebar. Without it, only the ones that answer them.",
+      desc: "On Team and in the sidebar, except other people's personal agents. Without it, only the ones that answer them.",
       short: "see all agents",
       say: "sees all agents",
     },
@@ -1445,9 +1445,9 @@ export const en = {
           "Drop openbot-import.json (from Migrator by OpenBot) or openbot-transfer.json (from the instance transfer), or the .zip it came in.",
         openmausbot: "In OpenMausBot: right-click the team → Share team… → Save file.",
         hermes:
-          "In a terminal, run hermes profile export with the profile's name and drop the .tar.gz here. Or drag the ~/.hermes folder to bring every profile.",
+          "In a terminal, run `hermes profile export` with the profile's name and drop the .tar.gz here. Or drag the `~/.hermes` folder to bring every profile.",
         openclaw:
-          "Drag the whole ~/.openclaw folder (it brings every agent) or just one workspace. On a Mac, ⌘⇧. shows hidden folders in the file picker.",
+          "Drag the whole `~/.openclaw` folder (it brings every agent) or just one workspace. On a Mac, ⌘⇧. shows hidden folders in the file picker.",
         paperclip: "Drag the package folder (the one with COMPANY.md), drop a .zip of it or paste its GitHub link.",
         agenteschat:
           "In the other workspace: Settings → Import and export → Download the file. Then drop the .json here.",
@@ -3999,11 +3999,15 @@ export const en = {
   },
   keyGuard: {
     title: "This looks like an API key",
-    text: "Everything in the chat is visible to people and agents. Save it as a workspace key instead: it's encrypted and nobody sees it.",
-    textMember: "Everything in the chat is visible to people and agents. A key is like a password.",
-    save: "Save as a key",
+    titleSecret: "This looks like a key or password",
+    vaultText:
+      "Everything in the chat is visible to people and agents. Keep it in the Vault: it's encrypted, and the agents you allow use it without seeing it.",
+    vault: "Save in the Vault",
+    useAsAi: "Use as AI key",
     remove: "Remove it",
     send: "Send anyway",
+    /** After "Save in the Vault", under the toast's "Saved in the Vault". */
+    saved: "Agents with access use it by the name {{name}}.",
   },
   /** An agent's proposal of costly work nobody asked for directly (ADR 0131): the card's buttons and who decided. */
   costlyCard: {
@@ -5019,7 +5023,7 @@ export const en = {
     error: {
       title: "Give it a name.",
       website: "Use an https address, like app.example.com.",
-      keyName: "Use capital letters, numbers and _, starting with a letter, like ACME_API_KEY.",
+      keyName: "Use capital letters, numbers and _, starting with a letter, like `ACME_API_KEY`.",
       password: "Type the password.",
       value: "Type the value.",
       contact: "Fill in at least one field.",
@@ -5187,7 +5191,7 @@ export const en = {
       show: "Show the value of {{name}}",
       hide: "Hide the value of {{name}}",
       problem: {
-        name: "The name must look like ACME_API_KEY",
+        name: "The name must look like `ACME_API_KEY`",
         reserved: "Reserved name",
         empty: "No value",
         tooLarge: "Value too large",
@@ -10096,7 +10100,6 @@ export const en = {
       start: "Start mission",
       created: "Mission created: {{name}} is putting the plan together.",
       who: "Who programs",
-      codexOld: "Codex on {{computer}} is too old for missions: update it there.",
     },
     commandApproval: {
       label: "Autonomy",
@@ -10992,8 +10995,8 @@ export const en = {
     line: {
       invalid: "TypeSafe didn't accept this key. Create a new one.",
       no_credit: "Add credit at TypeSafe. Jev resumes by itself.",
-      env: "Set in this server's settings (TYPESAFE_API_KEY).",
-      envInvalid: "TypeSafe didn't accept this key. Change it in this server's settings (TYPESAFE_API_KEY).",
+      env: "Set in this server's settings (`TYPESAFE_API_KEY`).",
+      envInvalid: "TypeSafe didn't accept this key. Change it in this server's settings (`TYPESAFE_API_KEY`).",
     },
     checkAgain: "Check again",
     /** Where Jev is called and paid (ADR 0073 §9): the rows under the reasons once "Set up Jev" is pressed. */
@@ -11022,7 +11025,7 @@ export const en = {
       line: {
         invalid: "OpenRouter didn't accept this key. Create a new one.",
         no_credit: "Add credit at OpenRouter. Jev resumes by itself.",
-        envInvalid: "OpenRouter didn't accept this key. Change it in this server's settings (TYPESAFE_API_KEY).",
+        envInvalid: "OpenRouter didn't accept this key. Change it in this server's settings (`TYPESAFE_API_KEY`).",
       },
     },
     remove: {
@@ -11109,7 +11112,6 @@ export const en = {
       needsCloud: {
         online: "{{computer}} is restarting or reconnecting. This changes by itself once it's back.",
         installing: "{{program}} is being installed on {{computer}}. This changes by itself when it's done.",
-        updating: "{{program}} is being updated on {{computer}}. This changes by itself when it's done.",
         runnerOld:
           "The agentes.chat program on {{computer}} is out of date and an update is on its way. This changes by itself when it's done.",
         execOff: "{{computer}} can't run {{program}} yet. We're on it, and this changes by itself.",
@@ -11271,7 +11273,7 @@ export const en = {
     modeText: {
       everyone: "Anyone in the workspace can call {{name}}.",
       people: "Pick the people and roles that can talk to {{name}}.",
-      owner: "Only {{owner}} talks to {{name}}.",
+      owner: "Only {{owner}} talks to {{name}}. Lists show {{name}} only to {{owner}}, admins and whoever can edit.",
       noOwner: "Set an owner to use this option.",
       everyonePersonal: "Anyone here can call {{name}}.",
       peoplePersonal: "Pick the people who can talk to {{name}}.",
@@ -12444,12 +12446,6 @@ export const en = {
       cant_start: "{{program}} is on {{computer}}, but it won't start.",
       /** Its runner hasn't said which CLIs it has yet: nobody knows whether this one is there. */
       not_reported: "{{computer}} is still checking which programs it has. This changes by itself when it's done.",
-      outdated: "The version on {{computer}} is old. Update Codex to use it.",
-      outdatedCodex: "Codex CLI {{detected}} was found on {{computer}}. Update it to {{minimum}} or later.",
-      codexUpdateGuide: "How to update Codex CLI",
-      codexRecheckHere: "After updating, choose Check again for Codex in Preferences › Tools.",
-      codexRecheckThere:
-        "Update Codex CLI on {{computer}}. If it runs the desktop app, choose Check again for Codex in Preferences › Tools.",
       /** The runner doesn't run this program on that computer's system (Cursor on Windows, for one). */
       system: "{{program}} doesn't run on {{computer}}'s system yet.",
       no_computerCloud: "Ready as soon as {{computer}} is.",
@@ -13311,7 +13307,7 @@ export const en = {
       create: "Create the app on GitHub",
       state: { off: "Off", on: "On", invalid: "Invalid" },
       line: {
-        env: "Set in this server's settings (GITHUB_APP_ID).",
+        env: "Set in this server's settings (`GITHUB_APP_ID`).",
         invalid: "This server can't open the saved app. Remove it and create it again.",
         /** The app isn't subscribed to what agents hear on GitHub: `events` are GitHub's own names for them. */
         events: "For agents to hear what happens on GitHub, tick these events on the app: {{events}}.",
@@ -13725,9 +13721,9 @@ export const en = {
       via: "Through Composio",
       needsReconnect: "Needs reconnecting",
       off_one:
-        "{{names}} and {{count}} more service connect through Composio. To turn them on, whoever runs this server sets COMPOSIO_API_KEY (see SELF_HOSTING.md).",
+        "{{names}} and {{count}} more service connect through Composio. To turn them on, whoever runs this server sets `COMPOSIO_API_KEY` (see `SELF_HOSTING.md`).",
       off_other:
-        "{{names}} and {{count}} more services connect through Composio. To turn them on, whoever runs this server sets COMPOSIO_API_KEY (see SELF_HOSTING.md).",
+        "{{names}} and {{count}} more services connect through Composio. To turn them on, whoever runs this server sets `COMPOSIO_API_KEY` (see `SELF_HOSTING.md`).",
       usage: "Composio: {{calls}} of {{limit}} calls in {{month}}",
       usageNoLimit: "Composio: {{calls}} calls in {{month}}",
       limitNotice: "This workspace used its Composio calls for the month",
@@ -14925,7 +14921,7 @@ export const en = {
       },
       railway: {
         "1": "In the Postgres service, open Data → Query and run the command below (change the password).",
-        "2": "In Variables, copy DATABASE_PUBLIC_URL (DATABASE_URL is internal and doesn't work from here).",
+        "2": "In Variables, copy `DATABASE_PUBLIC_URL` (`DATABASE_URL` is internal and doesn't work from here).",
         "3": "Swap the user and password in it for agentes_leitura and the password you chose, and paste it here.",
       },
       rds: {
@@ -14962,7 +14958,7 @@ export const en = {
       unreachable:
         "We couldn't reach the database server. Check the address and whether it accepts connections from outside.",
       blocked_host:
-        "This server isn't allowed. Use the database's public address (internal addresses, like Railway's DATABASE_URL, don't work from here).",
+        "This server isn't allowed. Use the database's public address (internal addresses, like Railway's `DATABASE_URL`, don't work from here).",
       tls: "The database didn't accept a secure connection. Turn on SSL in the database, or choose No encryption under Advanced (test databases only).",
       unknown: "Couldn't connect right now. Try again in a moment.",
       no_databases: "This user can't open any database on this server. Check its permissions or the start of the name.",
@@ -15867,7 +15863,7 @@ export const en = {
       titleRequired: "Give it a name.",
       tooLong: "That's too long. The limit is {{max}}.",
       notHttps: "Use an address that starts with https://",
-      keyNameInvalid: "Use capital letters, digits and _ in the name, like ACME_API_KEY.",
+      keyNameInvalid: "Use capital letters, digits and _ in the name, like `ACME_API_KEY`.",
       keyNameReserved: "This name is reserved. Pick another one.",
       keyNameTaken: "A key with this name is already saved here.",
       contactEmpty: "Fill in at least one field.",
@@ -16258,6 +16254,12 @@ export const en = {
       until: "until {{time}}",
       withHost: "with {{host}}",
       lastSeen: "last seen {{time}}",
+      /** A computer someone brought, by why it went offline: its runner stopped answering pings. */
+      offlineUnresponsive: "stopped answering at {{time}}",
+      /** Its runner stopped (its service stopped, the app quit). */
+      offlineStopped: "runner stopped at {{time}}",
+      /** The connection dropped. */
+      offlineDropped: "connection dropped at {{time}}",
     },
     line: {
       ready: "Agents can use it now.",
@@ -16266,6 +16268,11 @@ export const en = {
       offline: "Agents wait for it to come back.",
       offlineSeen: "Last seen {{time}}. Agents wait for it to come back.",
       offlineWithHost: "{{host}} is offline. Agents wait for it to come back.",
+      /** `command`: `agentes-runner doctor`, as code between its backticks. No network, or the computer too busy to answer. */
+      offlineUnresponsive: "Stopped answering at {{time}}, maybe no network or overloaded. Run `{{command}}` on it.",
+      offlineStopped: "The runner stopped at {{time}}. Start it again, or run `{{command}}` on it to see why.",
+      offlineDropped:
+        "The connection dropped at {{time}}. It reconnects by itself. If it doesn't, run `{{command}}` on it.",
     },
     /** Why a device isn't ready, by the code its computer reports. */
     reason: {
@@ -16686,8 +16693,16 @@ export const en = {
         "{{name}} runs iOS {{version}} and Xcode on {{mac}} knows iOS {{sdk}} at most. Install Xcode {{major}}, then run this in Terminal.",
       xcodeOldAny:
         "{{name}} runs iOS {{version}}, newer than Xcode on {{mac}} knows. Install Xcode {{major}}, then run this in Terminal.",
-      uiRefusedText:
-        "The iPhone refused the test helper's taps. Unlock it and enter its passcode if it asks. If it keeps happening, turn Settings\u00a0›\u00a0Developer\u00a0›\u00a0Enable UI Automation off and on.",
+      uiRefusedText: "Agents see the iPhone's screen, but iOS refuses their taps.",
+      /** Above two Settings paths (Developer Mode, Enable UI Automation): both switches on. */
+      uiTurnOn: "On the iPhone, turn both on:",
+      uiPasscode: "Enter its passcode when it asks, and keep it unlocked.",
+      /** A button: the Mac checks again now whether the iPhone lets the test helper tap. */
+      uiCheck: "Check again",
+      /** A button: the Mac stops the test helper, builds it again with its Xcode and checks it on the iPhone. */
+      repair: "Repair the test helper",
+      repairHint:
+        "The Mac stops the test helper and builds it again with its Xcode, in a few minutes. For taps that still fail once both are on.",
       /** An iPhone below iOS 17: the guide ends here. */
       tooOld:
         "{{name}} runs iOS {{version}}, and agents need iOS 17 or newer. Update it if it can, or plug in a newer iPhone.",
@@ -17265,6 +17280,22 @@ export const en = {
       /** Under the sentence, before `operatorRead.ai`, and after "Reason:" in the entry's panel. `name`: the member. */
       request: "support request from {{name}}",
     },
+    /** Whoever runs the server tells the workspace, afterwards, that it read content to investigate suspected abuse. */
+    operatorReview: {
+      /** `who`: one of `operatorRead.who.*`. As short as the language allows: a phone's list cuts it after one line. */
+      sentence: "{{who}} reviewed content for safety",
+      /**
+       * Under the sentence, its first words: how many, before a "·" and the days. `value`: the count as the language
+       * writes numbers. It stands alone, so it takes the form a count has by itself.
+       */
+      items_one: "{{value}} item",
+      items_other: "{{value}} items",
+      /**
+       * Under the sentence, after the count and a "·": the review's first and last day. `from`, `to`: short dates
+       * ("Nov 3"). A review of one day shows that date alone, without these words.
+       */
+      period: "{{from}} to {{to}}",
+    },
     change: {
       mergedWithoutAsking: "Merged in {{repo}} without asking",
       accentChanged: "Changed the workspace's accent color",
@@ -17801,8 +17832,8 @@ export const en = {
         state: { off: "Off", on: "On", invalid: "Invalid key" },
         line: {
           invalid: "This server can't read this key. Paste it again.",
-          env: "Set in this server's settings (GIPHY_API_KEY).",
-          envInvalid: "This key can't be used. Change it in this server's settings (GIPHY_API_KEY).",
+          env: "Set in this server's settings (`GIPHY_API_KEY`).",
+          envInvalid: "This key can't be used. Change it in this server's settings (`GIPHY_API_KEY`).",
         },
         invalid: "GIPHY didn't accept this key. Copy it again from GIPHY Developers.",
         remove: {
@@ -18445,6 +18476,11 @@ export const en = {
         shell: "It runs other commands inside it",
         inline: "It runs code given inline",
         global: "It installs for the whole computer",
+        privilege: "It asks for more rights",
+        reverseShell: "It hands this computer's shell to another machine",
+        destroy: "It would wipe the computer or a whole home folder",
+        network: "It changes or goes around the proxy and firewall",
+        otherUser: "It reaches into another user's files",
         rules: "Outside what agents may do on their own",
         /** Calls the Tool Gateway refused (`data.refusal`): the agent lacks access, the kind of work, a key, a repository. */
         noAccess: "The agent doesn't have access to this",
@@ -19761,6 +19797,25 @@ export const en = {
     writeAfter: ".",
     ask: "Need help? Ask the people who run this server.",
   },
+  /** Resetting a workspace (owners, Sua conta): what it made goes now and for good, and it starts over as a new one. */
+  resetOrg: {
+    /** The title over the account's danger rows for an owner: resetting, deleting the workspace, deleting the account. */
+    cardTitle: "Reset or delete",
+    row: {
+      title: "Reset workspace",
+      text: "Erases everything made in it and starts over, with the same people.",
+    },
+    goes: "Agents, conversations, DMs, files, tasks, routines and memory",
+    stays: "People, roles, invitations, AI accounts, computers and connectors",
+    fresh: "Then it opens like a new workspace, with the first setup",
+    /** Only where plans are billed. */
+    plan: "The plan stays the same, with no new charge",
+    now: "It happens at once and can't be undone.",
+    title: "Reset {{name}}?",
+    submit: "Reset workspace",
+    /** In the row once it started, until the workspace opens again as a new one. */
+    resetting: "Resetting {{name}}…",
+  },
   /** Deleting a workspace (owners): it turns read-only for everyone now and is deleted for good 7 days later. */
   deleteOrg: {
     card: {
@@ -19853,8 +19908,6 @@ export const en = {
     card: {
       text: "Deletes your account in 7 days, in every workspace.",
       button: "Delete account…",
-      /** The card's title for an owner, over its two buttons: the account and the workspace. */
-      title: "Delete",
     },
     title: "Delete your whole account?",
     intro: "This deletes your whole account, not just one workspace.",
@@ -21560,6 +21613,39 @@ export const en = {
       alwaysOn: "From now on, reports like this go without asking.",
       askFirst: "Ask before sending",
     },
+  },
+  /** "Send a report" on a self-hosted server: what the agentes.chat team gets, shown in full before it goes. */
+  problemReport: {
+    button: "Send a report",
+    title: "Send a report to agentes.chat",
+    lead: "The agentes.chat team gets: versions, which settings are set (never their values), what failed, and the last lines of the logs. No messages, pages, names or keys.",
+    noteLabel: "What happened? (optional)",
+    notePlaceholder: "What you were doing when it stopped",
+    emailLabel: "Email for a reply (optional)",
+    emailHelp: "Only if you want an answer.",
+    showAll: "See everything that's sent",
+    copy: "Copy report",
+    copied: "Copied",
+    send: "Send",
+    sending: "Sending…",
+    cancel: "Cancel",
+    loading: "Gathering the details…",
+    sentTitle: "Report {{id}} sent",
+    sentText: "If you write to us, mention this code.",
+    sentTextReply: "We'll answer at {{email}}. Mention this code if you write to us.",
+    copyCode: "Copy code",
+    done: "Done",
+    noLogComputer: "{{computer}} didn't answer, so its log isn't included.",
+    oldRunner: "The agentes.chat app on {{computer}} is too old to include its log. Update it there to include it.",
+    noServerLines: "The server's log lines are included only when the installation's owner sends a report.",
+    off: "Sending is off on this server (`PROBLEM_REPORT_URL=off`). Copy the report to share it.",
+    errorRate: "Too many reports in a short time. Try again in {{minutes}} min, or copy the report.",
+    errorUnreachable: "agentes.chat didn't answer. Try again, or copy the report.",
+    errorRefused: "agentes.chat didn't accept this report (it may be from an older version). Copy the report instead.",
+    errorPreview: "Couldn't gather the details: {{reason}}",
+    emailInvalid: "That email doesn't look right. Fix it or leave it empty.",
+    settingsTitle: "Something not working?",
+    settingsText: "Send the technical details to the agentes.chat team.",
   },
   /** Live files: spreadsheets, presentations and canvases people and agents edit together (ADR 0196). */
   live: {

@@ -600,11 +600,9 @@ export const featureKeysEn = {
     camera: "Camera",
     photos: "Photos",
     file: "File",
-    /** The fourth tile: the GIFs and stickers, out of the field so it only sends. */
+    /** The fourth tile: the GIFs and stickers (also beside the mic in the empty field). */
     media: "GIFs",
     noCamera: "No camera access. Allow it in the phone's Settings.",
-    mission: "Start a mission",
-    missionHint: "Long work, with a plan, from start to finish",
     summary: "Sum up the chat",
     summaryHint: "What happened while you were away",
     remind: "Remind me later",
@@ -880,9 +878,9 @@ export const featureKeysEn = {
         openmausbot:
           "In OpenMausBot: right-click the team\u00a0›\u00a0Share team…\u00a0›\u00a0Save file. Then pick that file here.",
         hermes:
-          "Hermes exports from a terminal (hermes profile export), as a .tar.gz the phone can't open. Import it on the computer, or pick the profile's .md and .yaml files here.",
+          "Hermes exports from a terminal (`hermes profile export`), as a .tar.gz the phone can't open. Import it on the computer, or pick the profile's .md and .yaml files here.",
         openclaw:
-          "OpenClaw keeps agents in the ~/.openclaw folder on the computer. Pick a workspace's .md files here, or import the whole folder on the computer.",
+          "OpenClaw keeps agents in the `~/.openclaw` folder on the computer. Pick a workspace's .md files here, or import the whole folder on the computer.",
         paperclip: "Paste the package's GitHub link below, or pick its COMPANY.md and the other .md files.",
         agenteschat:
           "In the other workspace: Settings\u00a0›\u00a0Import and export\u00a0›\u00a0Download the file. Then pick the .json here.",
@@ -2078,8 +2076,7 @@ export const featureKeysEn = {
       /** Xcode's names (Signing & Capabilities) stay in English. */
       teamMissing:
         "Xcode is signed in but shows no team yet. In Xcode, make any iOS app, pick your team under Signing & Capabilities and run it on this iPhone once.",
-      uiRefused:
-        "This iPhone refused the test helper's taps. Unlock it and enter its passcode if it asks. If it keeps happening, turn Settings\u00a0›\u00a0Developer\u00a0›\u00a0Enable UI Automation off and on.",
+      uiRefused: "Agents see this iPhone's screen, but iOS refuses their taps.",
       /** A button on step 1: the person says it's plugged in, and the guide says what to check. */
       pluggedIn: "It's plugged in",
       /** iPhones on the Mac's network that already trust it (they did over a cable once), offered, never used until picked. */
@@ -2408,6 +2405,8 @@ export const featureKeysEn = {
     deleteIntro: "{{name}} turns read-only for everyone right away and is deleted for good in 7 days.",
     holdDelete: "Hold to delete",
     deleteFailed: "Couldn't delete the workspace. Try again.",
+    holdReset: "Hold to reset",
+    resetFailed: "Couldn't reset the workspace. Try again.",
     access: {
       how: "Tap a row to change its level: No access, Read, Read and write.",
     },
@@ -2713,7 +2712,7 @@ export const featureKeysEn = {
       newPassword: "New password",
       keyName: "Variable",
       keyNamePlaceholder: "ACME_API_KEY",
-      keyNameHelp: "Capital letters, digits and _, like ACME_API_KEY. Agents ask for the key by this name.",
+      keyNameHelp: "Capital letters, digits and _, like `ACME_API_KEY`. Agents ask for the key by this name.",
       value: "Value",
       newValue: "New value",
       description: "Description",

@@ -14,6 +14,7 @@ import {
   auditQueryOf,
   auditReason,
   auditReasonKey,
+  auditReasonLabel,
   auditRoutine,
   auditSecretText,
   auditSentence,
@@ -166,7 +167,7 @@ export function AuditSection({ agent }: { agent?: string }) {
                         <span className="audit-row__title">
                           <Sentence row={row} />
                         </span>
-                        <span className="audit-row__sub">{auditSubLine(t, row)}</span>
+                        <span className="audit-row__sub">{auditSubLine(t, row, i18n.language)}</span>
                       </span>
                       <OutcomeChip row={row} />
                       <time className="audit-row__time" dateTime={row.at}>
@@ -249,7 +250,8 @@ function AuditPanel({ row, onClose }: { row: AuditRow; onClose: () => void }) {
   const toast = useToast();
   useEscClose(onClose);
   const name = auditActorName(t, row) ?? t("audit.system");
-  const reason = auditReason(t, row);
+  const reason = auditReason(t, row, i18n.language);
+  const reasonLabel = auditReasonLabel(t, row);
   const isCall = row.action === TOOL_CALL;
   const where = auditWhere(t, row);
   const connector = auditStr(row.details.connector);
@@ -297,7 +299,7 @@ function AuditPanel({ row, onClose }: { row: AuditRow; onClose: () => void }) {
   facts.push([t("audit.panel.when"), whenAt(t, i18n.language, row.at)]);
 
   const input = isCall ? (row.details.input as Record<string, unknown> | undefined) : undefined;
-  const changeDetails = isCall ? undefined : auditDetailEntries(row.details);
+  const changeDetails = isCall ? undefined : auditDetailEntries(row.details, row.action);
   const reasonKey = auditReasonKey(row);
   const said = auditToolSaid(row);
 
@@ -348,7 +350,12 @@ function AuditPanel({ row, onClose }: { row: AuditRow; onClose: () => void }) {
           <div className={`audit-panel__reason ac-iconline audit-panel__reason--${reasonKey}`}>
             <Icon name={reasonKey === "refused" ? "block" : reasonKey === "failed" ? "alert" : "info"} size={16} />
             <span>
-              <strong>{t(`audit.panel.reason.${reasonKey}`)}:</strong> {reason}
+              {reasonLabel && (
+                <>
+                  <strong>{reasonLabel}:</strong>{" "}
+                </>
+              )}
+              {reason}
             </span>
           </div>
         )}

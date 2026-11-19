@@ -58,9 +58,12 @@ describe("a conversation of bubbles breathes", () => {
     expect(shape(rows)).toEqual(["day", "a", "b"]);
   });
 
-  test("the time line is the day and the time, quieter than a day's, and only in bubbles", () => {
+  test("the time line is the day and the time, quieter than a day's, only where messages hold no time", () => {
     const chat = src("features/chat/ChatScreen.tsx");
-    expect(chat).toContain('const timeLines = rowLook.style === "bubbles";');
+    expect(chat).toContain("const timeLines = timesOnPull(rowLook.style);");
+    expect(src("features/chat/look.ts")).toContain(
+      'export const timesOnPull = (style: ChatStyle) => style === "bubbles" || style === "compact";',
+    );
     expect(chat).toContain("buildRows(list, hidden, timeLines)");
     expect(chat).toContain(
       'dayLine(t("mobile.chat.dayAt", { day: when.day(item.iso), time: when.time(item.iso) }), true)',

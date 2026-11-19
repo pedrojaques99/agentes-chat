@@ -333,7 +333,8 @@
       "live.shell.formats.docx",
       "live.shell.formats.md",
       "live.doc.link.title",
-      "live.doc.keys.link"
+      "live.doc.keys.link",
+      "audit.operatorReview.items"
     ],
     "es": [
       "devices.iphone.path.general",
@@ -2657,7 +2658,8 @@
       "live.sheet.args.criteria1",
       "live.sheet.args.criteria2",
       "live.sheet.args.k",
-      "live.sheet.args.x"
+      "live.sheet.args.x",
+      "audit.operatorReview.items"
     ],
     "ja": [
       "live.sheet.args.k",

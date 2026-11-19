@@ -57,10 +57,12 @@ describe("a pull to the left shows the times", () => {
     expect(row).toContain("<SwipeSlide on={bubbled} style={styles.meSlide}>");
     expect(row).toContain("<ReceiptMark message={m} mine receipt={receipt} seenBy={seenBy} />\n        </SwipeTime>");
     // Someone else's has its time there too, and gives way, face and body together, only when too wide.
-    expect(row).toMatch(/\{inBubble \? \(\s+<SwipeTime>/);
+    expect(row).toMatch(/\{inBubble \|\| compact \? \(\s+<SwipeTime>/);
     expect(row).toContain("<View onLayout={inBubble ? giveWay.onArea : undefined}>");
     expect(row).toContain("onLayout={giveWay.onBubble}");
-    expect(row).toContain("<Animated.View style={[styles.body, { gap: rhythm.part }, inBubble && giveWay.style]}>");
+    expect(row).toContain(
+      "<Animated.View style={[styles.body, { gap: rhythm.part }, inBubble && giveWay.style, compact && slide]}>",
+    );
     expect(row).toMatch(/styles\.avslot,[\s\S]{0,120}inBubble && giveWay\.style,/);
     // The hook runs before my rows' branch: the same hooks every time.
     expect(row.indexOf("const giveWay = useGiveWay();")).toBeLessThan(row.indexOf("if (onRight) {"));
@@ -77,9 +79,9 @@ describe("a pull to the left shows the times", () => {
     expect(swipe).toContain("withTiming(0, { duration: 150, easing: EASE_OUT })");
     // The times take no touch.
     expect(swipe).toContain('<Animated.View pointerEvents="none" style={[styles.time, shown]}>');
-    // On only in bubbles, over the whole list.
+    // On where messages hold no time (bubbles, compact), over the whole list.
     const chat = src("features/chat/ChatScreen.tsx");
-    expect(chat).toContain('const timePan = useSwipeTimePan(timePull, rowLook.style === "bubbles", stillRows);');
+    expect(chat).toContain("const timePan = useSwipeTimePan(timePull, timesOnPull(rowLook.style), stillRows);");
     expect(chat).toContain("<SwipeTimeFrame pull={timePull} gesture={timePan}>");
     // One rubber band for both sideways pulls.
     expect(src("features/chat/SwipeReply.tsx")).toContain('import { rubberband } from "./pull";');

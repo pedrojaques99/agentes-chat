@@ -55,10 +55,23 @@ describe("the bubbles' colors", () => {
 });
 
 describe("the rows follow the same choice as the web", () => {
-  test("defaults: channels on the left, DMs in bubbles", () => {
+  test("defaults: on the web channels on the left, on the phone in bubbles as DMs; the person's choice wins", () => {
     expect(chatLookOf(undefined, false).style).toBe("left");
     expect(chatLookOf(undefined, true).style).toBe("bubbles");
+    expect(chatLookOf(undefined, false, false, "phone").style).toBe("bubbles");
+    expect(chatLookOf({ channelStyle: "compact" }, false, false, "phone").style).toBe("compact");
     expect(mineOnRight("left")).toBe(false);
+  });
+
+  test("compact holds no column of times: a pull shows them, its face at the rows' edge", async () => {
+    const row = await read("chat/MessageRow.tsx");
+    expect(row).not.toContain("compactClock");
+    expect(row).toContain("{inBubble || compact ? (");
+    expect(row).toContain("const slide = useSwipeSlide(compact);");
+    expect(await read("chat/look.ts")).toContain(
+      "compactRow: { paddingLeft: MSG_INSET, paddingRight: 12, gap: COMPACT_GAP },",
+    );
+    expect(await read("me/ChatLookPage.tsx")).not.toContain("compactClock");
   });
 
   test("a personal workspace opens every conversation in bubbles; the person's choice wins (ADR 0159)", async () => {
@@ -66,9 +79,9 @@ describe("the rows follow the same choice as the web", () => {
     expect(chatLookOf(undefined, true, true).style).toBe("bubbles");
     expect(chatLookOf({ channelStyle: "compact" }, false, true).style).toBe("compact");
     // Every conversation and the preview read the workspace's mode.
-    expect(await read("chat/look.ts")).toContain("chatLookOf(org?.chatPrefs, dm, isPersonal(org))");
+    expect(await read("chat/look.ts")).toContain('chatLookOf(org?.chatPrefs, dm, isPersonal(org), "phone")');
     const page = await read("me/ChatLookPage.tsx");
-    expect(page).toContain("chatLookOf(prefs, dm, isPersonal(org))");
+    expect(page).toContain('chatLookOf(prefs, dm, isPersonal(org), "phone")');
     // Its channels are its group conversations: the tab and the tone's header say so.
     expect(page).toContain('label: t(modeKey(org, "settings.account.chat.channels"))');
     expect(page).toContain('modeKey(org, "settings.account.chat.toneChannels")');
